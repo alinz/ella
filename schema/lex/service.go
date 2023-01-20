@@ -258,8 +258,7 @@ func ServiceMethodReturnTypes(next lexer.State) lexer.State {
 		lexer.IgnoreWhiteSpace(l)
 
 		if l.Peek() == 's' {
-			value, reset := l.PeekRunUntil(" \t\r")
-			reset()
+			value := l.PeekRunUntil(" \t\r")
 			if value == "stream" {
 				l.AcceptRunUntil(" \t\r")
 				l.Emit(token.Stream)

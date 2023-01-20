@@ -112,7 +112,7 @@ func (l *Lexer) AcceptRunUntil(invalid string) {
 	l.Backup()
 }
 
-func (l *Lexer) PeekRunUntil(invalid string) (value string, reset func()) {
+func (l *Lexer) PeekRunUntil(invalid string) (value string) {
 	pos := l.pos
 	start := l.start
 	width := l.width
@@ -120,11 +120,11 @@ func (l *Lexer) PeekRunUntil(invalid string) (value string, reset func()) {
 	l.AcceptRunUntil(invalid)
 	value = l.Current()
 
-	return value, func() {
-		l.pos = pos
-		l.start = start
-		l.width = width
-	}
+	l.pos = pos
+	l.start = start
+	l.width = width
+
+	return value
 }
 
 func (l *Lexer) Errorf(errType Type, format string, args ...interface{}) {
