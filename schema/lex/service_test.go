@@ -1,0 +1,192 @@
+package lex_test
+
+import (
+	"testing"
+
+	"github.com/alinz/rpc.go/schema/lex"
+	"github.com/alinz/rpc.go/schema/lex/token"
+)
+
+func TestLexService(t *testing.T) {
+	runTestCase(t, -1, lex.Service(nil), TestCases{
+		{
+			input: `service TestService {
+				Ping() => (status: stream int)
+			}`,
+			output: Tokens{
+				{Type: token.Service, Start: 0, End: 7, Val: "service"},
+				{Type: token.Identifier, Start: 8, End: 19, Val: "TestService"},
+				{Type: token.OpenCurl, Start: 20, End: 21, Val: "{"},
+				{Type: token.Identifier, Start: 26, End: 30, Val: "Ping"},
+				{Type: token.OpenParen, Start: 30, End: 31, Val: "("},
+				{Type: token.CloseParen, Start: 31, End: 32, Val: ")"},
+				{Type: token.Return, Start: 33, End: 35, Val: "=>"},
+				{Type: token.OpenParen, Start: 36, End: 37, Val: "("},
+				{Type: token.Identifier, Start: 37, End: 43, Val: "status"},
+				{Type: token.Colon, Start: 43, End: 44, Val: ":"},
+				{Type: token.Stream, Start: 45, End: 51, Val: "stream"},
+				{Type: token.Type, Start: 52, End: 55, Val: "int"},
+				{Type: token.CloseParen, Start: 55, End: 56, Val: ")"},
+				{Type: token.CloseCurl, Start: 60, End: 61, Val: "}"},
+			},
+		},
+		{
+			input: `service TestService {
+				Ping() => (a: int, b: map<string, []int>)
+			}`,
+			output: Tokens{
+				{Type: token.Service, Start: 0, End: 7, Val: "service"},
+				{Type: token.Identifier, Start: 8, End: 19, Val: "TestService"},
+				{Type: token.OpenCurl, Start: 20, End: 21, Val: "{"},
+				{Type: token.Identifier, Start: 26, End: 30, Val: "Ping"},
+				{Type: token.OpenParen, Start: 30, End: 31, Val: "("},
+				{Type: token.CloseParen, Start: 31, End: 32, Val: ")"},
+				{Type: token.Return, Start: 33, End: 35, Val: "=>"},
+				{Type: token.OpenParen, Start: 36, End: 37, Val: "("},
+				{Type: token.Identifier, Start: 37, End: 38, Val: "a"},
+				{Type: token.Colon, Start: 38, End: 39, Val: ":"},
+				{Type: token.Type, Start: 40, End: 43, Val: "int"},
+				{Type: token.Comma, Start: 43, End: 44, Val: ","},
+				{Type: token.Identifier, Start: 45, End: 46, Val: "b"},
+				{Type: token.Colon, Start: 46, End: 47, Val: ":"},
+				{Type: token.Type, Start: 48, End: 51, Val: "map"},
+				{Type: token.OpenAngle, Start: 51, End: 52, Val: "<"},
+				{Type: token.Type, Start: 52, End: 58, Val: "string"},
+				{Type: token.Comma, Start: 58, End: 59, Val: ","},
+				{Type: token.OpenBracket, Start: 60, End: 61, Val: "["},
+				{Type: token.CloseBracket, Start: 61, End: 62, Val: "]"},
+				{Type: token.Type, Start: 62, End: 65, Val: "int"},
+				{Type: token.CloseAngle, Start: 65, End: 66, Val: ">"},
+				{Type: token.CloseParen, Start: 66, End: 67, Val: ")"},
+				{Type: token.CloseCurl, Start: 71, End: 72, Val: "}"},
+			},
+		},
+		{
+			input: `service TestService {
+				Ping() => (a: int, b: string)
+			}`,
+			output: Tokens{
+				{Type: token.Service, Start: 0, End: 7, Val: "service"},
+				{Type: token.Identifier, Start: 8, End: 19, Val: "TestService"},
+				{Type: token.OpenCurl, Start: 20, End: 21, Val: "{"},
+				{Type: token.Identifier, Start: 26, End: 30, Val: "Ping"},
+				{Type: token.OpenParen, Start: 30, End: 31, Val: "("},
+				{Type: token.CloseParen, Start: 31, End: 32, Val: ")"},
+				{Type: token.Return, Start: 33, End: 35, Val: "=>"},
+				{Type: token.OpenParen, Start: 36, End: 37, Val: "("},
+				{Type: token.Identifier, Start: 37, End: 38, Val: "a"},
+				{Type: token.Colon, Start: 38, End: 39, Val: ":"},
+				{Type: token.Type, Start: 40, End: 43, Val: "int"},
+				{Type: token.Comma, Start: 43, End: 44, Val: ","},
+				{Type: token.Identifier, Start: 45, End: 46, Val: "b"},
+				{Type: token.Colon, Start: 46, End: 47, Val: ":"},
+				{Type: token.Type, Start: 48, End: 54, Val: "string"},
+				{Type: token.CloseParen, Start: 54, End: 55, Val: ")"},
+				{Type: token.CloseCurl, Start: 59, End: 60, Val: "}"},
+			},
+		},
+		{
+			input: `service TestService {
+				Ping() => (a: int)
+			}`,
+			output: Tokens{
+				{Type: token.Service, Start: 0, End: 7, Val: "service"},
+				{Type: token.Identifier, Start: 8, End: 19, Val: "TestService"},
+				{Type: token.OpenCurl, Start: 20, End: 21, Val: "{"},
+				{Type: token.Identifier, Start: 26, End: 30, Val: "Ping"},
+				{Type: token.OpenParen, Start: 30, End: 31, Val: "("},
+				{Type: token.CloseParen, Start: 31, End: 32, Val: ")"},
+				{Type: token.Return, Start: 33, End: 35, Val: "=>"},
+				{Type: token.OpenParen, Start: 36, End: 37, Val: "("},
+				{Type: token.Identifier, Start: 37, End: 38, Val: "a"},
+				{Type: token.Colon, Start: 38, End: 39, Val: ":"},
+				{Type: token.Type, Start: 40, End: 43, Val: "int"},
+				{Type: token.CloseParen, Start: 43, End: 44, Val: ")"},
+				{Type: token.CloseCurl, Start: 48, End: 49, Val: "}"},
+			},
+		},
+		{
+			input: `service TestService {
+				Ping() => ()
+			}`,
+			output: Tokens{
+				{Type: token.Service, Start: 0, End: 7, Val: "service"},
+				{Type: token.Identifier, Start: 8, End: 19, Val: "TestService"},
+				{Type: token.OpenCurl, Start: 20, End: 21, Val: "{"},
+				{Type: token.Identifier, Start: 26, End: 30, Val: "Ping"},
+				{Type: token.OpenParen, Start: 30, End: 31, Val: "("},
+				{Type: token.CloseParen, Start: 31, End: 32, Val: ")"},
+				{Type: token.Return, Start: 33, End: 35, Val: "=>"},
+				{Type: token.OpenParen, Start: 36, End: 37, Val: "("},
+				{Type: token.CloseParen, Start: 37, End: 38, Val: ")"},
+				{Type: token.CloseCurl, Start: 42, End: 43, Val: "}"},
+			},
+		},
+		{
+			input: `service TestService {
+				Ping(a: int, b: map<string, int>)
+			}`,
+			output: Tokens{
+				{Type: token.Service, Start: 0, End: 7, Val: "service"},
+				{Type: token.Identifier, Start: 8, End: 19, Val: "TestService"},
+				{Type: token.OpenCurl, Start: 20, End: 21, Val: "{"},
+				{Type: token.Identifier, Start: 26, End: 30, Val: "Ping"},
+				{Type: token.OpenParen, Start: 30, End: 31, Val: "("},
+				{Type: token.Identifier, Start: 31, End: 32, Val: "a"},
+				{Type: token.Colon, Start: 32, End: 33, Val: ":"},
+				{Type: token.Type, Start: 34, End: 37, Val: "int"},
+				{Type: token.Comma, Start: 37, End: 38, Val: ","},
+				{Type: token.Identifier, Start: 39, End: 40, Val: "b"},
+				{Type: token.Colon, Start: 40, End: 41, Val: ":"},
+				{Type: token.Type, Start: 42, End: 45, Val: "map"},
+				{Type: token.OpenAngle, Start: 45, End: 46, Val: "<"},
+				{Type: token.Type, Start: 46, End: 52, Val: "string"},
+				{Type: token.Comma, Start: 52, End: 53, Val: ","},
+				{Type: token.Type, Start: 54, End: 57, Val: "int"},
+				{Type: token.CloseAngle, Start: 57, End: 58, Val: ">"},
+				{Type: token.CloseParen, Start: 58, End: 59, Val: ")"},
+				{Type: token.CloseCurl, Start: 63, End: 64, Val: "}"},
+			},
+		},
+		{
+			input: `service TestService {
+				Ping(a: int)
+			}`,
+			output: Tokens{
+				{Type: token.Service, Start: 0, End: 7, Val: "service"},
+				{Type: token.Identifier, Start: 8, End: 19, Val: "TestService"},
+				{Type: token.OpenCurl, Start: 20, End: 21, Val: "{"},
+				{Type: token.Identifier, Start: 26, End: 30, Val: "Ping"},
+				{Type: token.OpenParen, Start: 30, End: 31, Val: "("},
+				{Type: token.Identifier, Start: 31, End: 32, Val: "a"},
+				{Type: token.Colon, Start: 32, End: 33, Val: ":"},
+				{Type: token.Type, Start: 34, End: 37, Val: "int"},
+				{Type: token.CloseParen, Start: 37, End: 38, Val: ")"},
+				{Type: token.CloseCurl, Start: 42, End: 43, Val: "}"},
+			},
+		},
+		{
+			input: `service TestService {
+				Ping()
+			}`,
+			output: Tokens{
+				{Type: token.Service, Start: 0, End: 7, Val: "service"},
+				{Type: token.Identifier, Start: 8, End: 19, Val: "TestService"},
+				{Type: token.OpenCurl, Start: 20, End: 21, Val: "{"},
+				{Type: token.Identifier, Start: 26, End: 30, Val: "Ping"},
+				{Type: token.OpenParen, Start: 30, End: 31, Val: "("},
+				{Type: token.CloseParen, Start: 31, End: 32, Val: ")"},
+				{Type: token.CloseCurl, Start: 36, End: 37, Val: "}"},
+			},
+		},
+		{
+			input: `service TestService {}`,
+			output: Tokens{
+				{Type: token.Service, Start: 0, End: 7, Val: "service"},
+				{Type: token.Identifier, Start: 8, End: 19, Val: "TestService"},
+				{Type: token.OpenCurl, Start: 20, End: 21, Val: "{"},
+				{Type: token.CloseCurl, Start: 21, End: 22, Val: "}"},
+			},
+		},
+	})
+}
