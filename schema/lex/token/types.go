@@ -16,6 +16,7 @@ const (
 	Message
 	Service
 	Stream
+	Comment // #
 
 	// Byte
 	// Bool
@@ -52,31 +53,16 @@ const (
 )
 
 var names = map[lexer.Type]string{
-	EOF:        "EOF",
-	Identifier: "Identifier",
-	Assign:     "Assign",
-	Value:      "Value",
-	Type:       "Type",
-	Enum:       "Enum",
-	Message:    "Message",
-	Service:    "Service",
-	Stream:     "Stream",
-	// Byte:       "Byte",
-	// Bool:       "Bool",
-	// Any:        "Any",
-	// Null:       "Null",
-	// Uint8:      "Uint8",
-	// Uint16:     "Uint16",
-	// Uint32:     "Uint32",
-	// Uint64:     "Uint64",
-	// Int8:       "Int8",
-	// Int16:      "Int16",
-	// Int32:      "Int32",
-	// Int64:      "Int64",
-	// Float32:    "Float32",
-	// Float64:    "Float64",
-	// String:     "String",
-	// Timestamp:  "Timestamp",
+	EOF:          "EOF",
+	Identifier:   "Identifier",
+	Assign:       "Assign",
+	Value:        "Value",
+	Type:         "Type",
+	Enum:         "Enum",
+	Message:      "Message",
+	Service:      "Service",
+	Stream:       "Stream",
+	Comment:      "Comment",
 	Colon:        "Colon",
 	Comma:        "Comma",
 	Underline:    "Underline",

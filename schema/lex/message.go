@@ -8,8 +8,9 @@ import (
 func Message(next lexer.State) lexer.State {
 	return func(l *lexer.Lexer) lexer.State {
 		lexer.IgnoreWhiteSpace(l)
+		checkComment(l)
 
-		l.AcceptRunUntil(" \t\r\n")
+		l.AcceptRunUntil(" \t\r\n#")
 		if l.Current() != "message" {
 			errorf(l, "expected message keywoard but got %s", l.Current())
 			return nil
@@ -17,8 +18,9 @@ func Message(next lexer.State) lexer.State {
 		l.Emit(token.Message)
 
 		lexer.IgnoreWhiteSpace(l)
+		checkComment(l)
 
-		l.AcceptRunUntil(" \t\r\n{")
+		l.AcceptRunUntil(" \t\r\n{#")
 		if l.Current() == "" {
 			errorf(l, "expected name for message but got nothing")
 			return nil
@@ -32,6 +34,7 @@ func Message(next lexer.State) lexer.State {
 func MessageFields(next lexer.State) lexer.State {
 	return func(l *lexer.Lexer) lexer.State {
 		lexer.IgnoreWhiteSpace(l)
+		checkComment(l)
 
 		if l.Peek() == '}' {
 			l.Next()
@@ -53,6 +56,7 @@ func MessageFields(next lexer.State) lexer.State {
 func MessageField(next lexer.State) lexer.State {
 	return func(l *lexer.Lexer) lexer.State {
 		lexer.IgnoreWhiteSpace(l)
+		checkComment(l)
 
 		if l.Peek() == '}' {
 			l.Next()
@@ -64,7 +68,7 @@ func MessageField(next lexer.State) lexer.State {
 			return MessageTypes(next)
 		}
 
-		l.AcceptRunUntil(" ?:{\t\n\r")
+		l.AcceptRunUntil(" ?:{\t\n\r#")
 		if l.Current() == "" {
 			errorf(l, "expected field name but got nothing")
 			return nil
@@ -72,6 +76,7 @@ func MessageField(next lexer.State) lexer.State {
 		l.Emit(token.Identifier)
 
 		lexer.IgnoreWhiteSpace(l)
+		checkComment(l)
 
 		if l.Peek() == '?' {
 			l.Next()
@@ -146,6 +151,7 @@ func MessageTypes(next lexer.State) lexer.State {
 func FieldOptions(next lexer.State) lexer.State {
 	return func(l *lexer.Lexer) lexer.State {
 		lexer.IgnoreWhiteSpace(l)
+		checkComment(l)
 
 		if l.Peek() == '}' {
 			l.Next()
@@ -156,7 +162,7 @@ func FieldOptions(next lexer.State) lexer.State {
 		// identifier -> = -> value
 		// identifier -> =
 
-		l.AcceptRunUntil(" \t\n\r")
+		l.AcceptRunUntil(" \t\n\r#")
 		if l.Current() == "" {
 			errorf(l, "expected field option name but got nothing")
 			return nil
@@ -165,6 +171,7 @@ func FieldOptions(next lexer.State) lexer.State {
 
 		l.AcceptRun(" \t")
 		l.Ignore()
+		checkComment(l)
 
 		if value := l.Next(); value != '=' {
 			errorf(l, "expected '=' but got %s", string(value))
@@ -175,7 +182,7 @@ func FieldOptions(next lexer.State) lexer.State {
 		l.AcceptRun(" \t}")
 		l.Ignore()
 
-		l.AcceptRunUntil(" \t\n\r")
+		l.AcceptRunUntil(" \t\n\r#")
 		l.Emit(token.Value)
 
 		return FieldOptions(next)

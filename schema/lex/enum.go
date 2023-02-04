@@ -9,7 +9,7 @@ func Enum(next lexer.State) lexer.State {
 	return func(l *lexer.Lexer) lexer.State {
 		lexer.IgnoreWhiteSpace(l)
 
-		l.AcceptRunUntil(" \t\r\n")
+		l.AcceptRunUntil(" \t\r\n#")
 		if l.Current() == "" {
 			errorf(l, "expected enum for enum but got nothing")
 			return nil
@@ -18,7 +18,9 @@ func Enum(next lexer.State) lexer.State {
 
 		lexer.IgnoreWhiteSpace(l)
 
-		l.AcceptRunUntil(" \t\r\n")
+		checkComment(l)
+
+		l.AcceptRunUntil(" \t\r\n#")
 		if l.Current() == "" {
 			errorf(l, "expected name for enum but got nothing")
 			return nil
@@ -26,14 +28,17 @@ func Enum(next lexer.State) lexer.State {
 		l.Emit(token.Identifier)
 
 		lexer.IgnoreWhiteSpace(l)
+		checkComment(l)
 
-		l.AcceptRunUntil(" \t\r\n{")
+		l.AcceptRunUntil(" \t\r\n{#")
 
 		if l.Current() == "" {
 			errorf(l, "expected type of enum but got %s", l.Current())
 			return nil
 		}
 		l.Emit(token.Type)
+
+		checkComment(l)
 
 		return EnumValues(next)
 	}
@@ -42,6 +47,7 @@ func Enum(next lexer.State) lexer.State {
 func EnumValues(next lexer.State) lexer.State {
 	return func(l *lexer.Lexer) lexer.State {
 		lexer.IgnoreWhiteSpace(l)
+		checkComment(l)
 
 		if value := l.Peek(); value != '{' {
 			errorf(l, "expected '{' but got %s", string(value))
@@ -57,8 +63,9 @@ func EnumValues(next lexer.State) lexer.State {
 func EnumValue(next lexer.State) lexer.State {
 	return func(l *lexer.Lexer) lexer.State {
 		lexer.IgnoreWhiteSpace(l)
+		checkComment(l)
 
-		l.AcceptRunUntil(" \t\n\r")
+		l.AcceptRunUntil(" \t\n\r#")
 		value := l.Current()
 
 		switch value {
@@ -69,12 +76,16 @@ func EnumValue(next lexer.State) lexer.State {
 			l.Emit(token.Assign)
 
 			lexer.IgnoreWhiteSpace(l)
-			l.AcceptRunUntil(" \t\n\r}")
+			checkComment(l)
+
+			l.AcceptRunUntil(" \t\n\r}#")
 			l.Emit(token.Value)
 
 			return EnumValue(next)
 		default:
-			l.Emit(token.Identifier)
+			if value != "" {
+				l.Emit(token.Identifier)
+			}
 			return EnumValue(next)
 		}
 	}

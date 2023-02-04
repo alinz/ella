@@ -9,7 +9,7 @@ func Constant(next lexer.State) lexer.State {
 	return func(l *lexer.Lexer) lexer.State {
 		lexer.IgnoreWhiteSpace(l)
 
-		l.AcceptRunUntil(" =\t")
+		l.AcceptRunUntil(" =\t#")
 		if l.Current() == "" {
 			errorf(l, "expected name for constant but got nothing")
 			return nil
@@ -17,6 +17,8 @@ func Constant(next lexer.State) lexer.State {
 		l.Emit(token.Identifier)
 
 		lexer.IgnoreSpaceTabs(l)
+
+		checkComment(l)
 
 		if value := l.Next(); value != '=' {
 			errorf(l, "expected '=' but got %s", string(value))
@@ -26,8 +28,12 @@ func Constant(next lexer.State) lexer.State {
 
 		lexer.IgnoreSpaceTabs(l)
 
-		l.AcceptRunUntil(" \r\n")
+		checkComment(l)
+
+		l.AcceptRunUntil(" \r\n#")
 		l.Emit(token.Value)
+
+		checkComment(l)
 
 		return next
 	}

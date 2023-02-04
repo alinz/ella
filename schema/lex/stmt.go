@@ -16,6 +16,10 @@ func Stmt(next lexer.State) lexer.State {
 			return next
 		}
 
+		if l.Peek() == '#' {
+			return Comment(internal)
+		}
+
 		peekValue := l.PeekRunUntil(" \t\r\n")
 
 		switch peekValue {
