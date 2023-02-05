@@ -1,11 +1,5 @@
 ```
 
-errors {
-  NotFoundRow: {
-    Msg = item not found
-    Status = http.NotFound
-  }
-}
 
 a = 10
 
