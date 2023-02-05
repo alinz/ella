@@ -1,47 +1,42 @@
 package token
 
-import "github.com/alinz/rpc.go/pkg/lexer"
+import (
+	"fmt"
+)
+
+type Kind int
+
+var _ fmt.Stringer = Kind(0)
+
+type Token struct {
+	Val   string
+	Kind  Kind
+	Start int
+	End   int
+}
+
+func (t Token) String() string {
+	return fmt.Sprintf("Kind: %s, Val: %s, Start: %d, End: %d", t.Kind, t.Val, t.Start, t.End)
+}
 
 const (
-	Error lexer.Type = -1   // Error token type which indicates error
-	EOF   lexer.Type = iota // EOF token type which indicates end of input
-
+	Error Kind = -1   // Error token type which indicates error
+	EOF   Kind = iota // EOF token type which indicates end of input
 	Identifier
-
 	Assign // =
 	Value  // anything after assign char
 	Type
-
 	Enum
 	Message
 	Service
 	Stream
-	Comment // #
-
-	// Byte
-	// Bool
-	// Any
-	// Null
-	// Uint8
-	// Uint16
-	// Uint32
-	// Uint64
-	// Int8
-	// Int16
-	// Int32
-	// Int64
-	// Float32
-	// Float64
-	// String
-	// Timestamp
-
-	Colon     // :
-	Comma     // ,
-	Underline // _
-	Optional  // ?
-	Ellipsis  // ...
-	Return    // =>
-
+	Comment      // #
+	Colon        // :
+	Comma        // ,
+	Underline    // _
+	Optional     // ?
+	Ellipsis     // ...
+	Return       // =>
 	OpenCurl     // {
 	CloseCurl    // }
 	OpenParen    // (
@@ -52,7 +47,8 @@ const (
 	CloseBracket // ]
 )
 
-var names = map[lexer.Type]string{
+var names = map[Kind]string{
+	Error:        "Error",
 	EOF:          "EOF",
 	Identifier:   "Identifier",
 	Assign:       "Assign",
@@ -79,8 +75,8 @@ var names = map[lexer.Type]string{
 	CloseBracket: "CloseBracket",
 }
 
-func Name(t lexer.Type) string {
-	if name, ok := names[t]; ok {
+func (k Kind) String() string {
+	if name, ok := names[k]; ok {
 		return name
 	}
 	return "Unknown"

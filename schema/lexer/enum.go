@@ -1,39 +1,38 @@
-package lex
+package lexer
 
 import (
-	"github.com/alinz/rpc.go/pkg/lexer"
-	"github.com/alinz/rpc.go/schema/lex/token"
+	"github.com/alinz/rpc.go/schema/token"
 )
 
-func Enum(next lexer.State) lexer.State {
-	return func(l *lexer.Lexer) lexer.State {
-		lexer.IgnoreWhiteSpace(l)
+func Enum(next StateFn) StateFn {
+	return func(l *Lexer) StateFn {
+		IgnoreWhiteSpace(l)
 
 		l.AcceptRunUntil(" \t\r\n#")
 		if l.Current() == "" {
-			errorf(l, "expected enum for enum but got nothing")
+			l.Errorf("expected enum for enum but got nothing")
 			return nil
 		}
 		l.Emit(token.Enum)
 
-		lexer.IgnoreWhiteSpace(l)
+		IgnoreWhiteSpace(l)
 
 		checkComment(l)
 
 		l.AcceptRunUntil(" \t\r\n#")
 		if l.Current() == "" {
-			errorf(l, "expected name for enum but got nothing")
+			l.Errorf("expected name for enum but got nothing")
 			return nil
 		}
 		l.Emit(token.Identifier)
 
-		lexer.IgnoreWhiteSpace(l)
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		l.AcceptRunUntil(" \t\r\n{#")
 
 		if l.Current() == "" {
-			errorf(l, "expected type of enum but got %s", l.Current())
+			l.Errorf("expected type of enum but got %s", l.Current())
 			return nil
 		}
 		l.Emit(token.Type)
@@ -44,13 +43,13 @@ func Enum(next lexer.State) lexer.State {
 	}
 }
 
-func EnumValues(next lexer.State) lexer.State {
-	return func(l *lexer.Lexer) lexer.State {
-		lexer.IgnoreWhiteSpace(l)
+func EnumValues(next StateFn) StateFn {
+	return func(l *Lexer) StateFn {
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		if value := l.Peek(); value != '{' {
-			errorf(l, "expected '{' but got %s", string(value))
+			l.Errorf("expected '{' but got %s", string(value))
 			return nil
 		}
 		l.Next()
@@ -60,9 +59,9 @@ func EnumValues(next lexer.State) lexer.State {
 	}
 }
 
-func EnumValue(next lexer.State) lexer.State {
-	return func(l *lexer.Lexer) lexer.State {
-		lexer.IgnoreWhiteSpace(l)
+func EnumValue(next StateFn) StateFn {
+	return func(l *Lexer) StateFn {
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		l.AcceptRunUntil(" \t\n\r#")
@@ -75,7 +74,7 @@ func EnumValue(next lexer.State) lexer.State {
 		case "=":
 			l.Emit(token.Assign)
 
-			lexer.IgnoreWhiteSpace(l)
+			IgnoreWhiteSpace(l)
 			checkComment(l)
 
 			l.AcceptRunUntil(" \t\n\r}#")

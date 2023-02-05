@@ -1,28 +1,27 @@
-package lex
+package lexer
 
 import (
-	"github.com/alinz/rpc.go/pkg/lexer"
-	"github.com/alinz/rpc.go/schema/lex/token"
+	"github.com/alinz/rpc.go/schema/token"
 )
 
-func Message(next lexer.State) lexer.State {
-	return func(l *lexer.Lexer) lexer.State {
-		lexer.IgnoreWhiteSpace(l)
+func Message(next StateFn) StateFn {
+	return func(l *Lexer) StateFn {
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		l.AcceptRunUntil(" \t\r\n#")
 		if l.Current() != "message" {
-			errorf(l, "expected message keywoard but got %s", l.Current())
+			l.Errorf("expected message keywoard but got %s", l.Current())
 			return nil
 		}
 		l.Emit(token.Message)
 
-		lexer.IgnoreWhiteSpace(l)
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		l.AcceptRunUntil(" \t\r\n{#")
 		if l.Current() == "" {
-			errorf(l, "expected name for message but got nothing")
+			l.Errorf("expected name for message but got nothing")
 			return nil
 		}
 		l.Emit(token.Identifier)
@@ -31,9 +30,9 @@ func Message(next lexer.State) lexer.State {
 	}
 }
 
-func MessageFields(next lexer.State) lexer.State {
-	return func(l *lexer.Lexer) lexer.State {
-		lexer.IgnoreWhiteSpace(l)
+func MessageFields(next StateFn) StateFn {
+	return func(l *Lexer) StateFn {
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		if l.Peek() == '}' {
@@ -44,7 +43,7 @@ func MessageFields(next lexer.State) lexer.State {
 
 		l.Next()
 		if l.Current() != "{" {
-			errorf(l, "expected '{' for message body but got %s", l.Current())
+			l.Errorf("expected '{' for message body but got %s", l.Current())
 			return nil
 		}
 		l.Emit(token.OpenCurl)
@@ -53,9 +52,9 @@ func MessageFields(next lexer.State) lexer.State {
 	}
 }
 
-func MessageField(next lexer.State) lexer.State {
-	return func(l *lexer.Lexer) lexer.State {
-		lexer.IgnoreWhiteSpace(l)
+func MessageField(next StateFn) StateFn {
+	return func(l *Lexer) StateFn {
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		if l.Peek() == '}' {
@@ -70,12 +69,12 @@ func MessageField(next lexer.State) lexer.State {
 
 		l.AcceptRunUntil(" ?:{\t\n\r#")
 		if l.Current() == "" {
-			errorf(l, "expected field name but got nothing")
+			l.Errorf("expected field name but got nothing")
 			return nil
 		}
 		l.Emit(token.Identifier)
 
-		lexer.IgnoreWhiteSpace(l)
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		if l.Peek() == '?' {
@@ -84,7 +83,7 @@ func MessageField(next lexer.State) lexer.State {
 		}
 
 		if l.Peek() != ':' {
-			errorf(l, "expected ':' but got %s", string(l.Peek()))
+			l.Errorf("expected ':' but got %s", string(l.Peek()))
 			return nil
 		}
 		l.Next()
@@ -94,8 +93,8 @@ func MessageField(next lexer.State) lexer.State {
 	}
 }
 
-func MessageTypes(next lexer.State) lexer.State {
-	return func(l *lexer.Lexer) lexer.State {
+func MessageTypes(next StateFn) StateFn {
+	return func(l *Lexer) StateFn {
 		l.AcceptRun(" \t")
 		l.Ignore()
 
@@ -125,12 +124,12 @@ func MessageTypes(next lexer.State) lexer.State {
 		case '.':
 			l.Next()
 			if l.Peek() != '.' {
-				errorf(l, "expected '.' but got %s", string(l.Peek()))
+				l.Errorf("expected '.' but got %s", string(l.Peek()))
 				return nil
 			}
 			l.Next()
 			if l.Peek() != '.' {
-				errorf(l, "expected '.' but got %s", string(l.Peek()))
+				l.Errorf("expected '.' but got %s", string(l.Peek()))
 				return nil
 			}
 			l.Next()
@@ -148,9 +147,9 @@ func MessageTypes(next lexer.State) lexer.State {
 	}
 }
 
-func FieldOptions(next lexer.State) lexer.State {
-	return func(l *lexer.Lexer) lexer.State {
-		lexer.IgnoreWhiteSpace(l)
+func FieldOptions(next StateFn) StateFn {
+	return func(l *Lexer) StateFn {
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		if l.Peek() == '}' {
@@ -164,7 +163,7 @@ func FieldOptions(next lexer.State) lexer.State {
 
 		l.AcceptRunUntil(" \t\n\r#")
 		if l.Current() == "" {
-			errorf(l, "expected field option name but got nothing")
+			l.Errorf("expected field option name but got nothing")
 			return nil
 		}
 		l.Emit(token.Identifier)
@@ -174,7 +173,7 @@ func FieldOptions(next lexer.State) lexer.State {
 		checkComment(l)
 
 		if value := l.Next(); value != '=' {
-			errorf(l, "expected '=' but got %s", string(value))
+			l.Errorf("expected '=' but got %s", string(value))
 			return nil
 		}
 		l.Emit(token.Assign)

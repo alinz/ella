@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/alinz/rpc.go/schema/token"
 )
 
 // Lexer lexer struct
 type Lexer struct {
-	emitter Emitter
+	emitter token.Emitter
 	input   string
 	start   int
 	pos     int
@@ -25,9 +27,9 @@ func (l *Lexer) Current() string {
 	return l.input[l.start:l.pos]
 }
 
-func (l *Lexer) Emit(tokenType Type) {
-	token := &Token{
-		Type:  tokenType,
+func (l *Lexer) Emit(kind token.Kind) {
+	token := &token.Token{
+		Kind:  kind,
 		Val:   l.input[l.start:l.pos],
 		Start: l.start,
 		End:   l.pos,
@@ -127,33 +129,39 @@ func (l *Lexer) PeekRunUntil(invalid string) (value string) {
 	return value
 }
 
-func (l *Lexer) Errorf(errType Type, format string, args ...interface{}) {
-	l.emitter.Emit(&Token{
-		Type:  errType,
+func (l *Lexer) Errorf(format string, args ...interface{}) {
+	l.emitter.Emit(&token.Token{
+		Kind:  token.Error,
 		Val:   fmt.Sprintf(format, args...),
 		Start: l.start,
 		End:   l.pos,
 	})
 }
 
-func (l *Lexer) Run(state State) {
+func (l *Lexer) Run(state StateFn) {
 	for state != nil {
 		state = state(l)
 	}
 }
 
-type State func(*Lexer) State
+type StateFn func(*Lexer) StateFn
 
-func New(input string, emitter Emitter) *Lexer {
-	return &Lexer{
-		input:   input,
+func Start(input string, emitter token.Emitter, inital StateFn) {
+	lexer := &Lexer{
 		emitter: emitter,
+		input:   input,
+	}
+	for state := inital; state != nil; {
+		state = state(lexer)
 	}
 }
 
-func Start(input string, emitter Emitter, inital State) {
-	lex := New(input, emitter)
-	for state := inital; state != nil; {
-		state = state(lex)
-	}
+func IgnoreWhiteSpace(l *Lexer) {
+	l.AcceptRun(" \t\n")
+	l.Ignore()
+}
+
+func IgnoreSpaceTabs(l *Lexer) {
+	l.AcceptRun(" \t")
+	l.Ignore()
 }

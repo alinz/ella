@@ -1,28 +1,27 @@
-package lex
+package lexer
 
 import (
-	"github.com/alinz/rpc.go/pkg/lexer"
-	"github.com/alinz/rpc.go/schema/lex/token"
+	"github.com/alinz/rpc.go/schema/token"
 )
 
-func Service(next lexer.State) lexer.State {
-	return func(l *lexer.Lexer) lexer.State {
-		lexer.IgnoreWhiteSpace(l)
+func Service(next StateFn) StateFn {
+	return func(l *Lexer) StateFn {
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		l.AcceptRunUntil(" \t\r\n#")
 		if l.Current() != "service" {
-			errorf(l, "expected message keywoard but got %s", l.Current())
+			l.Errorf("expected message keywoard but got %s", l.Current())
 			return nil
 		}
 		l.Emit(token.Service)
 
-		lexer.IgnoreWhiteSpace(l)
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		l.AcceptRunUntil(" \t\r\n{#")
 		if l.Current() == "" {
-			errorf(l, "expected name for service but got nothing")
+			l.Errorf("expected name for service but got nothing")
 			return nil
 		}
 		l.Emit(token.Identifier)
@@ -31,9 +30,9 @@ func Service(next lexer.State) lexer.State {
 	}
 }
 
-func ServiceMethods(next lexer.State) lexer.State {
-	return func(l *lexer.Lexer) lexer.State {
-		lexer.IgnoreWhiteSpace(l)
+func ServiceMethods(next StateFn) StateFn {
+	return func(l *Lexer) StateFn {
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		if l.Peek() == '}' {
@@ -44,7 +43,7 @@ func ServiceMethods(next lexer.State) lexer.State {
 
 		l.Next()
 		if l.Current() != "{" {
-			errorf(l, "expected '{' for service body but got %s", l.Current())
+			l.Errorf("expected '{' for service body but got %s", l.Current())
 			return nil
 		}
 		l.Emit(token.OpenCurl)
@@ -53,9 +52,9 @@ func ServiceMethods(next lexer.State) lexer.State {
 	}
 }
 
-func ServiceMethod(next lexer.State) lexer.State {
-	return func(l *lexer.Lexer) lexer.State {
-		lexer.IgnoreWhiteSpace(l)
+func ServiceMethod(next StateFn) StateFn {
+	return func(l *Lexer) StateFn {
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		if l.Peek() == '}' {
@@ -66,16 +65,16 @@ func ServiceMethod(next lexer.State) lexer.State {
 
 		l.AcceptRunUntil(" \t\r\n(#")
 		if l.Current() == "" {
-			errorf(l, "expected method name but got nothing")
+			l.Errorf("expected method name but got nothing")
 			return nil
 		}
 		l.Emit(token.Identifier)
 
-		lexer.IgnoreWhiteSpace(l)
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		if value := l.Peek(); value != '(' {
-			errorf(l, "expected '(' for method arguments but got %s", string(value))
+			l.Errorf("expected '(' for method arguments but got %s", string(value))
 			return nil
 		}
 		l.Next()
@@ -85,9 +84,9 @@ func ServiceMethod(next lexer.State) lexer.State {
 	}
 }
 
-func ServiceMethodArgs(next lexer.State) lexer.State {
-	return func(l *lexer.Lexer) lexer.State {
-		lexer.IgnoreWhiteSpace(l)
+func ServiceMethodArgs(next StateFn) StateFn {
+	return func(l *Lexer) StateFn {
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		if l.Peek() == ')' {
@@ -100,9 +99,9 @@ func ServiceMethodArgs(next lexer.State) lexer.State {
 	}
 }
 
-func ServiceMethodArg(next lexer.State) lexer.State {
-	return func(l *lexer.Lexer) lexer.State {
-		lexer.IgnoreWhiteSpace(l)
+func ServiceMethodArg(next StateFn) StateFn {
+	return func(l *Lexer) StateFn {
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		if l.Peek() == ')' {
@@ -111,17 +110,17 @@ func ServiceMethodArg(next lexer.State) lexer.State {
 			return ServiceMethodReturns(next)
 		}
 
-		lexer.IgnoreWhiteSpace(l)
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		l.AcceptRunUntil(" \t\r\n:?#")
 		if l.Current() == "" {
-			errorf(l, "expected argument name but got nothing")
+			l.Errorf("expected argument name but got nothing")
 			return nil
 		}
 		l.Emit(token.Identifier)
 
-		lexer.IgnoreWhiteSpace(l)
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		if l.Peek() == '?' {
@@ -130,7 +129,7 @@ func ServiceMethodArg(next lexer.State) lexer.State {
 		}
 
 		if l.Peek() != ':' {
-			errorf(l, "expected ':' for argument type but got %s", string(l.Peek()))
+			l.Errorf("expected ':' for argument type but got %s", string(l.Peek()))
 			return nil
 		}
 		l.Next()
@@ -140,9 +139,9 @@ func ServiceMethodArg(next lexer.State) lexer.State {
 	}
 }
 
-func ServiceMethodArgsTypes(next lexer.State) lexer.State {
-	return func(l *lexer.Lexer) lexer.State {
-		lexer.IgnoreWhiteSpace(l)
+func ServiceMethodArgsTypes(next StateFn) StateFn {
+	return func(l *Lexer) StateFn {
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		switch l.Peek() {
@@ -176,12 +175,12 @@ func ServiceMethodArgsTypes(next lexer.State) lexer.State {
 		case '.':
 			l.Next()
 			if l.Peek() != '.' {
-				errorf(l, "expected '.' but got %s", string(l.Peek()))
+				l.Errorf("expected '.' but got %s", string(l.Peek()))
 				return nil
 			}
 			l.Next()
 			if l.Peek() != '.' {
-				errorf(l, "expected '.' but got %s", string(l.Peek()))
+				l.Errorf("expected '.' but got %s", string(l.Peek()))
 				return nil
 			}
 			l.Next()
@@ -195,9 +194,9 @@ func ServiceMethodArgsTypes(next lexer.State) lexer.State {
 	}
 }
 
-func ServiceMethodReturns(next lexer.State) lexer.State {
-	return func(l *lexer.Lexer) lexer.State {
-		lexer.IgnoreWhiteSpace(l)
+func ServiceMethodReturns(next StateFn) StateFn {
+	return func(l *Lexer) StateFn {
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		value := l.Peek()
@@ -209,16 +208,16 @@ func ServiceMethodReturns(next lexer.State) lexer.State {
 		l.Next() // consume '='
 		value = l.Next()
 		if value != '>' {
-			errorf(l, "expected '=>' for method return but got %s", string(value))
+			l.Errorf("expected '=>' for method return but got %s", string(value))
 			return nil
 		}
 		l.Emit(token.Return)
 
-		lexer.IgnoreWhiteSpace(l)
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		if l.Peek() != '(' {
-			errorf(l, "expected '(' for method return args but got %s", string(l.Peek()))
+			l.Errorf("expected '(' for method return args but got %s", string(l.Peek()))
 			return nil
 		}
 		l.Next()
@@ -228,9 +227,9 @@ func ServiceMethodReturns(next lexer.State) lexer.State {
 	}
 }
 
-func ServiceMethodReturn(next lexer.State) lexer.State {
-	return func(l *lexer.Lexer) lexer.State {
-		lexer.IgnoreWhiteSpace(l)
+func ServiceMethodReturn(next StateFn) StateFn {
+	return func(l *Lexer) StateFn {
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		if l.Peek() == ')' {
@@ -239,17 +238,17 @@ func ServiceMethodReturn(next lexer.State) lexer.State {
 			return ServiceMethod(next)
 		}
 
-		lexer.IgnoreWhiteSpace(l)
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		l.AcceptRunUntil(" \t\r\n:?#")
 		if l.Current() == "" {
-			errorf(l, "expected return argument name but got nothing")
+			l.Errorf("expected return argument name but got nothing")
 			return nil
 		}
 		l.Emit(token.Identifier)
 
-		lexer.IgnoreWhiteSpace(l)
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		if l.Peek() == '?' {
@@ -258,7 +257,7 @@ func ServiceMethodReturn(next lexer.State) lexer.State {
 		}
 
 		if l.Peek() != ':' {
-			errorf(l, "expected ':' for argument type but got %s", string(l.Peek()))
+			l.Errorf("expected ':' for argument type but got %s", string(l.Peek()))
 			return nil
 		}
 		l.Next()
@@ -268,9 +267,9 @@ func ServiceMethodReturn(next lexer.State) lexer.State {
 	}
 }
 
-func ServiceMethodReturnTypes(next lexer.State) lexer.State {
-	return func(l *lexer.Lexer) lexer.State {
-		lexer.IgnoreWhiteSpace(l)
+func ServiceMethodReturnTypes(next StateFn) StateFn {
+	return func(l *Lexer) StateFn {
+		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		if l.Peek() == 's' {
@@ -313,12 +312,12 @@ func ServiceMethodReturnTypes(next lexer.State) lexer.State {
 		case '.':
 			l.Next()
 			if l.Peek() != '.' {
-				errorf(l, "expected '.' but got %s", string(l.Peek()))
+				l.Errorf("expected '.' but got %s", string(l.Peek()))
 				return nil
 			}
 			l.Next()
 			if l.Peek() != '.' {
-				errorf(l, "expected '.' but got %s", string(l.Peek()))
+				l.Errorf("expected '.' but got %s", string(l.Peek()))
 				return nil
 			}
 			l.Next()

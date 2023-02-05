@@ -1,15 +1,14 @@
-package lex
+package lexer
 
 import (
-	"github.com/alinz/rpc.go/pkg/lexer"
-	"github.com/alinz/rpc.go/schema/lex/token"
+	"github.com/alinz/rpc.go/schema/token"
 )
 
-func Stmt(next lexer.State) lexer.State {
-	var internal lexer.State
+func Stmt(next StateFn) StateFn {
+	var internal StateFn
 
-	internal = func(l *lexer.Lexer) lexer.State {
-		lexer.IgnoreWhiteSpace(l)
+	internal = func(l *Lexer) StateFn {
+		IgnoreWhiteSpace(l)
 
 		if l.Peek() == 0 {
 			l.Emit(token.EOF)
