@@ -10,6 +10,17 @@ import (
 func TestLexStmt(t *testing.T) {
 	runTestCase(t, -1, lexer.Stmt(nil), TestCases{
 		{
+			input: `enum A int64 {}`,
+			output: Tokens{
+				{Kind: token.Enum, Start: 0, End: 4, Val: "enum"},
+				{Kind: token.Identifier, Start: 5, End: 6, Val: "A"},
+				{Kind: token.Type, Start: 7, End: 12, Val: "int64"},
+				{Kind: token.OpenCurl, Start: 13, End: 14, Val: "{"},
+				{Kind: token.CloseCurl, Start: 14, End: 15, Val: "}"},
+				{Kind: token.EOF, Start: 15, End: 15, Val: ""},
+			},
+		},
+		{
 			input: `
 			hello = 1
 			bye = 2

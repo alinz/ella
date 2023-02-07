@@ -13,9 +13,11 @@ var _ Node = (*Program)(nil)
 func (p *Program) TokenLiteral() string {
 	var sb strings.Builder
 
-	for _, n := range p.Nodes {
+	for i, n := range p.Nodes {
 		sb.WriteString(n.TokenLiteral())
-		sb.WriteString("\n")
+		if i < len(p.Nodes)-1 {
+			sb.WriteString("\n")
+		}
 	}
 
 	return sb.String()

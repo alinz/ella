@@ -17,11 +17,16 @@ func (e *Enum) TokenLiteral() string {
 	sb.WriteString(e.Name.TokenLiteral())
 	sb.WriteString(" ")
 	sb.WriteString(e.Type.TokenLiteral())
-	sb.WriteString(" {\n")
+	sb.WriteString(" {")
 	for _, c := range e.Constants {
+		sb.WriteString("\n\t")
 		sb.WriteString(c.TokenLiteral())
+	}
+
+	if len(e.Constants) > 0 {
 		sb.WriteString("\n")
 	}
+
 	sb.WriteString("}")
 
 	return sb.String()

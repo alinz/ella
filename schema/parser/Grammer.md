@@ -19,7 +19,7 @@
 a = 10
 
 enum A int64 {
-
+	A = 1
 }
 
 message B {
