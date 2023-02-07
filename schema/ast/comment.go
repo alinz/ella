@@ -23,10 +23,12 @@ type Comment struct {
 func (c *Comment) TokenLiteral() string {
 	var sb strings.Builder
 
-	for _, v := range c.Values {
+	for i, v := range c.Values {
 		sb.WriteString("#")
 		sb.WriteString(v)
-		sb.WriteString("\n")
+		if i < len(c.Values)-1 {
+			sb.WriteString("\n")
+		}
 	}
 
 	return sb.String()
