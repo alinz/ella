@@ -181,8 +181,39 @@ func FieldOptions(next StateFn) StateFn {
 		l.AcceptRun(" \t}")
 		l.Ignore()
 
-		l.AcceptRunUntil(" \t\n\r#")
-		l.Emit(token.Value)
+		switch l.Peek() {
+		case '"':
+			l.Next()
+			l.Ignore()
+
+			l.AcceptRunUntil("\"\n\r")
+			if l.Peek() != '"' {
+				l.Errorf("expected '\"' but got %s", string(l.Peek()))
+				return nil
+			}
+			l.Emit(token.Value)
+
+			l.Next()
+			l.Ignore()
+
+		case '\'':
+			l.Next()
+			l.Ignore()
+
+			l.AcceptRunUntil("'\n\r")
+			if l.Peek() != '\'' {
+				l.Errorf("expected ' but got %s", string(l.Peek()))
+				return nil
+			}
+			l.Emit(token.Value)
+
+			l.Next()
+			l.Ignore()
+
+		default:
+			l.AcceptRunUntil(" \t\n\r#")
+			l.Emit(token.Value)
+		}
 
 		return FieldOptions(next)
 	}

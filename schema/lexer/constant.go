@@ -27,10 +27,42 @@ func Constant(next StateFn) StateFn {
 
 		IgnoreSpaceTabs(l)
 
-		checkComment(l)
+		switch l.Peek() {
+		case '"':
+			l.Next()
+			l.Ignore()
 
-		l.AcceptRunUntil(" \r\n#")
-		l.Emit(token.Value)
+			l.AcceptRunUntil("\r\n\"")
+
+			if l.Peek() != '"' {
+				l.Errorf("expected \" but got %s", string(l.Peek()))
+				return nil
+			}
+
+			l.Emit(token.Value)
+
+			l.Next()
+			l.Ignore()
+		case '\'':
+			l.Next()
+			l.Ignore()
+
+			l.AcceptRunUntil("\r\n'")
+
+			if l.Peek() != '\'' {
+				l.Errorf("expected ' but got %s", string(l.Peek()))
+				return nil
+			}
+
+			l.Emit(token.Value)
+
+			l.Next()
+			l.Ignore()
+
+		default:
+			l.AcceptRunUntil(" \r\n#")
+			l.Emit(token.Value)
+		}
 
 		checkComment(l)
 

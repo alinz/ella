@@ -10,6 +10,81 @@ import (
 func TestMessage(t *testing.T) {
 	runTestCase(t, -1, lexer.Message(nil), TestCases{
 		{
+			input: `message User { 
+			id: string {
+				json = "ali's macbook"
+			}
+			name: string
+		}`,
+			output: Tokens{
+				{Kind: token.Message, Start: 0, End: 7, Val: "message"},
+				{Kind: token.Identifier, Start: 8, End: 12, Val: "User"},
+				{Kind: token.OpenCurl, Start: 13, End: 14, Val: "{"},
+				{Kind: token.Identifier, Start: 19, End: 21, Val: "id"},
+				{Kind: token.Colon, Start: 21, End: 22, Val: ":"},
+				{Kind: token.Type, Start: 23, End: 29, Val: "string"},
+				{Kind: token.OpenCurl, Start: 30, End: 31, Val: "{"},
+				{Kind: token.Identifier, Start: 36, End: 40, Val: "json"},
+				{Kind: token.Assign, Start: 41, End: 42, Val: "="},
+				{Kind: token.Value, Start: 44, End: 57, Val: "ali's macbook"},
+				{Kind: token.CloseCurl, Start: 62, End: 63, Val: "}"},
+				{Kind: token.Identifier, Start: 67, End: 71, Val: "name"},
+				{Kind: token.Colon, Start: 71, End: 72, Val: ":"},
+				{Kind: token.Type, Start: 73, End: 79, Val: "string"},
+				{Kind: token.CloseCurl, Start: 82, End: 83, Val: "}"},
+			},
+		},
+		{
+			input: `message User { 
+			id: string {
+				json = 'hello world'
+			}
+			name: string
+		}`,
+			output: Tokens{
+				{Kind: token.Message, Start: 0, End: 7, Val: "message"},
+				{Kind: token.Identifier, Start: 8, End: 12, Val: "User"},
+				{Kind: token.OpenCurl, Start: 13, End: 14, Val: "{"},
+				{Kind: token.Identifier, Start: 19, End: 21, Val: "id"},
+				{Kind: token.Colon, Start: 21, End: 22, Val: ":"},
+				{Kind: token.Type, Start: 23, End: 29, Val: "string"},
+				{Kind: token.OpenCurl, Start: 30, End: 31, Val: "{"},
+				{Kind: token.Identifier, Start: 36, End: 40, Val: "json"},
+				{Kind: token.Assign, Start: 41, End: 42, Val: "="},
+				{Kind: token.Value, Start: 44, End: 55, Val: "hello world"},
+				{Kind: token.CloseCurl, Start: 60, End: 61, Val: "}"},
+				{Kind: token.Identifier, Start: 65, End: 69, Val: "name"},
+				{Kind: token.Colon, Start: 69, End: 70, Val: ":"},
+				{Kind: token.Type, Start: 71, End: 77, Val: "string"},
+				{Kind: token.CloseCurl, Start: 80, End: 81, Val: "}"},
+			},
+		},
+		{
+			input: `message User { 
+			id: string {
+				json = "hello world"
+			}
+			name: string
+		}`,
+			output: Tokens{
+				{Kind: token.Message, Start: 0, End: 7, Val: "message"},
+				{Kind: token.Identifier, Start: 8, End: 12, Val: "User"},
+				{Kind: token.OpenCurl, Start: 13, End: 14, Val: "{"},
+				{Kind: token.Identifier, Start: 19, End: 21, Val: "id"},
+				{Kind: token.Colon, Start: 21, End: 22, Val: ":"},
+				{Kind: token.Type, Start: 23, End: 29, Val: "string"},
+				{Kind: token.OpenCurl, Start: 30, End: 31, Val: "{"},
+				{Kind: token.Identifier, Start: 36, End: 40, Val: "json"},
+				{Kind: token.Assign, Start: 41, End: 42, Val: "="},
+				{Kind: token.Value, Start: 44, End: 55, Val: "hello world"},
+				{Kind: token.CloseCurl, Start: 60, End: 61, Val: "}"},
+				{Kind: token.Identifier, Start: 65, End: 69, Val: "name"},
+				{Kind: token.Colon, Start: 69, End: 70, Val: ":"},
+				{Kind: token.Type, Start: 71, End: 77, Val: "string"},
+				{Kind: token.CloseCurl, Start: 80, End: 81, Val: "}"},
+			},
+		},
+		{
 			input: `message ComplexType {
 				meta: map<string,any>
 				metaNestedExample: map<string,map<string,uint32>>

@@ -34,7 +34,6 @@ func (l *Lexer) Emit(kind token.Kind) {
 		Start: l.start,
 		End:   l.pos,
 	}
-	fmt.Println(token)
 	l.emitter.Emit(token)
 	l.start = l.pos
 }
