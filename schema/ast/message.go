@@ -16,7 +16,7 @@ func (f *Field) TokenLiteral() string {
 	var sb strings.Builder
 
 	sb.WriteString(f.Name.TokenLiteral())
-	sb.WriteString(" ")
+	sb.WriteString(": ")
 	sb.WriteString(f.Type.TokenLiteral())
 
 	if len(f.Options) > 0 {
@@ -32,8 +32,9 @@ func (f *Field) TokenLiteral() string {
 }
 
 type Message struct {
-	Name   *Identifier
-	Fields []*Field
+	Name    *Identifier
+	Extends []*TypeCustom
+	Fields  []*Field
 }
 
 var _ Node = (*Message)(nil)
@@ -43,11 +44,22 @@ func (m *Message) TokenLiteral() string {
 
 	sb.WriteString("message ")
 	sb.WriteString(m.Name.TokenLiteral())
-	sb.WriteString(" {\n")
+	sb.WriteString(" {")
+
+	for _, e := range m.Extends {
+		sb.WriteString("\n\t...")
+		sb.WriteString(e.TokenLiteral())
+	}
+
 	for _, f := range m.Fields {
+		sb.WriteString("\n\t")
 		sb.WriteString(f.TokenLiteral())
+	}
+
+	if len(m.Extends) > 0 || len(m.Fields) > 0 {
 		sb.WriteString("\n")
 	}
+
 	sb.WriteString("}")
 
 	return sb.String()

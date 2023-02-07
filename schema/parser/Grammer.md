@@ -23,7 +23,10 @@ enum A int64 {
 }
 
 message B {
+	A: String {
+		json.omitempty
 
+	}
 }
 
 service C {

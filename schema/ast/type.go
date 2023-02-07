@@ -21,6 +21,17 @@ func (v TypeCustom) TokenLiteral() string {
 	return v.Token.Val
 }
 
+type TypeAny struct {
+	Token *token.Token
+}
+
+var _ Type = (*TypeAny)(nil)
+
+func (v TypeAny) kindNode() {}
+func (v TypeAny) TokenLiteral() string {
+	return v.Token.Val
+}
+
 type TypeInt struct {
 	Token *token.Token
 	Size  int // 8 | 16 | 32 | 64
@@ -76,6 +87,17 @@ var _ Type = (*TypeString)(nil)
 
 func (v TypeString) kindNode() {}
 func (v TypeString) TokenLiteral() string {
+	return v.Token.Val
+}
+
+type TypeBool struct {
+	Token *token.Token
+}
+
+var _ Type = (*TypeBool)(nil)
+
+func (v TypeBool) kindNode() {}
+func (v TypeBool) TokenLiteral() string {
 	return v.Token.Val
 }
 
