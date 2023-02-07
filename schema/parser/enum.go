@@ -74,27 +74,47 @@ func (p *Parser) parseEnum() (*ast.Enum, error) {
 
 func parseEnumType(token *token.Token) (ast.Type, error) {
 	switch token.Val {
-	case "int8":
+	case "Int8":
 		return &ast.TypeInt{
 			Token: token,
 			Size:  8,
 		}, nil
-	case "int16":
+	case "Int16":
 		return &ast.TypeInt{
 			Token: token,
 			Size:  16,
 		}, nil
-	case "int32":
+	case "Int32":
 		return &ast.TypeInt{
 			Token: token,
 			Size:  32,
 		}, nil
-	case "int64":
+	case "Int64":
 		return &ast.TypeInt{
 			Token: token,
 			Size:  64,
 		}, nil
+	case "Uint8":
+		return &ast.TypeUint{
+			Token: token,
+			Size:  8,
+		}, nil
+	case "Uint16":
+		return &ast.TypeUint{
+			Token: token,
+			Size:  16,
+		}, nil
+	case "Uint32":
+		return &ast.TypeUint{
+			Token: token,
+			Size:  32,
+		}, nil
+	case "Uint64":
+		return &ast.TypeUint{
+			Token: token,
+			Size:  64,
+		}, nil
 	default:
-		return nil, fmt.Errorf("only int8, int16, int32, and int64 are supported for enum type but got %s", token.Val)
+		return nil, fmt.Errorf("only Int8, Int16, Int32, Int64, Uint8, Uint16, Uint32 and Uint64 are supported for enum type but got %s", token.Val)
 	}
 }

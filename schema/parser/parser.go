@@ -28,7 +28,9 @@ func (p *Parser) Parse() (*ast.Program, error) {
 		case token.Enum:
 			node, err = p.parseEnum()
 		case token.Message:
+			node, err = p.parseMessage()
 		case token.Service:
+			node, err = p.parseService()
 		case token.Identifier:
 			node, err = p.parseConstant(false)
 		}
