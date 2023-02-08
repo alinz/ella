@@ -25,7 +25,7 @@ func (f *Field) TokenLiteral() string {
 			sb.WriteString("\n\t\t")
 			sb.WriteString(o.TokenLiteral())
 		}
-		sb.WriteString("\n}")
+		sb.WriteString("\n\t}")
 	}
 
 	return sb.String()

@@ -2,6 +2,7 @@ package ast
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/alinz/rpc.go/schema/token"
 )
@@ -18,7 +19,23 @@ type ValueString struct {
 
 func (v ValueString) valueNode() {}
 func (v *ValueString) TokenLiteral() string {
-	return v.Token.Val
+	var sb strings.Builder
+
+	if strings.Contains(v.Token.Val, ` `) {
+		if strings.Contains(v.Token.Val, `"`) {
+			sb.WriteString(`'`)
+			sb.WriteString(v.Token.Val)
+			sb.WriteString(`'`)
+		} else {
+			sb.WriteString(`"`)
+			sb.WriteString(v.Token.Val)
+			sb.WriteString(`"`)
+		}
+	} else {
+		sb.WriteString(v.Token.Val)
+	}
+
+	return sb.String()
 }
 
 type ValueInt struct {

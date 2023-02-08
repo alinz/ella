@@ -9,13 +9,55 @@ func TestMessageParser(t *testing.T) {
 		{
 			Input: `message A {
 				value: Int64 {
+					json = "hello's world"
+				}
+			}`,
+			Output: `
+message A {
+	value: Int64 {
+		json = "hello's world"
+	}
+}			
+			`,
+		},
+		{
+			Input: `message A {
+				value: Int64 {
+					json = 'hello world'
+				}
+			}`,
+			Output: `
+message A {
+	value: Int64 {
+		json = "hello world"
+	}
+}			
+			`,
+		},
+		{
+			Input: `message A {
+				value: Int64 {
+					json = "hello world"
+				}
+			}`,
+			Output: `
+message A {
+	value: Int64 {
+		json = "hello world"
+	}
+}			
+			`,
+		},
+		{
+			Input: `message A {
+				value: Int64 {
 					json = "value"
 				}
 			}`,
 			Output: `
 message A {
 	value: Int64 {
-		json = "value"
+		json = value
 	}
 }			
 			`,
