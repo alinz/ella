@@ -22,7 +22,7 @@ func (f *Field) TokenLiteral() string {
 	if len(f.Options) > 0 {
 		sb.WriteString(" {")
 		for _, o := range f.Options {
-			sb.WriteString("\n")
+			sb.WriteString("\n\t\t")
 			sb.WriteString(o.TokenLiteral())
 		}
 		sb.WriteString("\n}")

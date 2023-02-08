@@ -7,6 +7,20 @@ import (
 func TestMessageParser(t *testing.T) {
 	runTests(t, TestCases{
 		{
+			Input: `message A {
+				value: Int64 {
+					json = "value"
+				}
+			}`,
+			Output: `
+message A {
+	value: Int64 {
+		json = "value"
+	}
+}			
+			`,
+		},
+		{
 			Input: `message B {
 				value: int64
 				...A

@@ -60,7 +60,7 @@ func (p *Parser) parseMessage() (message *ast.Message, err error) {
 		message.Fields = append(message.Fields, field)
 	}
 
-	p.scanToken()
+	p.scanToken() // skip }
 
 	return message, nil
 }
@@ -78,13 +78,13 @@ func (p *Parser) parseField() (field *ast.Field, err error) {
 		Options: make([]*ast.Constant, 0),
 	}
 
-	p.scanToken()
+	p.scanToken() // skip name
 
 	if p.nextToken.Kind != token.Colon {
 		return nil, fmt.Errorf("expected : for field but got %s", p.nextToken.Val)
 	}
 
-	p.scanToken()
+	p.scanToken() // skip :
 
 	field.Type, err = p.parseType()
 	if err != nil {
@@ -119,5 +119,7 @@ func (p *Parser) parseFieldOptions() ([]*ast.Constant, error) {
 		options = append(options, option)
 	}
 
-	return nil, nil
+	p.scanToken() // skip }
+
+	return options, nil
 }
