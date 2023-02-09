@@ -46,7 +46,18 @@ type ValueInt struct {
 
 func (v ValueInt) valueNode() {}
 func (v *ValueInt) TokenLiteral() string {
-	return v.Token.Val
+	return strconv.FormatInt(v.Content, 10)
+}
+
+type ValueUint struct {
+	Token   *token.Token
+	Size    int // 8 | 16 | 32 | 64
+	Content uint64
+}
+
+func (v ValueUint) valueNode() {}
+func (v *ValueUint) TokenLiteral() string {
+	return strconv.FormatUint(v.Content, 10)
 }
 
 type ValueFloat struct {
@@ -72,9 +83,9 @@ func (v *ValueBool) TokenLiteral() string {
 
 func ParseValue(token *token.Token) Value {
 	{
-		value, err := strconv.ParseFloat(token.Val, 64)
+		value, err := strconv.ParseInt(token.Val, 10, 64)
 		if err == nil {
-			return &ValueFloat{
+			return &ValueInt{
 				Token:   token,
 				Content: value,
 			}
@@ -82,9 +93,9 @@ func ParseValue(token *token.Token) Value {
 	}
 
 	{
-		value, err := strconv.ParseInt(token.Val, 10, 64)
+		value, err := strconv.ParseFloat(token.Val, 64)
 		if err == nil {
-			return &ValueInt{
+			return &ValueFloat{
 				Token:   token,
 				Content: value,
 			}

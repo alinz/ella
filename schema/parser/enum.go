@@ -64,6 +64,24 @@ func (p *Parser) parseEnum() (*ast.Enum, error) {
 			return nil, err
 		}
 
+		// we need convert the value from Int to Uint
+		// this involves checking if value is not negative
+		// this the only place where we can do this check, there is no way for us to
+		// detect uint and int values without knowing the type
+		if _, ok := enum.Type.(*ast.TypeUint); ok {
+			if v, ok := constant.Value.(*ast.ValueInt); ok {
+				if v.Content < 0 {
+					return nil, fmt.Errorf("enum type unsiged int value cannot be negative")
+				}
+
+				constant.Value = &ast.ValueUint{
+					Content: uint64(v.Content),
+					Token:   v.Token,
+					Size:    v.Size,
+				}
+			}
+		}
+
 		enum.Constants = append(enum.Constants, constant)
 	}
 
