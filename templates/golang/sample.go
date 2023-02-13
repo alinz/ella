@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"path"
 	"strings"
 )
 
@@ -106,7 +108,119 @@ func CreateGreetingServiceServer(service GreetingService) http.Handler {
 	return &server
 }
 
+type greetingServiceClient struct {
+	client *http.Client
+	host   string
+}
+
+var _ GreetingService = (*greetingServiceClient)(nil)
+
+func (s *greetingServiceClient) Echo(ctx context.Context) (_ *Message, err error) {
+	url, err := urlPathJoin(s.host, "/rpc/GreetingService/Echo")
+	if err != nil {
+		return
+	}
+
+	in := emptyStruct{}
+
+	out := struct {
+		Message *Message `json:"message"`
+	}{}
+
+	err = callServiceMethod(ctx, s.client, url, &in, &out)
+	if err != nil {
+		return nil, err
+	}
+
+	return out.Message, nil
+}
+
+func (s *greetingServiceClient) Ping(ctx context.Context, userID string) error {
+	url := path.Join(s.host, "/rpc/GreetingService/Ping")
+
+	in := struct {
+		UserID string `json:"user_id"`
+	}{
+		UserID: userID,
+	}
+
+	out := emptyStruct{}
+
+	err := callServiceMethod(ctx, s.client, url, &in, &out)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func CreateGreetingServiceClient(host string, client *http.Client) GreetingService {
+	return &greetingServiceClient{
+		host:   host,
+		client: client,
+	}
+}
+
 // http handler
+
+func urlPathJoin(host string, paths ...string) (string, error) {
+	u, err := url.Parse(host)
+	if err != nil {
+		return "", err
+	}
+
+	u.Path = path.Join(u.Path, path.Join(paths...))
+	return u.String(), nil
+}
+
+type emptyStruct struct{}
+
+func isStructEmpty(value any) bool {
+	_, ok := value.(*emptyStruct)
+	return ok
+}
+
+func jsonEncoder(value any) (io.Reader, error) {
+	var buffer bytes.Buffer
+	if err := json.NewEncoder(&buffer).Encode(value); err != nil {
+		return nil, err
+	}
+	return &buffer, nil
+}
+
+func callServiceMethod[ReqMsg, RespMsg any](ctx context.Context, client *http.Client, url string, in *ReqMsg, out *RespMsg) (err error) {
+	var reqBody io.Reader
+
+	if !isStructEmpty(in) {
+		reqBody, err = jsonEncoder(in)
+		if err != nil {
+			return err
+		}
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, reqBody)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		return nil
+	}
+
+	if isStructEmpty(out) {
+		return nil
+	}
+
+	return json.NewDecoder(resp.Body).Decode(out)
+}
 
 type serviceMethodHandler func(context.Context, http.ResponseWriter, *http.Request)
 
@@ -172,7 +286,7 @@ func checkContentType(r *http.Request, value string) error {
 
 // error
 
-func response(w http.ResponseWriter, code int, body any) {
+func writeResponse(w http.ResponseWriter, code int, body any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 
@@ -239,8 +353,8 @@ func WrapErr(code int, cause error, msg string) error {
 func ResponseError(w http.ResponseWriter, err error) {
 	switch err := err.(type) {
 	case *Error:
-		response(w, err.code, err)
+		writeResponse(w, err.code, err)
 	default:
-		response(w, http.StatusInternalServerError, err)
+		writeResponse(w, http.StatusInternalServerError, err)
 	}
 }
