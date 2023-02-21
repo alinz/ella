@@ -1,0 +1,10 @@
+
+//
+// Constants
+//
+
+const (
+{{- range $item := . }}
+  {{ $item.Key }} = {{ $item.Value }}
+{{- end }}
+)

@@ -1,18 +1,7 @@
-package rpc
 
-import (
-	"bufio"
-	"bytes"
-	"context"
-	"encoding/json"
-	"fmt"
-	"io"
-	"net/http"
-	"net/url"
-	"path"
-	"strconv"
-	"strings"
-)
+//
+// Helper functions
+//
 
 func callServiceMethod[ReqMsg, RespMsg any](ctx context.Context, client *http.Client, url string, in *ReqMsg, out *RespMsg) (err error) {
 	var reqBody io.Reader

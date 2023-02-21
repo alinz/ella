@@ -1,0 +1,6 @@
+rpc=0.0.1
+
+enum Flag Int32 { 
+  NoName = 1 
+  WithName 
+}
