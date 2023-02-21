@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/urfave/cli/v2"
@@ -71,6 +72,11 @@ func genCmd() *cli.Command {
 			defer out.Close()
 
 			err = golang.Generate(out, "rpc", program)
+			if err != nil {
+				return err
+			}
+
+			err = exec.Command("go", "fmt", outFile).Run()
 			if err != nil {
 				return err
 			}

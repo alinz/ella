@@ -128,8 +128,11 @@ func (p *Parser) parseArrayType() (typ *ast.TypeArray, err error) {
 	p.scanToken() // skip ]
 
 	typ.Type, err = p.parseType()
+	if err != nil {
+		return nil, err
+	}
 
-	return nil, nil
+	return typ, nil
 }
 
 func (p *Parser) parseKeyType() (typ ast.Type, err error) {

@@ -2,7 +2,7 @@
 //
 // Enums
 //
-{{range $enum := . }}
+{{ range $enum := . }}
 type {{ $enum.Name }} {{ $enum.Type | ToLower }}
 
 const (

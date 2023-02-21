@@ -1,6 +1,12 @@
 
-type GreetingService interface {
-	Echo(ctx context.Context) (*Message, error)
-	Ping(ctx context.Context, userID string) error
-	StatusStream(ctx context.Context, userID string) (<-chan *Message, error)
+//
+// Services
+//
+
+{{ range $service := . }}
+type {{ $service.Name }} interface {
+	{{- range $method := $service.Methods }}
+	{{ $method.Name }}({{ $method.Args | MethodArgs }}) ({{ $method.Returns | MethodReturns}})
+	{{- end }}
 }
+{{- end }}

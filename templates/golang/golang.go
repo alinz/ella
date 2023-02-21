@@ -16,6 +16,46 @@ var files embed.FS
 var tmplFuncs = template.FuncMap{
 	"ToUpper": strings.ToUpper,
 	"ToLower": strings.ToLower,
+
+	"MethodArgs": func(args []Arg) string {
+		var sb strings.Builder
+
+		sb.WriteString("ctx context.Context")
+
+		for _, arg := range args {
+			sb.WriteString(", ")
+			sb.WriteString(arg.Name)
+			sb.WriteString(" ")
+			sb.WriteString(arg.Type)
+		}
+
+		return sb.String()
+	},
+
+	"MethodReturns": func(returns []Return) string {
+		var sb strings.Builder
+
+		for i, ret := range returns {
+			if i > 0 {
+				sb.WriteString(", ")
+			}
+
+			sb.WriteString(ret.Name)
+			sb.WriteString(" ")
+			if ret.Stream {
+				sb.WriteString("<-chan ")
+			}
+			sb.WriteString(ret.Type)
+		}
+
+		if sb.Len() > 0 {
+			sb.WriteString(", ")
+		}
+
+		sb.WriteString("err error")
+
+		return sb.String()
+	},
 }
 
 type Constant struct {
@@ -42,6 +82,28 @@ type Field struct {
 type Message struct {
 	Name   string
 	Fields []Field
+}
+
+type Arg struct {
+	Name string
+	Type string
+}
+
+type Return struct {
+	Name   string
+	Type   string
+	Stream bool
+}
+
+type Method struct {
+	Name    string
+	Args    []Arg
+	Returns []Return
+}
+
+type Service struct {
+	Name    string
+	Methods []Method
 }
 
 func generateHeader(out io.Writer, pkgName string) error {
@@ -130,14 +192,37 @@ func genarateMessages(out io.Writer, nodes []*ast.Message, messagesMap map[strin
 }
 
 func genarateServices(out io.Writer, nodes []*ast.Service, messagesMap map[string]*ast.Message, enumsMap map[string]*ast.Enum) error {
-	return nil
+	tmpl, err := loadTemplate("services")
+	if err != nil {
+		return err
+	}
+
+	services := parseServices(nodes, messagesMap, enumsMap)
+
+	return tmpl.Execute(out, services)
 }
 
 func genarateServers(out io.Writer, nodes []*ast.Service, messagesMap map[string]*ast.Message, enumsMap map[string]*ast.Enum) error {
+	// tmpl, err := loadTemplate("servers")
+	// if err != nil {
+	// 	return err
+	// }
+
+	// services := parseServices(nodes, messagesMap, enumsMap)
+
+	// return tmpl.Execute(out, services)
 	return nil
 }
 
 func genarateClients(out io.Writer, nodes []*ast.Service, messagesMap map[string]*ast.Message, enumsMap map[string]*ast.Enum) error {
+	// tmpl, err := loadTemplate("clients")
+	// if err != nil {
+	// 	return err
+	// }
+
+	// services := parseServices(nodes, messagesMap, enumsMap)
+
+	// return tmpl.Execute(out, services)
 	return nil
 }
 
@@ -301,4 +386,69 @@ func parseFieldType(typ ast.Type, messagesMap map[string]*ast.Message, enumsMap 
 	}
 
 	return ""
+}
+
+func parseServices(nodes []*ast.Service, messagesMap map[string]*ast.Message, enumsMap map[string]*ast.Enum) []*Service {
+	services := make([]*Service, 0, len(nodes))
+
+	for _, node := range nodes {
+		service := Service{
+			Name: node.Name.Token.Val,
+		}
+
+		for _, method := range node.Methods {
+			service.Methods = append(service.Methods, parseMethod(method, messagesMap, enumsMap))
+		}
+
+		services = append(services, &service)
+	}
+
+	return services
+}
+
+func parseMethod(node *ast.Method, messagesMap map[string]*ast.Message, enumsMap map[string]*ast.Enum) Method {
+	method := Method{
+		Name: node.Name.Token.Val,
+	}
+
+	if node.Args != nil {
+		method.Args = parseArgs(node.Args, messagesMap, enumsMap)
+	}
+
+	if node.Returns != nil {
+		method.Returns = parseReturns(node.Returns, messagesMap, enumsMap)
+	}
+
+	return method
+}
+
+func parseArgs(nodes []*ast.Arg, messagesMap map[string]*ast.Message, enumsMap map[string]*ast.Enum) []Arg {
+	var args []Arg
+
+	for _, node := range nodes {
+		arg := Arg{
+			Name: node.Name.Token.Val,
+			Type: parseFieldType(node.Type, messagesMap, enumsMap),
+		}
+
+		args = append(args, arg)
+	}
+
+	return args
+}
+
+func parseReturns(nodes []*ast.Return, messagesMap map[string]*ast.Message, enumsMap map[string]*ast.Enum) []Return {
+	var returns []Return
+
+	for _, node := range nodes {
+		ret := Return{
+			Name:   node.Name.Token.Val,
+			Type:   parseFieldType(node.Type, messagesMap, enumsMap),
+			Stream: node.Stream,
+		}
+
+		returns = append(returns, ret)
+	}
+
+	return returns
 }
