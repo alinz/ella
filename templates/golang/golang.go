@@ -14,11 +14,59 @@ import (
 //go:embed tmpl/*.tmpl
 var files embed.FS
 
+func toStructArgs(args []Arg) string {
+	var sb strings.Builder
+
+	for i, arg := range args {
+		if i > 0 {
+			sb.WriteString("\n")
+		}
+
+		sb.WriteString(stringcase.ToPascal(arg.Name))
+		sb.WriteString(" ")
+		sb.WriteString(arg.Type)
+		sb.WriteString(" ")
+		sb.WriteString("`json:\"")
+		sb.WriteString(stringcase.ToSnake(arg.Name))
+		sb.WriteString("\"`")
+	}
+
+	return sb.String()
+}
+
+func toStructReturns(returns []Return) string {
+
+	var sb strings.Builder
+
+	for i, ret := range returns {
+		if i > 0 {
+			sb.WriteString("\n")
+		}
+
+		sb.WriteString(stringcase.ToPascal(ret.Name))
+		sb.WriteString(" ")
+		sb.WriteString(ret.Type)
+		sb.WriteString(" ")
+		sb.WriteString("`json:\"")
+		sb.WriteString(stringcase.ToSnake(ret.Name))
+		sb.WriteString("\"`")
+	}
+
+	return sb.String()
+
+}
+
 var tmplFuncs = template.FuncMap{
 	"ToUpper":  strings.ToUpper,
 	"ToLower":  strings.ToLower,
 	"ToCamel":  stringcase.ToCamel,
 	"ToPascal": stringcase.ToPascal,
+	"GetArgsLength": func(args []Arg) int {
+		return len(args)
+	},
+	"GetReturnsLength": func(returns []Return) int {
+		return len(returns)
+	},
 
 	"MethodArgs": func(args []Arg) string {
 		var sb strings.Builder
@@ -70,45 +118,9 @@ var tmplFuncs = template.FuncMap{
 		return false
 	},
 
-	"ToStructArgs": func(args []Arg) string {
-		var sb strings.Builder
+	"ToStructArgs": toStructArgs,
 
-		for i, arg := range args {
-			if i > 0 {
-				sb.WriteString("\n")
-			}
-
-			sb.WriteString(stringcase.ToPascal(arg.Name))
-			sb.WriteString(" ")
-			sb.WriteString(arg.Type)
-			sb.WriteString(" ")
-			sb.WriteString("`json:\"")
-			sb.WriteString(stringcase.ToSnake(arg.Name))
-			sb.WriteString("\"`")
-		}
-
-		return sb.String()
-	},
-
-	"ToStructReturns": func(returns []Return) string {
-		var sb strings.Builder
-
-		for i, ret := range returns {
-			if i > 0 {
-				sb.WriteString("\n")
-			}
-
-			sb.WriteString(stringcase.ToPascal(ret.Name))
-			sb.WriteString(" ")
-			sb.WriteString(ret.Type)
-			sb.WriteString(" ")
-			sb.WriteString("`json:\"")
-			sb.WriteString(stringcase.ToSnake(ret.Name))
-			sb.WriteString("\"`")
-		}
-
-		return sb.String()
-	},
+	"ToStructReturns": toStructReturns,
 
 	"ToExtractArgs": func(args []Arg) string {
 		var sb strings.Builder
@@ -156,6 +168,62 @@ var tmplFuncs = template.FuncMap{
 		} else {
 			sb.WriteString("err")
 		}
+		return sb.String()
+	},
+
+	"MethodArgsStructClient": func(args []Arg) string {
+		var sb strings.Builder
+
+		if len(args) > 0 {
+			sb.WriteString("struct {\n")
+			sb.WriteString(toStructArgs(args))
+			sb.WriteString("}{\n")
+			for _, arg := range args {
+				sb.WriteString(stringcase.ToPascal(arg.Name))
+				sb.WriteString(": ")
+				sb.WriteString(arg.Name)
+				sb.WriteString(",\n")
+			}
+			sb.WriteString("}\n")
+		} else {
+			sb.WriteString("emptyStruct{}")
+		}
+
+		return sb.String()
+	},
+
+	"MethodReturnsStructClient": func(returns []Return) string {
+		var sb strings.Builder
+
+		if len(returns) > 0 {
+			sb.WriteString("struct {\n")
+			sb.WriteString(toStructReturns(returns))
+			sb.WriteString("}{}")
+		} else {
+			sb.WriteString("emptyStruct{}")
+		}
+
+		return sb.String()
+	},
+
+	"ReturnsOut": func(returns []Return) string {
+		var sb strings.Builder
+
+		for i, ret := range returns {
+			if i > 0 {
+				sb.WriteString(", ")
+			}
+
+			sb.WriteString("out.")
+			sb.WriteString(stringcase.ToPascal(ret.Name))
+		}
+
+		if sb.Len() > 0 {
+			sb.WriteString(", err")
+		} else {
+			sb.WriteString("err")
+		}
+
 		return sb.String()
 	},
 }
@@ -316,15 +384,14 @@ func genarateServers(out io.Writer, nodes []*ast.Service, messagesMap map[string
 }
 
 func genarateClients(out io.Writer, nodes []*ast.Service, messagesMap map[string]*ast.Message, enumsMap map[string]*ast.Enum) error {
-	// tmpl, err := loadTemplate("clients")
-	// if err != nil {
-	// 	return err
-	// }
+	tmpl, err := loadTemplate("clients")
+	if err != nil {
+		return err
+	}
 
-	// services := parseServices(nodes, messagesMap, enumsMap)
+	services := parseServices(nodes, messagesMap, enumsMap)
 
-	// return tmpl.Execute(out, services)
-	return nil
+	return tmpl.Execute(out, services)
 }
 
 func generateHelper(out io.Writer) error {

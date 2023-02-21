@@ -16,7 +16,7 @@ message User {
 }
 
 service GreetingService {
-	Ping(userID: String)
+	Ping(UserId: String)
   GetUsers() => (users: []User)
-	StatusStream(userID: String) => (users: stream User)
+	StatusStream(userId: String) => (users: stream User)
 }

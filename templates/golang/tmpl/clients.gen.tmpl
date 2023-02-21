@@ -1,76 +1,72 @@
+{{- range $service := . }}
+{{- $serviceName := $service.Name | ToPascal }}
+{{- $serviceNameImpl := $service.Name | ToCamel }}
 
-type greetingServiceClient struct {
+type {{ $serviceNameImpl }}Client struct {
 	client *http.Client
 	host   string
 }
 
-var _ GreetingService = (*greetingServiceClient)(nil)
+var _ {{ $serviceName }} = (*{{ $serviceNameImpl }}Client)(nil)
 
-func (s *greetingServiceClient) Echo(ctx context.Context) (_ *Message, err error) {
-	url, err := urlPathJoin(s.host, "/rpc/GreetingService/Echo")
-	if err != nil {
-		return
-	}
-
-	in := emptyStruct{}
-
-	out := struct {
-		Message *Message `json:"message"`
-	}{}
-
-	err = callServiceMethod(ctx, s.client, url, &in, &out)
-	if err != nil {
-		return nil, err
-	}
-
-	return out.Message, nil
-}
-
-func (s *greetingServiceClient) Ping(ctx context.Context, userID string) error {
-	url := path.Join(s.host, "/rpc/GreetingService/Ping")
-
-	in := struct {
-		UserID string `json:"user_id"`
-	}{
-		UserID: userID,
-	}
-
-	out := emptyStruct{}
-
-	err := callServiceMethod(ctx, s.client, url, &in, &out)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *greetingServiceClient) StatusStream(ctx context.Context, userID string) (<-chan *Message, error) {
-	url := path.Join(s.host, "/rpc/GreetingService/StatusStream")
-
-	in := struct {
-		UserID string `json:"user_id"`
-	}{
-		UserID: userID,
-	}
-
-	out1 := make(chan *Message)
-
-	streamMapper := streamMapper{
-		"stream": parseStreamData(out1),
-	}
-
-	err := callServiceStreamMethod(ctx, s.client, url, &in, streamMapper)
-	if err != nil {
-		return nil, err
-	}
-
-	return out1, nil
-}
-
-func CreateGreetingServiceClient(host string, client *http.Client) GreetingService {
-	return &greetingServiceClient{
+func Create{{ $serviceName }}Client(host string, client *http.Client) {{ $serviceName }} {
+	return &{{ $serviceNameImpl }}Client{
 		host:   host,
 		client: client,
 	}
 }
+
+{{- range $method := $service.Methods }}
+{{- $methodName := $method.Name | ToPascal }}
+{{- $isStream := $method.Returns | IsStream }}
+
+{{- if $isStream }}
+
+func (s *{{ $serviceNameImpl }}Client) {{ $methodName }}({{ $method.Args | MethodArgs }}) ({{ $method.Returns | MethodReturns }}) {
+	url := path.Join(s.host, "/rpc/{{ $serviceName }}/{{ $methodName }}")
+
+	IN := {{ $method.Args | MethodArgsStructClient }}
+
+	{{- range $i, $ret := $method.Returns }}	
+	Out{{ $i }} := make(chan {{ $ret.Type }})
+	{{- end }}
+
+	streamMapper := streamMapper{
+	{{- range $i, $ret := $method.Returns }}
+		"{{ $ret.Name }}": parseStreamData(Out{{ $i }}),
+	{{- end }}
+	}
+
+	err = callServiceStreamMethod(ctx, s.client, url, &IN, streamMapper)
+	if err != nil {
+		return
+	}
+
+	return  {{range $i, $ret := $method.Returns}}Out{{ $i }},{{- end}} nil
+}
+
+{{- else }}
+
+func (s *{{ $serviceNameImpl }}Client) {{ $methodName }}({{ $method.Args | MethodArgs }}) ({{ $method.Returns | MethodReturns }}) {
+	url, err := urlPathJoin(s.host, "/rpc/{{ $serviceName }}/{{ $methodName }}")
+	if err != nil {
+		return
+	}
+
+	in := {{ $method.Args | MethodArgsStructClient }}
+
+	out := {{ $method.Returns | MethodReturnsStructClient }}
+
+	err = callServiceMethod(ctx, s.client, url, &in, &out)
+	if err != nil {
+		return
+	}
+
+	return {{ $method.Returns | ReturnsOut }}
+}
+
+{{- end }}
+
+{{- end }}
+
+{{- end }}
