@@ -15,6 +15,7 @@ message User {
   }
 }
 
+# awesome service
 service GreetingService {
 	Ping(UserId: String)
   GetUsers() => (users: []User)

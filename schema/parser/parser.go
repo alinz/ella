@@ -12,7 +12,16 @@ type Parser struct {
 }
 
 func (p *Parser) scanToken() {
-	p.nextToken = p.tokens.NextToken()
+	// for now all comment token will be ignored and skipped
+	for {
+		p.nextToken = p.tokens.NextToken()
+		if p.nextToken.Kind == token.Comment {
+			// the next token must be a value
+			p.tokens.NextToken()
+			continue
+		}
+		break
+	}
 }
 
 func (p *Parser) Parse() (*ast.Program, error) {
