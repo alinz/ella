@@ -1,50 +1,16 @@
 
-type greetingServiceServer struct {
-	service GreetingService
+{{- range $service := . }}
+{{- $serviceName := $service.Name | ToPascal }}
+{{- $serviceNameImpl := $service.Name | ToCamel }}
+
+type {{ $serviceNameImpl }}Server struct {
+	service {{ $serviceName }}
 	routes  map[string]serviceMethodHandler
 }
 
-var _ http.Handler = (*greetingServiceServer)(nil)
+var _ http.Handler = (*{{ $serviceNameImpl }}Server)(nil)
 
-func (s *greetingServiceServer) createEchoMethodHandler() serviceMethodHandler {
-	return createServiceMethodHandler(func(ctx context.Context, args *struct {
-	}) (ret *struct {
-		Message *Message `json:"message"`
-	}, err error) {
-		ret.Message, err = s.service.Echo(ctx)
-		return
-	})
-}
-
-func (s *greetingServiceServer) createPingMethodHandler() serviceMethodHandler {
-	return createServiceMethodHandler(func(ctx context.Context, args *struct {
-		UserID string `json:"user_id"`
-	}) (ret *struct {
-	}, err error) {
-		err = s.service.Ping(ctx, args.UserID)
-		return
-	})
-}
-
-func (s *greetingServiceServer) createStatusStreamMethodHandler() serviceMethodHandler {
-	return createStreamServiceMethod(func(ctx context.Context, args *struct {
-		UserID string `json:"user_id"`
-	}) (<-chan *stremEvent, error) {
-		stream1, err := s.service.StatusStream(ctx, args.UserID)
-		if err != nil {
-			return nil, err
-		}
-
-		out := mergeChannels(
-			ctx,
-			createEventStream(ctx, "stream", stream1),
-		)
-
-		return out, nil
-	})
-}
-
-func (s *greetingServiceServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (s *{{ $serviceNameImpl }}Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	handler, ok := s.routes[r.URL.Path]
 	if !ok {
 		ResponseError(w, Errorf(http.StatusNotFound, "method %q not found", r.URL.Path))
@@ -54,16 +20,78 @@ func (s *greetingServiceServer) ServeHTTP(w http.ResponseWriter, r *http.Request
 	handler(r.Context(), w, r)
 }
 
-func CreateGreetingServiceServer(service GreetingService) http.Handler {
-	server := greetingServiceServer{
+func Create{{ $serviceName }}Server(service {{ $serviceName }}) http.Handler {
+	server := {{ $serviceNameImpl }}Server{
 		service: service,
 	}
 
 	server.routes = map[string]serviceMethodHandler{
-		"/rpc/GreetingService/Echo":         server.createEchoMethodHandler(),
-		"/rpc/GreetingService/Ping":         server.createPingMethodHandler(),
-		"/rpc/GreetingService/StatusStream": server.createStatusStreamMethodHandler(),
+		{{- range $method := $service.Methods }}
+		{{- $methodName := $method.Name | ToPascal }}
+		"/rpc/{{ $serviceName }}/{{ $methodName }}": server.create{{ $methodName }}MethodHandler(),
+		{{- end }}
 	}
 
 	return &server
 }
+
+{{- range $method := $service.Methods }}
+{{- $methodName := $method.Name | ToPascal }}
+{{- $isStream := $method.Returns | IsStream }}
+
+{{- if $isStream }}
+
+func (s *{{ $serviceNameImpl }}Server) create{{ $methodName }}MethodHandler() serviceMethodHandler {
+	return createStreamServiceMethod(func(ctx context.Context, args *struct {
+		{{ $method.Args | ToStructArgs }}
+	}) (out <-chan *stremEvent, err error) {
+		{{ $method.Returns | ToStreamReturnsName }}, err := s.service.{{ $methodName }}(
+			ctx, 
+			{{$method.Args | ToExtractArgs }}
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		out = mergeChannels(
+			ctx,
+			{{- range $ret := $method.Returns }}
+			createEventStream(ctx, "{{ $ret.Name }}", {{ $ret.Name }}Stream),
+			{{- end }}
+		)
+
+		return out, nil
+	})
+}
+
+{{- else }}
+
+func (s *{{ $serviceNameImpl }}Server) create{{ $methodName }}MethodHandler() serviceMethodHandler {
+	return createServiceMethodHandler(func(ctx context.Context, args *struct {
+		{{ $method.Args | ToStructArgs }}
+	}) (ret *struct {
+		{{ $method.Returns | ToStructReturns }}
+	}, err error) {
+		{{ $method.Returns | ReturnsExtract }} = s.service.{{ $methodName }}(
+			ctx, 
+			{{ $method.Args | ToExtractArgs }}
+		)
+		return
+	})
+}
+
+{{- end }}
+
+{{- end }}
+
+{{- range $method := $service.Methods }}
+{{- $methodName := $method.Name | ToPascal }}
+{{- $isStream := $method.Returns | IsStream }}
+
+{{- if $isStream }}
+
+{{- end }}
+
+{{- end }}
+
+{{- end }}

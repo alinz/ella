@@ -7,6 +7,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/alinz/rpc.go/pkg/stringcase"
 	"github.com/alinz/rpc.go/schema/ast"
 )
 
@@ -14,8 +15,10 @@ import (
 var files embed.FS
 
 var tmplFuncs = template.FuncMap{
-	"ToUpper": strings.ToUpper,
-	"ToLower": strings.ToLower,
+	"ToUpper":  strings.ToUpper,
+	"ToLower":  strings.ToLower,
+	"ToCamel":  stringcase.ToCamel,
+	"ToPascal": stringcase.ToPascal,
 
 	"MethodArgs": func(args []Arg) string {
 		var sb strings.Builder
@@ -54,6 +57,105 @@ var tmplFuncs = template.FuncMap{
 
 		sb.WriteString("err error")
 
+		return sb.String()
+	},
+
+	"IsStream": func(returns []Return) bool {
+		for _, ret := range returns {
+			if ret.Stream {
+				return true
+			}
+		}
+
+		return false
+	},
+
+	"ToStructArgs": func(args []Arg) string {
+		var sb strings.Builder
+
+		for i, arg := range args {
+			if i > 0 {
+				sb.WriteString("\n")
+			}
+
+			sb.WriteString(stringcase.ToPascal(arg.Name))
+			sb.WriteString(" ")
+			sb.WriteString(arg.Type)
+			sb.WriteString(" ")
+			sb.WriteString("`json:\"")
+			sb.WriteString(stringcase.ToSnake(arg.Name))
+			sb.WriteString("\"`")
+		}
+
+		return sb.String()
+	},
+
+	"ToStructReturns": func(returns []Return) string {
+		var sb strings.Builder
+
+		for i, ret := range returns {
+			if i > 0 {
+				sb.WriteString("\n")
+			}
+
+			sb.WriteString(stringcase.ToPascal(ret.Name))
+			sb.WriteString(" ")
+			sb.WriteString(ret.Type)
+			sb.WriteString(" ")
+			sb.WriteString("`json:\"")
+			sb.WriteString(stringcase.ToSnake(ret.Name))
+			sb.WriteString("\"`")
+		}
+
+		return sb.String()
+	},
+
+	"ToExtractArgs": func(args []Arg) string {
+		var sb strings.Builder
+
+		for i, arg := range args {
+			if i > 0 {
+				sb.WriteString("\n")
+			}
+			sb.WriteString("args.")
+			sb.WriteString(stringcase.ToPascal(arg.Name))
+			sb.WriteString(",")
+		}
+
+		return sb.String()
+	},
+	"ToStreamReturnsName": func(returns []Return) string {
+		var sb strings.Builder
+
+		for i, ret := range returns {
+			if i > 0 {
+				sb.WriteString(", ")
+			}
+
+			sb.WriteString(ret.Name)
+			sb.WriteString("Stream")
+		}
+
+		return sb.String()
+	},
+
+	"ReturnsExtract": func(returns []Return) string {
+		var sb strings.Builder
+
+		for i, ret := range returns {
+			if i > 0 {
+				sb.WriteString(", ")
+			}
+
+			sb.WriteString("ret.")
+			sb.WriteString(stringcase.ToPascal(ret.Name))
+		}
+
+		if sb.Len() > 0 {
+			sb.WriteString(", err")
+		} else {
+			sb.WriteString("err")
+		}
 		return sb.String()
 	},
 }
@@ -203,15 +305,14 @@ func genarateServices(out io.Writer, nodes []*ast.Service, messagesMap map[strin
 }
 
 func genarateServers(out io.Writer, nodes []*ast.Service, messagesMap map[string]*ast.Message, enumsMap map[string]*ast.Enum) error {
-	// tmpl, err := loadTemplate("servers")
-	// if err != nil {
-	// 	return err
-	// }
+	tmpl, err := loadTemplate("servers")
+	if err != nil {
+		return err
+	}
 
-	// services := parseServices(nodes, messagesMap, enumsMap)
+	services := parseServices(nodes, messagesMap, enumsMap)
 
-	// return tmpl.Execute(out, services)
-	return nil
+	return tmpl.Execute(out, services)
 }
 
 func genarateClients(out io.Writer, nodes []*ast.Service, messagesMap map[string]*ast.Message, enumsMap map[string]*ast.Enum) error {
@@ -302,7 +403,7 @@ func parseConstants(nodes []*ast.Constant) Constants {
 
 	for _, node := range nodes {
 		constant := Constant{
-			Key: node.Name.Token.Val,
+			Key: stringcase.ToPascal(node.Name.Token.Val),
 		}
 
 		switch v := node.Value.(type) {
@@ -393,7 +494,7 @@ func parseServices(nodes []*ast.Service, messagesMap map[string]*ast.Message, en
 
 	for _, node := range nodes {
 		service := Service{
-			Name: node.Name.Token.Val,
+			Name: stringcase.ToPascal(node.Name.Token.Val),
 		}
 
 		for _, method := range node.Methods {
@@ -408,7 +509,7 @@ func parseServices(nodes []*ast.Service, messagesMap map[string]*ast.Message, en
 
 func parseMethod(node *ast.Method, messagesMap map[string]*ast.Message, enumsMap map[string]*ast.Enum) Method {
 	method := Method{
-		Name: node.Name.Token.Val,
+		Name: stringcase.ToPascal(node.Name.Token.Val),
 	}
 
 	if node.Args != nil {
@@ -427,7 +528,7 @@ func parseArgs(nodes []*ast.Arg, messagesMap map[string]*ast.Message, enumsMap m
 
 	for _, node := range nodes {
 		arg := Arg{
-			Name: node.Name.Token.Val,
+			Name: stringcase.ToCamel(node.Name.Token.Val),
 			Type: parseFieldType(node.Type, messagesMap, enumsMap),
 		}
 
@@ -442,7 +543,7 @@ func parseReturns(nodes []*ast.Return, messagesMap map[string]*ast.Message, enum
 
 	for _, node := range nodes {
 		ret := Return{
-			Name:   node.Name.Token.Val,
+			Name:   stringcase.ToCamel(node.Name.Token.Val),
 			Type:   parseFieldType(node.Type, messagesMap, enumsMap),
 			Stream: node.Stream,
 		}
