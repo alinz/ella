@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -14,6 +15,50 @@ import (
 	"github.com/alinz/rpc.go/schema/validator"
 	"github.com/alinz/rpc.go/templates/golang"
 )
+
+func fmtCmd() *cli.Command {
+	var schemaFile string
+
+	return &cli.Command{
+		Name:  "fmt",
+		Usage: "format rpc schema file",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:        "input",
+				Aliases:     []string{"i"},
+				Usage:       "target's input schema file `./example/schema.rpc`",
+				Required:    true,
+				Destination: &schemaFile,
+			},
+		},
+		Action: func(ctx *cli.Context) (err error) {
+			in, err := os.Open(schemaFile)
+			if err != nil {
+				return err
+			}
+			inData, err := io.ReadAll(in)
+			if err != nil {
+				in.Close()
+				return err
+			}
+			in.Close()
+
+			program, err := parser.New(string(inData)).Parse()
+			if err != nil {
+				return err
+			}
+
+			err = validator.Validate(program)
+			if err != nil {
+				return err
+			}
+
+			fmt.Fprintf(os.Stdout, "%s", program.TokenLiteral())
+
+			return nil
+		},
+	}
+}
 
 func genCmd() *cli.Command {
 	var outDir string
@@ -90,6 +135,7 @@ func main() {
 	app := &cli.App{
 		Commands: []*cli.Command{
 			genCmd(),
+			fmtCmd(),
 		},
 	}
 

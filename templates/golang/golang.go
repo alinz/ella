@@ -531,6 +531,8 @@ func parseFieldType(typ ast.Type, messagesMap map[string]*ast.Message, enumsMap 
 		if _, ok := enumsMap[typ.Name]; ok {
 			return typ.Name
 		}
+
+		panic(fmt.Sprintf("unknown type: %s", typ.Name))
 	case *ast.TypeAny:
 		return "any"
 	case *ast.TypeInt:
