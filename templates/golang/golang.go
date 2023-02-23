@@ -553,7 +553,7 @@ func parseFieldType(typ ast.Type, messagesMap map[string]*ast.Message, enumsMap 
 		return fmt.Sprintf("[]%s", parseFieldType(typ.Type, messagesMap, enumsMap))
 	}
 
-	return ""
+	panic(fmt.Sprintf("unknown type: %T", typ))
 }
 
 func parseServices(nodes []*ast.Service, messagesMap map[string]*ast.Message, enumsMap map[string]*ast.Enum) []*Service {
