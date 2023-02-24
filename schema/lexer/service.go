@@ -194,17 +194,97 @@ func ServiceMethodArgsTypes(next StateFn) StateFn {
 	}
 }
 
+func ServiceMethodOptions(next StateFn) StateFn {
+	return func(l *Lexer) StateFn {
+		IgnoreWhiteSpace(l)
+		checkComment(l)
+
+		if l.Peek() == '}' {
+			l.Next()
+			l.Emit(token.CloseCurl)
+			return ServiceMethod(next)
+		}
+
+		// identifier -> = -> value
+		// identifier -> =
+
+		l.AcceptRunUntil(" \t\n\r#")
+		if l.Current() == "" {
+			l.Errorf("expected method option name but got nothing")
+			return nil
+		}
+		l.Emit(token.Identifier)
+
+		l.AcceptRun(" \t")
+		l.Ignore()
+		checkComment(l)
+
+		if value := l.Next(); value != '=' {
+			l.Errorf("expected '=' but got %s", string(value))
+			return nil
+		}
+		l.Emit(token.Assign)
+
+		l.AcceptRun(" \t}")
+		l.Ignore()
+
+		switch l.Peek() {
+		case '"':
+			l.Next()
+			l.Ignore()
+
+			l.AcceptRunUntil("\"\n\r")
+			if l.Peek() != '"' {
+				l.Errorf("expected '\"' but got %s", string(l.Peek()))
+				return nil
+			}
+			l.Emit(token.Value)
+
+			l.Next()
+			l.Ignore()
+
+		case '\'':
+			l.Next()
+			l.Ignore()
+
+			l.AcceptRunUntil("'\n\r")
+			if l.Peek() != '\'' {
+				l.Errorf("expected ' but got %s", string(l.Peek()))
+				return nil
+			}
+			l.Emit(token.Value)
+
+			l.Next()
+			l.Ignore()
+
+		default:
+			l.AcceptRunUntil(" \t\n\r#")
+			l.Emit(token.Value)
+		}
+
+		return ServiceMethodOptions(next)
+	}
+}
+
 func ServiceMethodReturns(next StateFn) StateFn {
 	return func(l *Lexer) StateFn {
 		IgnoreWhiteSpace(l)
 		checkComment(l)
 
 		value := l.Peek()
-		if value != '=' {
+
+		switch value {
+		case '=':
+		case '{':
+			l.Next()
+			l.Emit(token.OpenCurl)
+			return ServiceMethodOptions(next)
+		default:
 			// there is no return ( => ) for example Ping(),
 			// that's why we check for next method
 			return ServiceMethod(next)
 		}
+
 		l.Next() // consume '='
 		value = l.Next()
 		if value != '>' {

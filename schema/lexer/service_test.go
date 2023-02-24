@@ -11,6 +11,94 @@ func TestLexService(t *testing.T) {
 	runTestCase(t, -1, lexer.Service(nil), TestCases{
 		{
 			input: `service TestService {
+				Ping() {
+					Method = GET
+				}
+			}`,
+			output: Tokens{
+				{Kind: token.Service, Start: 0, End: 7, Val: "service"},
+				{Kind: token.Identifier, Start: 8, End: 19, Val: "TestService"},
+				{Kind: token.OpenCurl, Start: 20, End: 21, Val: "{"},
+				{Kind: token.Identifier, Start: 26, End: 30, Val: "Ping"},
+				{Kind: token.OpenParen, Start: 30, End: 31, Val: "("},
+				{Kind: token.CloseParen, Start: 31, End: 32, Val: ")"},
+				{Kind: token.OpenCurl, Start: 33, End: 34, Val: "{"},
+				{Kind: token.Identifier, Start: 40, End: 46, Val: "Method"},
+				{Kind: token.Assign, Start: 47, End: 48, Val: "="},
+				{Kind: token.Value, Start: 49, End: 52, Val: "GET"},
+				{Kind: token.CloseCurl, Start: 57, End: 58, Val: "}"},
+				{Kind: token.CloseCurl, Start: 62, End: 63, Val: "}"},
+			},
+		},
+		{
+			input: `service TestService {
+				Ping() {}
+			}`,
+			output: Tokens{
+				{Kind: token.Service, Start: 0, End: 7, Val: "service"},
+				{Kind: token.Identifier, Start: 8, End: 19, Val: "TestService"},
+				{Kind: token.OpenCurl, Start: 20, End: 21, Val: "{"},
+				{Kind: token.Identifier, Start: 26, End: 30, Val: "Ping"},
+				{Kind: token.OpenParen, Start: 30, End: 31, Val: "("},
+				{Kind: token.CloseParen, Start: 31, End: 32, Val: ")"},
+				{Kind: token.OpenCurl, Start: 33, End: 34, Val: "{"},
+				{Kind: token.CloseCurl, Start: 34, End: 35, Val: "}"},
+				{Kind: token.CloseCurl, Start: 39, End: 40, Val: "}"},
+			},
+		},
+		{
+			input: `service TestService {
+				Ping() => (status: stream int) {
+					Method = GET
+				}
+			}`,
+			output: Tokens{
+				{Kind: token.Service, Start: 0, End: 7, Val: "service"},
+				{Kind: token.Identifier, Start: 8, End: 19, Val: "TestService"},
+				{Kind: token.OpenCurl, Start: 20, End: 21, Val: "{"},
+				{Kind: token.Identifier, Start: 26, End: 30, Val: "Ping"},
+				{Kind: token.OpenParen, Start: 30, End: 31, Val: "("},
+				{Kind: token.CloseParen, Start: 31, End: 32, Val: ")"},
+				{Kind: token.Return, Start: 33, End: 35, Val: "=>"},
+				{Kind: token.OpenParen, Start: 36, End: 37, Val: "("},
+				{Kind: token.Identifier, Start: 37, End: 43, Val: "status"},
+				{Kind: token.Colon, Start: 43, End: 44, Val: ":"},
+				{Kind: token.Stream, Start: 45, End: 51, Val: "stream"},
+				{Kind: token.Type, Start: 52, End: 55, Val: "int"},
+				{Kind: token.CloseParen, Start: 55, End: 56, Val: ")"},
+				{Kind: token.OpenCurl, Start: 57, End: 58, Val: "{"},
+				{Kind: token.Identifier, Start: 64, End: 70, Val: "Method"},
+				{Kind: token.Assign, Start: 71, End: 72, Val: "="},
+				{Kind: token.Value, Start: 73, End: 76, Val: "GET"},
+				{Kind: token.CloseCurl, Start: 81, End: 82, Val: "}"},
+				{Kind: token.CloseCurl, Start: 86, End: 87, Val: "}"},
+			},
+		},
+		{
+			input: `service TestService {
+				Ping() => (status: stream int) {}
+			}`,
+			output: Tokens{
+				{Kind: token.Service, Start: 0, End: 7, Val: "service"},
+				{Kind: token.Identifier, Start: 8, End: 19, Val: "TestService"},
+				{Kind: token.OpenCurl, Start: 20, End: 21, Val: "{"},
+				{Kind: token.Identifier, Start: 26, End: 30, Val: "Ping"},
+				{Kind: token.OpenParen, Start: 30, End: 31, Val: "("},
+				{Kind: token.CloseParen, Start: 31, End: 32, Val: ")"},
+				{Kind: token.Return, Start: 33, End: 35, Val: "=>"},
+				{Kind: token.OpenParen, Start: 36, End: 37, Val: "("},
+				{Kind: token.Identifier, Start: 37, End: 43, Val: "status"},
+				{Kind: token.Colon, Start: 43, End: 44, Val: ":"},
+				{Kind: token.Stream, Start: 45, End: 51, Val: "stream"},
+				{Kind: token.Type, Start: 52, End: 55, Val: "int"},
+				{Kind: token.CloseParen, Start: 55, End: 56, Val: ")"},
+				{Kind: token.OpenCurl, Start: 57, End: 58, Val: "{"},
+				{Kind: token.CloseCurl, Start: 58, End: 59, Val: "}"},
+				{Kind: token.CloseCurl, Start: 63, End: 64, Val: "}"},
+			},
+		},
+		{
+			input: `service TestService {
 				Ping() => (status: stream int)
 			}`,
 			output: Tokens{

@@ -42,6 +42,7 @@ func (r *Return) TokenLiteral() string {
 
 type Method struct {
 	Name    *Identifier
+	Options []*Constant
 	Args    []*Arg
 	Returns []*Return
 }
@@ -60,7 +61,22 @@ func (m *Method) TokenLiteral() string {
 		}
 	}
 	sb.WriteString(")")
+
 	if len(m.Returns) == 0 {
+		if len(m.Options) > 0 {
+			sb.WriteString(" {")
+			for _, c := range m.Options {
+				sb.WriteString("\n\t\t")
+				sb.WriteString(c.TokenLiteral())
+			}
+
+			if len(m.Options) > 0 {
+				sb.WriteString("\n\t")
+			}
+
+			sb.WriteString("}")
+		}
+
 		return sb.String()
 	}
 
@@ -72,6 +88,20 @@ func (m *Method) TokenLiteral() string {
 		}
 	}
 	sb.WriteString(")")
+
+	if len(m.Options) > 0 {
+		sb.WriteString(" {")
+		for _, c := range m.Options {
+			sb.WriteString("\n\t\t")
+			sb.WriteString(c.TokenLiteral())
+		}
+
+		if len(m.Options) > 0 {
+			sb.WriteString("\n\t")
+		}
+
+		sb.WriteString("}")
+	}
 
 	return sb.String()
 }

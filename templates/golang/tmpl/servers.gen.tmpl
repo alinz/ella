@@ -40,11 +40,12 @@ func Create{{ $serviceName }}Server(service {{ $serviceName }}) http.Handler {
 {{- range $method := $service.Methods }}
 {{- $methodName := $method.Name | ToPascal }}
 {{- $isStream := $method.Returns | IsStream }}
+{{- $httpMethod := $method | ServiceMethodHttpMethod }}
 
 {{- if $isStream }}
 
 func (s *{{ $serviceNameImpl }}Server) create{{ $methodName }}MethodHandler() serviceMethodHandler {
-	return createStreamServiceMethod(func(ctx context.Context, args *struct {
+	return createStreamServiceMethod("{{ $httpMethod }}", func(ctx context.Context, args *struct {
 		{{ $method.Args | ToStructArgs }}
 	}) (out <-chan *stremEvent, err error) {
 		{{ $method.Returns | ToStreamReturnsName }}, err := s.service.{{ $methodName }}(
@@ -69,7 +70,7 @@ func (s *{{ $serviceNameImpl }}Server) create{{ $methodName }}MethodHandler() se
 {{- else }}
 
 func (s *{{ $serviceNameImpl }}Server) create{{ $methodName }}MethodHandler() serviceMethodHandler {
-	return createServiceMethodHandler(func(ctx context.Context, args *struct {
+	return createServiceMethodHandler("{{ $httpMethod }}", func(ctx context.Context, args *struct {
 		{{ $method.Args | ToStructArgs }}
 	}) (ret *struct {
 		{{ $method.Returns | ToStructReturns }}

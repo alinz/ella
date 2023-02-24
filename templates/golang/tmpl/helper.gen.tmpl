@@ -33,17 +33,24 @@ func injectCommonVars(ctx context.Context, w http.ResponseWriter, r *http.Reques
 	return ctx
 }
 
-func callServiceMethod[ReqMsg, RespMsg any](ctx context.Context, client *http.Client, url string, in *ReqMsg, out *RespMsg) (err error) {
+func callServiceMethod[ReqMsg, RespMsg any](ctx context.Context, method string, client *http.Client, url string, in *ReqMsg, out *RespMsg) (err error) {
 	var reqBody io.Reader
 
 	if !isStructEmpty(in) {
-		reqBody, err = jsonEncoder(in)
-		if err != nil {
-			return err
+		if method == http.MethodGet {
+			url, err = structToURL(url, in)
+			if err != nil {
+				return err
+			}
+		} else {
+			reqBody, err = jsonEncoder(in)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, reqBody)
+	req, err := http.NewRequestWithContext(ctx, method, url, reqBody)
 	if err != nil {
 		return err
 	}
@@ -69,13 +76,20 @@ func callServiceMethod[ReqMsg, RespMsg any](ctx context.Context, client *http.Cl
 
 type streamMapper map[string]func(id int64, data string)
 
-func callServiceStreamMethod[ReqMsg any](ctx context.Context, client *http.Client, url string, in *ReqMsg, out streamMapper) (err error) {
+func callServiceStreamMethod[ReqMsg any](ctx context.Context, method string, client *http.Client, url string, in *ReqMsg, out streamMapper) (err error) {
 	var reqBody io.Reader
 
 	if !isStructEmpty(in) {
-		reqBody, err = jsonEncoder(in)
-		if err != nil {
-			return err
+		if method == http.MethodGet {
+			url, err = structToURL(url, in)
+			if err != nil {
+				return err
+			}
+		} else {
+			reqBody, err = jsonEncoder(in)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -230,9 +244,9 @@ func createEventStream[T any](ctx context.Context, name string, stream <-chan T)
 	return out
 }
 
-func createStreamServiceMethod[ReqMsg any](fn func(ctx context.Context, req *ReqMsg) (<-chan *stremEvent, error)) serviceMethodHandler {
+func createStreamServiceMethod[ReqMsg any](method string, fn func(ctx context.Context, req *ReqMsg) (<-chan *stremEvent, error)) serviceMethodHandler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
+		if r.Method != method {
 			ResponseError(w, Errorf(http.StatusMethodNotAllowed, "method %q not allowed", r.Method))
 			return
 		}
@@ -258,9 +272,16 @@ func createStreamServiceMethod[ReqMsg any](fn func(ctx context.Context, req *Req
 
 		var reqMsg ReqMsg
 
-		if err := json.NewDecoder(r.Body).Decode(&reqMsg); err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
+		if method == http.MethodPost {
+			if err := json.NewDecoder(r.Body).Decode(&reqMsg); err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		} else if method == http.MethodGet {
+			if err := valuesToStruct(r.URL.Query(), &reqMsg); err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
 		}
 
 		events, err := fn(ctx, &reqMsg)
@@ -285,9 +306,9 @@ func createStreamServiceMethod[ReqMsg any](fn func(ctx context.Context, req *Req
 	}
 }
 
-func createServiceMethodHandler[ReqMsg, RespMsg any](fn func(ctx context.Context, req *ReqMsg) (*RespMsg, error)) serviceMethodHandler {
+func createServiceMethodHandler[ReqMsg, RespMsg any](method string, fn func(ctx context.Context, req *ReqMsg) (*RespMsg, error)) serviceMethodHandler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
+		if r.Method != method {
 			ResponseError(w, Errorf(http.StatusMethodNotAllowed, "method %q not allowed", r.Method))
 			return
 		}
@@ -307,9 +328,16 @@ func createServiceMethodHandler[ReqMsg, RespMsg any](fn func(ctx context.Context
 
 		var reqMsg ReqMsg
 
-		if err := json.NewDecoder(r.Body).Decode(&reqMsg); err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
+		if method == http.MethodPost {
+			if err := json.NewDecoder(r.Body).Decode(&reqMsg); err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		} else if method == http.MethodGet {
+			if err := valuesToStruct(r.URL.Query(), &reqMsg); err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
 		}
 
 		respMsg, err := fn(ctx, &reqMsg)
@@ -331,6 +359,98 @@ func createServiceMethodHandler[ReqMsg, RespMsg any](fn func(ctx context.Context
 }
 
 // Utility functions
+
+func structToValues(ptr any) url.Values {
+	values := url.Values{}
+	v := reflect.Indirect(reflect.ValueOf(ptr))
+
+	t := v.Type()
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		value := v.Field(i)
+
+		// Convert the field value to a string
+		var strValue string
+		switch value.Kind() {
+		case reflect.String:
+			strValue = url.QueryEscape(value.String())
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			strValue = strconv.FormatInt(value.Int(), 10)
+		case reflect.Float32, reflect.Float64:
+			strValue = strconv.FormatFloat(value.Float(), 'f', -1, 64)
+		case reflect.Bool:
+			strValue = strconv.FormatBool(value.Bool())
+		default:
+			continue
+		}
+
+		// Add the key-value pair to the values
+		if strValue != "" {
+			key := field.Tag.Get("json")
+			if key == "" {
+				key = field.Name
+			}
+			values.Add(key, strValue)
+		}
+	}
+	return values
+}
+
+func valuesToStruct(values url.Values, ptr any) error {
+	dType := reflect.TypeOf(ptr)
+	dhVal := reflect.ValueOf(ptr)
+
+	for i := 0; i < dType.Elem().NumField(); i++ {
+		field := dType.Elem().Field(i)
+		key := field.Tag.Get("json")
+		kind := field.Type.Kind()
+
+		val := values.Get(key)
+
+		result := dhVal.Elem().Field(i)
+
+		switch kind {
+		case reflect.String:
+			val, err := url.QueryUnescape(val)
+			if err != nil {
+				return err
+			}
+			result.SetString(val)
+		case reflect.Int:
+			v, err := strconv.ParseInt(val, 10, 64)
+			if err != nil {
+				return err
+			}
+			result.SetInt(v)
+		case reflect.Float64:
+			v, err := strconv.ParseFloat(val, 64)
+			if err != nil {
+				return err
+			}
+			result.SetFloat(v)
+		case reflect.Bool:
+			v, err := strconv.ParseBool(val)
+			if err != nil {
+				return err
+			}
+			result.SetBool(v)
+		default:
+			return fmt.Errorf("unsupported type %s", kind)
+		}
+	}
+	return nil
+}
+
+func structToURL(host string, ptr any) (string, error) {
+	u, err := url.Parse(host)
+	if err != nil {
+		return "", err
+	}
+
+	u.RawQuery = structToValues(ptr).Encode()
+
+	return u.String(), nil
+}
 
 func mergeChannels[Resp any](ctx context.Context, chans ...<-chan Resp) <-chan Resp {
 	out := make(chan Resp)

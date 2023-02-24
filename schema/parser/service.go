@@ -48,6 +48,7 @@ func (p *Parser) parseService() (*ast.Service, error) {
 }
 
 func (p *Parser) parseMethod() (*ast.Method, error) {
+	var err error
 
 	if p.nextToken.Kind != token.Identifier {
 		return nil, fmt.Errorf("expected identifier but got %s", p.nextToken.Kind)
@@ -58,6 +59,7 @@ func (p *Parser) parseMethod() (*ast.Method, error) {
 			Name:  p.nextToken.Val,
 			Token: p.nextToken,
 		},
+		Options: make([]*ast.Constant, 0),
 		Args:    make([]*ast.Arg, 0),
 		Returns: make([]*ast.Return, 0),
 	}
@@ -80,6 +82,13 @@ func (p *Parser) parseMethod() (*ast.Method, error) {
 	}
 
 	p.scanToken() // skip )
+
+	if p.nextToken.Kind == token.OpenCurl {
+		method.Options, err = p.parseMethodOptions()
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	if p.nextToken.Kind != token.Return {
 		return method, nil
@@ -104,7 +113,35 @@ func (p *Parser) parseMethod() (*ast.Method, error) {
 
 	p.scanToken() // skip )
 
+	if p.nextToken.Kind == token.OpenCurl {
+		method.Options, err = p.parseMethodOptions()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return method, nil
+}
+
+func (p *Parser) parseMethodOptions() (options []*ast.Constant, err error) {
+	if p.nextToken.Kind != token.OpenCurl {
+		return nil, fmt.Errorf("expected { but got %s", p.nextToken.Kind)
+	}
+
+	p.scanToken() // skip {
+
+	for p.nextToken.Kind != token.CloseCurl {
+		option, err := p.parseConstant(true)
+		if err != nil {
+			return nil, err
+		}
+
+		options = append(options, option)
+	}
+
+	p.scanToken() // skip }
+
+	return options, nil
 }
 
 func (p *Parser) parseArg() (arg *ast.Arg, err error) {

@@ -19,6 +19,7 @@ func Create{{ $serviceName }}Client(host string, client *http.Client) {{ $servic
 {{- range $method := $service.Methods }}
 {{- $methodName := $method.Name | ToPascal }}
 {{- $isStream := $method.Returns | IsStream }}
+{{- $httpMethod := $method | ServiceMethodHttpMethod }}
 
 {{- if $isStream }}
 
@@ -37,7 +38,7 @@ func (s *{{ $serviceNameImpl }}Client) {{ $methodName }}({{ $method.Args | Metho
 	{{- end }}
 	}
 
-	err = callServiceStreamMethod(ctx, s.client, url, &IN, streamMapper)
+	err = callServiceStreamMethod(ctx, "{{ $httpMethod }}", s.client, url, &IN, streamMapper)
 	if err != nil {
 		return
 	}
@@ -57,7 +58,7 @@ func (s *{{ $serviceNameImpl }}Client) {{ $methodName }}({{ $method.Args | Metho
 
 	out := {{ $method.Returns | MethodReturnsStructClient }}
 
-	err = callServiceMethod(ctx, s.client, url, &in, &out)
+	err = callServiceMethod(ctx, "{{ $httpMethod }}", s.client, url, &in, &out)
 	if err != nil {
 		return
 	}

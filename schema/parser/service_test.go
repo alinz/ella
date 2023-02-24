@@ -6,6 +6,34 @@ func TestServiceParser(t *testing.T) {
 	runTests(t, TestCases{
 		{
 			Input: `service A {
+				Ping2() => (pong: String) {
+					foo = 1
+				}
+			}`,
+			Output: `
+service A {
+	Ping2() => (pong: String) {
+		foo = 1
+	}
+}	
+			`,
+		},
+		{
+			Input: `service A {
+				Ping2() {
+					foo = 1
+				}
+			}`,
+			Output: `
+service A {
+	Ping2() {
+		foo = 1
+	}
+}	
+			`,
+		},
+		{
+			Input: `service A {
 				Ping(timeout: Timestamp, b: Int64) => (pong: stream String)
 				Ping2()
 			}`,

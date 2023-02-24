@@ -4,6 +4,7 @@ import (
 	"embed"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 	"text/template"
 
@@ -215,6 +216,19 @@ var tmplFuncs = template.FuncMap{
 		return sb.String()
 	},
 
+	"ServiceMethodHttpMethod": func(method Method) string {
+		for _, option := range method.Options {
+			if option.Key == "HttpMethod" {
+				value := option.Value.(string)
+				value = strings.ToUpper(value)
+				value = strings.ReplaceAll(value, "\"", "")
+				return value
+			}
+		}
+
+		return http.MethodPost
+	},
+
 	"ReturnsOut": func(returns []Return) string {
 		var sb strings.Builder
 
@@ -277,6 +291,7 @@ type Return struct {
 type Method struct {
 	Name    string
 	Args    []Arg
+	Options Constants
 	Returns []Return
 }
 
@@ -592,6 +607,10 @@ func parseMethod(node *ast.Method, messagesMap map[string]*ast.Message, enumsMap
 
 	if node.Args != nil {
 		method.Args = parseArgs(node.Args, messagesMap, enumsMap)
+	}
+
+	if node.Options != nil {
+		method.Options = parseConstants(node.Options)
 	}
 
 	if node.Returns != nil {
