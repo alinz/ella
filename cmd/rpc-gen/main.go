@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -62,7 +63,7 @@ func fmtCmd() *cli.Command {
 
 func genCmd() *cli.Command {
 	var outDir string
-	var schemaFile string
+	var schemaDir string
 
 	return &cli.Command{
 		Name:  "gen",
@@ -78,9 +79,9 @@ func genCmd() *cli.Command {
 			&cli.StringFlag{
 				Name:        "input",
 				Aliases:     []string{"i"},
-				Usage:       "target's input schema file `./example/schema.rpc`",
+				Usage:       "target's input schema folder `./example/schema/`",
 				Required:    true,
-				Destination: &schemaFile,
+				Destination: &schemaDir,
 			},
 		},
 		Action: func(ctx *cli.Context) (err error) {
@@ -89,17 +90,45 @@ func genCmd() *cli.Command {
 				return err
 			}
 
-			in, err := os.Open(schemaFile)
-			if err != nil {
-				return err
-			}
-			defer in.Close()
-			inData, err := io.ReadAll(in)
-			if err != nil {
-				return err
+			var inData bytes.Buffer
+
+			{
+				files, err := os.ReadDir(schemaDir)
+				if err != nil {
+					return err
+				}
+
+				for _, file := range files {
+					if file.IsDir() {
+						continue
+					}
+
+					if filepath.Ext(file.Name()) != ".rpc" {
+						continue
+					}
+
+					err = func(buffer *bytes.Buffer, filename string) error {
+						in, err := os.Open(filename)
+						if err != nil {
+							return err
+						}
+						defer in.Close()
+
+						_, err = io.Copy(buffer, in)
+						if err != nil {
+							return err
+						}
+
+						buffer.WriteString("\n")
+						return nil
+					}(&inData, filepath.Join(schemaDir, file.Name()))
+					if err != nil {
+						return err
+					}
+				}
 			}
 
-			program, err := parser.New(string(inData)).Parse()
+			program, err := parser.New(inData.String()).Parse()
 			if err != nil {
 				return err
 			}

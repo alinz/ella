@@ -6,17 +6,19 @@ import (
 )
 
 func Package(name string) transform.Func {
-	return func(out transform.Writer) {
+	return func(out transform.Writer) error {
 		out.
 			String("package ").String(name).
 			NewLines(2)
+
+		return nil
 	}
 }
 
 func Constants(constants []*ast.Constant) transform.Func {
-	return func(out transform.Writer) {
+	return func(out transform.Writer) error {
 		if len(constants) == 0 {
-			return
+			return nil
 		}
 
 		out.String("const (").Indents(1).NewLines(1)
@@ -28,33 +30,50 @@ func Constants(constants []*ast.Constant) transform.Func {
 				NewLines(1)
 		}
 		out.Indents(-1).String(")").NewLines(2)
+
+		return nil
 	}
 }
 
-func Enum(enum *ast.Enum) transform.Func {
-	return func(out transform.Writer) {
+func Enum(enum *ast.Enum, messagesMap map[string]*ast.Message, enumsMap map[string]*ast.Enum) transform.Func {
+	return func(out transform.Writer) error {
+		enumType, err := parseType(enum.Type, messagesMap, enumsMap)
+		if err != nil {
+			return err
+		}
+
 		out.
 			String("type ").
 			String(enum.Name.Name).
 			String(" ").
-			String(enum.Type.TokenLiteral()).
+			String(enumType).
 			NewLines(2)
 
-		Constants(enum.Constants)(out)
+		err = Constants(enum.Constants)(out)
+		if err != nil {
+			return err
+		}
+
+		return nil
 	}
 }
 
-func Enums(enums []*ast.Enum) transform.Func {
-	return func(out transform.Writer) {
+func Enums(enums []*ast.Enum, messagesMap map[string]*ast.Message, enumsMap map[string]*ast.Enum) transform.Func {
+	return func(out transform.Writer) error {
 		if len(enums) == 0 {
-			return
+			return nil
 		}
 
 		for i, enum := range enums {
 			if i != 0 {
 				out.NewLines(2)
 			}
-			Enum(enum)(out)
+			err := Enum(enum, messagesMap, enumsMap)(out)
+			if err != nil {
+				return err
+			}
 		}
+
+		return nil
 	}
 }

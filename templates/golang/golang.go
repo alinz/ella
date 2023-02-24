@@ -56,6 +56,37 @@ func toStructReturns(returns []Return) string {
 
 }
 
+func MethodReturns(ignoreName bool) func(returns []Return) string {
+	return func(returns []Return) string {
+		var sb strings.Builder
+
+		for i, ret := range returns {
+			if i > 0 {
+				sb.WriteString(", ")
+			}
+
+			if ignoreName {
+				sb.WriteString("_")
+			} else {
+				sb.WriteString(ret.Name)
+			}
+			sb.WriteString(" ")
+			if ret.Stream {
+				sb.WriteString("<-chan ")
+			}
+			sb.WriteString(ret.Type)
+		}
+
+		if sb.Len() > 0 {
+			sb.WriteString(", ")
+		}
+
+		sb.WriteString("err error")
+
+		return sb.String()
+	}
+}
+
 var tmplFuncs = template.FuncMap{
 	"ToUpper":  strings.ToUpper,
 	"ToLower":  strings.ToLower,
@@ -83,30 +114,8 @@ var tmplFuncs = template.FuncMap{
 		return sb.String()
 	},
 
-	"MethodReturns": func(returns []Return) string {
-		var sb strings.Builder
-
-		for i, ret := range returns {
-			if i > 0 {
-				sb.WriteString(", ")
-			}
-
-			sb.WriteString(ret.Name)
-			sb.WriteString(" ")
-			if ret.Stream {
-				sb.WriteString("<-chan ")
-			}
-			sb.WriteString(ret.Type)
-		}
-
-		if sb.Len() > 0 {
-			sb.WriteString(", ")
-		}
-
-		sb.WriteString("err error")
-
-		return sb.String()
-	},
+	"MethodReturns":           MethodReturns(false),
+	"MethodReturnsIgnoreName": MethodReturns(true),
 
 	"IsStream": func(returns []Return) bool {
 		for _, ret := range returns {

@@ -12,14 +12,17 @@ type Writer interface {
 	String(format string, args ...any) Writer
 }
 
-type Func func(out Writer)
+type Func func(out Writer) error
 
 func Run(out io.Writer, funcs ...Func) error {
 	for _, f := range funcs {
 		w := &writer{out: out}
-		f(w)
-		err := w.Done()
-		if err != nil {
+
+		if err := f(w); err != nil {
+			return err
+		}
+
+		if err := w.Done(); err != nil {
 			return err
 		}
 	}
