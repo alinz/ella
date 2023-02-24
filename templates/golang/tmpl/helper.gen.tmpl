@@ -3,6 +3,36 @@
 // Helper functions
 //
 
+type CtxKey string
+
+const (
+	CtxKeyRequest CtxKey = "http_request"
+	CtxKeyResponse CtxKey = "http_response"
+)
+
+func GetCtxValue[T any](ctx context.Context, key CtxKey) (result T, ok bool) {
+	value := ctx.Value(key)
+	if value == nil {
+		return result, false
+	}
+	result, ok = value.(T)
+	return result, ok
+}
+
+func GetCtxHttpRequest(ctx context.Context) (result *http.Request, ok bool) {
+	return GetCtxValue[*http.Request](ctx, CtxKeyRequest)
+}
+
+func GetCtxHttpResponse(ctx context.Context) (result http.ResponseWriter, ok bool) {
+	return GetCtxValue[http.ResponseWriter](ctx, CtxKeyResponse)
+}
+
+func injectCommonVars(ctx context.Context, w http.ResponseWriter, r *http.Request) context.Context {
+	ctx = context.WithValue(ctx, CtxKeyRequest, r)
+	ctx = context.WithValue(ctx, CtxKeyResponse, w)
+	return ctx
+}
+
 func callServiceMethod[ReqMsg, RespMsg any](ctx context.Context, client *http.Client, url string, in *ReqMsg, out *RespMsg) (err error) {
 	var reqBody io.Reader
 

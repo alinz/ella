@@ -17,7 +17,9 @@ func (s *{{ $serviceNameImpl }}Server) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
-	handler(r.Context(), w, r)
+	ctx := injectCommonVars(r.Context(), w, r)
+
+	handler(ctx, w, r)
 }
 
 func Create{{ $serviceName }}Server(service {{ $serviceName }}) http.Handler {
