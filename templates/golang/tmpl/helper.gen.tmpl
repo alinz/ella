@@ -265,9 +265,11 @@ func createStreamServiceMethod[ReqMsg any](method string, fn func(ctx context.Co
 			}
 		}()
 
-		if err := checkContentType(r, "application/json"); err != nil {
-			w.WriteHeader(http.StatusUnsupportedMediaType)
-			return
+		if method != http.MethodGet {
+			if err := checkContentType(r, "application/json"); err != nil {
+				w.WriteHeader(http.StatusUnsupportedMediaType)
+				return
+			}
 		}
 
 		var reqMsg ReqMsg
@@ -321,9 +323,11 @@ func createServiceMethodHandler[ReqMsg, RespMsg any](method string, fn func(ctx 
 			}
 		}()
 
-		if err := checkContentType(r, "application/json"); err != nil {
-			w.WriteHeader(http.StatusUnsupportedMediaType)
-			return
+		if method != http.MethodGet {
+			if err := checkContentType(r, "application/json"); err != nil {
+				w.WriteHeader(http.StatusUnsupportedMediaType)
+				return
+			}
 		}
 
 		var reqMsg ReqMsg
