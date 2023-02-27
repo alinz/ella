@@ -1,4 +1,11 @@
 
+const (
+{{- range $service := . }}
+{{- $serviceName := $service.Name | ToPascal }}
+	PrefixPath{{ $serviceName }} = "/rpc/{{ $serviceName }}/"
+{{- end }}
+)
+
 {{- range $service := . }}
 {{- $serviceName := $service.Name | ToPascal }}
 {{- $serviceNameImpl := $service.Name | ToCamel }}
@@ -30,7 +37,7 @@ func Create{{ $serviceName }}Server(service {{ $serviceName }}) http.Handler {
 	server.routes = map[string]serviceMethodHandler{
 		{{- range $method := $service.Methods }}
 		{{- $methodName := $method.Name | ToPascal }}
-		"/rpc/{{ $serviceName }}/{{ $methodName }}": server.create{{ $methodName }}MethodHandler(),
+		PrefixPath{{ $serviceName }} + "{{ $methodName }}": server.create{{ $methodName }}MethodHandler(),
 		{{- end }}
 	}
 
