@@ -176,6 +176,8 @@ func (p *Parser) parseKeyType() (typ ast.Type, err error) {
 		return nil, fmt.Errorf("unknown key type %s", p.nextToken.Val)
 	}
 
+	p.scanToken()
+
 	return
 }
 

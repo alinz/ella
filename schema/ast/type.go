@@ -1,6 +1,8 @@
 package ast
 
 import (
+	"strings"
+
 	"github.com/alinz/rpc.go/schema/token"
 )
 
@@ -120,7 +122,16 @@ var _ Type = (*TypeMap)(nil)
 
 func (v TypeMap) kindNode() {}
 func (v TypeMap) TokenLiteral() string {
-	return v.Token.Val
+	var sb strings.Builder
+
+	sb.WriteString(v.Token.Val)
+	sb.WriteString("<")
+	sb.WriteString(v.Key.TokenLiteral())
+	sb.WriteString(", ")
+	sb.WriteString(v.Value.TokenLiteral())
+	sb.WriteString(">")
+
+	return sb.String()
 }
 
 type TypeArray struct {

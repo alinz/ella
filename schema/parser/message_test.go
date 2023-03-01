@@ -8,6 +8,20 @@ func TestMessageParser(t *testing.T) {
 	runTests(t, TestCases{
 		{
 			Input: `message A {
+				value: map<String, String> {
+					json = "hello's world"
+				}
+			}`,
+			Output: `
+message A {
+	value: map<String, String> {
+		json = "hello's world"
+	}
+}			
+			`,
+		},
+		{
+			Input: `message A {
 				value: Int64 {
 					json = "hello's world"
 				}
