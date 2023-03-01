@@ -2,7 +2,7 @@
 const (
 {{- range $service := . }}
 {{- $serviceName := $service.Name | ToPascal }}
-	PrefixPath{{ $serviceName }} = "/rpc/{{ $serviceName }}/"
+	{{ $serviceName }}PrefixPath = "/rpc/{{ $serviceName }}/"
 {{- end }}
 )
 
@@ -37,7 +37,7 @@ func Create{{ $serviceName }}Server(service {{ $serviceName }}) http.Handler {
 	server.routes = map[string]serviceMethodHandler{
 		{{- range $method := $service.Methods }}
 		{{- $methodName := $method.Name | ToPascal }}
-		PrefixPath{{ $serviceName }} + "{{ $methodName }}": server.create{{ $methodName }}MethodHandler(),
+		{{ $serviceName }}PrefixPath + "{{ $methodName }}": server.create{{ $methodName }}MethodHandler(),
 		{{- end }}
 	}
 

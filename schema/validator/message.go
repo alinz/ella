@@ -3,10 +3,45 @@ package validator
 import (
 	"sort"
 
+	"github.com/alinz/rpc.go/pkg/stringcase"
 	"github.com/alinz/rpc.go/schema/ast"
+	"github.com/alinz/rpc.go/schema/token"
 )
 
+func addStringFieldOption(key, value string) *ast.Constant {
+	return &ast.Constant{
+		Name: &ast.Identifier{
+			Name: key,
+			Token: &token.Token{
+				Kind: token.Identifier,
+				Val:  key,
+			},
+		},
+		Value: &ast.ValueString{
+			Token: &token.Token{
+				Kind: token.Value,
+				Val:  value,
+			},
+			Content: value,
+		},
+	}
+}
+
 func validateMessage(message *ast.Message, messagesMap map[string]*ast.Message, enumsMap map[string]*ast.Enum) error {
+	for _, field := range message.Fields {
+		defineJson := false
+		for _, option := range field.Options {
+			if option.Name.Name == "json" {
+				defineJson = true
+				break
+			}
+		}
+
+		if !defineJson {
+			field.Options = append(field.Options, addStringFieldOption("json", stringcase.ToSnake(field.Name.Name)))
+		}
+	}
+
 	return nil
 }
 

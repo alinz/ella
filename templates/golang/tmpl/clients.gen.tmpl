@@ -24,7 +24,7 @@ func Create{{ $serviceName }}Client(host string, client *http.Client) {{ $servic
 {{- if $isStream }}
 
 func (s *{{ $serviceNameImpl }}Client) {{ $methodName }}({{ $method.Args | MethodArgs }}) ({{ $method.Returns | MethodReturnsIgnoreName }}) {
-	url := path.Join(s.host, "/rpc/{{ $serviceName }}/{{ $methodName }}")
+	url := path.Join(s.host, {{ $serviceName }}PrefixPath, "{{ $methodName }}")
 
 	IN := {{ $method.Args | MethodArgsStructClient }}
 
@@ -49,7 +49,7 @@ func (s *{{ $serviceNameImpl }}Client) {{ $methodName }}({{ $method.Args | Metho
 {{- else }}
 
 func (s *{{ $serviceNameImpl }}Client) {{ $methodName }}({{ $method.Args | MethodArgs }}) ({{ $method.Returns | MethodReturnsIgnoreName }}) {
-	url, err := urlPathJoin(s.host, "/rpc/{{ $serviceName }}/{{ $methodName }}")
+	url, err := urlPathJoin(s.host, {{ $serviceName }}PrefixPath, "{{ $methodName }}")
 	if err != nil {
 		return
 	}
