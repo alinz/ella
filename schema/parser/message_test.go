@@ -8,13 +8,13 @@ func TestMessageParser(t *testing.T) {
 	runTests(t, TestCases{
 		{
 			Input: `message A {
-				value: map<String, String> {
+				value: Map<String, String> {
 					json = "hello's world"
 				}
 			}`,
 			Output: `
 message A {
-	value: map<String, String> {
+	value: Map<String, String> {
 		json = "hello's world"
 	}
 }			

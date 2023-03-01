@@ -16,7 +16,7 @@ func (p *Parser) parseType() (typ ast.Type, err error) {
 	switch p.nextToken.Kind {
 	case token.Type:
 		switch p.nextToken.Val {
-		case "map":
+		case "Map":
 			return p.parseMapType()
 		case "Int8", "Int16", "Int32", "Int64":
 			typ = &ast.TypeInt{
@@ -71,8 +71,8 @@ func (p *Parser) parseType() (typ ast.Type, err error) {
 func (p *Parser) parseMapType() (typ *ast.TypeMap, err error) {
 	typ = &ast.TypeMap{}
 
-	if p.nextToken.Kind != token.Type || p.nextToken.Val != "map" {
-		return nil, fmt.Errorf("expected map keyword but got %s", p.nextToken.Val)
+	if p.nextToken.Kind != token.Type || p.nextToken.Val != "Map" {
+		return nil, fmt.Errorf("expected Map keyword but got %s", p.nextToken.Val)
 	}
 
 	typ.Token = p.nextToken
