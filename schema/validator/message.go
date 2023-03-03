@@ -3,9 +3,9 @@ package validator
 import (
 	"sort"
 
-	"github.com/alinz/rpc.go/pkg/stringcase"
-	"github.com/alinz/rpc.go/schema/ast"
-	"github.com/alinz/rpc.go/schema/token"
+	"github.com/alinz/ella.to/pkg/stringcase"
+	"github.com/alinz/ella.to/schema/ast"
+	"github.com/alinz/ella.to/schema/token"
 )
 
 func addStringFieldOption(key, value string) *ast.Constant {

@@ -1,7 +1,7 @@
 package ast
 
 import (
-	"github.com/alinz/rpc.go/schema/token"
+	"github.com/alinz/ella.to/schema/token"
 )
 
 type Node interface {

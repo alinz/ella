@@ -1,8 +1,8 @@
 package golang
 
 import (
-	"github.com/alinz/rpc.go/schema/ast"
-	"github.com/alinz/rpc.go/transform"
+	"github.com/alinz/ella.to/schema/ast"
+	"github.com/alinz/ella.to/transform"
 )
 
 func Package(name string) transform.Func {

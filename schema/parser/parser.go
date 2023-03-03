@@ -3,9 +3,9 @@ package parser
 import (
 	"fmt"
 
-	"github.com/alinz/rpc.go/schema/ast"
-	"github.com/alinz/rpc.go/schema/scanner"
-	"github.com/alinz/rpc.go/schema/token"
+	"github.com/alinz/ella.to/schema/ast"
+	"github.com/alinz/ella.to/schema/scanner"
+	"github.com/alinz/ella.to/schema/token"
 )
 
 type Parser struct {

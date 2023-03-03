@@ -12,9 +12,9 @@ import (
 
 	"github.com/urfave/cli/v2"
 
-	"github.com/alinz/rpc.go/schema/parser"
-	"github.com/alinz/rpc.go/schema/validator"
-	"github.com/alinz/rpc.go/templates/golang"
+	"github.com/alinz/ella.to/schema/parser"
+	"github.com/alinz/ella.to/schema/validator"
+	"github.com/alinz/ella.to/templates/golang"
 )
 
 func fmtCmd() *cli.Command {
@@ -61,12 +61,12 @@ func fmtCmd() *cli.Command {
 	}
 }
 
-func genCmd() *cli.Command {
+func rpcCmd() *cli.Command {
 	var outDir string
 	var schemaDir string
 
 	return &cli.Command{
-		Name:  "gen",
+		Name:  "rpc",
 		Usage: "generate rpc client and server",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
@@ -163,7 +163,7 @@ func genCmd() *cli.Command {
 func main() {
 	app := &cli.App{
 		Commands: []*cli.Command{
-			genCmd(),
+			rpcCmd(),
 			fmtCmd(),
 		},
 	}

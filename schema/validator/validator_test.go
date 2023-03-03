@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/alinz/rpc.go/schema/parser"
-	"github.com/alinz/rpc.go/schema/validator"
+	"github.com/alinz/ella.to/schema/parser"
+	"github.com/alinz/ella.to/schema/validator"
 )
 
 type TestCase struct {

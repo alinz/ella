@@ -3,7 +3,7 @@ package validator
 import (
 	"fmt"
 
-	"github.com/alinz/rpc.go/schema/ast"
+	"github.com/alinz/ella.to/schema/ast"
 )
 
 func Validate(program *ast.Program) error {

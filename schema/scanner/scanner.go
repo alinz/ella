@@ -3,7 +3,7 @@ package scanner
 import (
 	"unicode"
 
-	"github.com/alinz/rpc.go/schema/token"
+	"github.com/alinz/ella.to/schema/token"
 )
 
 func Lex(l *Lexer) State {

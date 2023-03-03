@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/alinz/rpc.go/schema/ast"
-	"github.com/alinz/rpc.go/schema/token"
+	"github.com/alinz/ella.to/schema/ast"
+	"github.com/alinz/ella.to/schema/token"
 )
 
 // T -> map < key , T >

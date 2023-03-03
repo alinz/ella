@@ -3,7 +3,7 @@ package ast
 import (
 	"strings"
 
-	"github.com/alinz/rpc.go/schema/token"
+	"github.com/alinz/ella.to/schema/token"
 )
 
 type Type interface {

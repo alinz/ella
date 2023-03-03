@@ -8,8 +8,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/alinz/rpc.go/pkg/stringcase"
-	"github.com/alinz/rpc.go/schema/ast"
+	"github.com/alinz/ella.to/pkg/stringcase"
+	"github.com/alinz/ella.to/schema/ast"
 )
 
 //go:embed tmpl/*.tmpl
@@ -527,7 +527,7 @@ func parseFieldOptions(opts []*ast.Constant) string {
 	json, ok := mapper["json"]
 	if ok {
 		sb.WriteString(`json:"`)
-		sb.WriteString(json)
+		sb.WriteString(strings.ReplaceAll(json, "\"", ""))
 		sb.WriteString(`"`)
 	}
 
@@ -537,7 +537,7 @@ func parseFieldOptions(opts []*ast.Constant) string {
 			sb.WriteString(` `)
 		}
 		sb.WriteString(`yaml:"`)
-		sb.WriteString(yaml)
+		sb.WriteString(strings.ReplaceAll(yaml, "\"", ""))
 		sb.WriteString(`"`)
 	}
 

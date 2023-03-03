@@ -1,4 +1,4 @@
-module github.com/alinz/rpc.go
+module github.com/alinz/ella.to
 
 go 1.19
 

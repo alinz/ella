@@ -1,17 +1,17 @@
-rpc=0.0.1
+ella="0.0.1"
 
-enum Flag Int32 { 
+enum Flag int32 { 
   NoName = 1 
   WithName 
 }
 
 message User { 
-  ID: String {
+  ID: string {
     json = id
   }
-  Name: String
+  Name: string
   Flag: Flag {
     json = flag
   }
-  Msg: []String
+  Msg: []string
 }

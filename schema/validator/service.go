@@ -3,7 +3,7 @@ package validator
 import (
 	"sort"
 
-	"github.com/alinz/rpc.go/schema/ast"
+	"github.com/alinz/ella.to/schema/ast"
 )
 
 func validateService(service *ast.Service, messagesMap map[string]*ast.Message, enumsMap map[string]*ast.Enum) error {

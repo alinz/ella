@@ -1,4 +1,4 @@
-constants
-enums
-messages
-services
+constants/rpc.gen.go
+enums/rpc.gen.go
+messages/rpc.gen.go
+services/rpc.gen.go

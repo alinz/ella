@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/alinz/rpc.go/schema/ast"
+	"github.com/alinz/ella.to/schema/ast"
 )
 
 const (
