@@ -9,13 +9,14 @@ import (
 
 func (p *Parser) parseMessage() (message *ast.Message, err error) {
 	if p.nextToken.Kind != token.Message {
-		return nil, fmt.Errorf("expected message keyword")
+		return nil, fmt.Errorf("expected message token but got %s", p.nextToken.Kind)
 	}
 
 	p.scanToken() // skip message
 
-	if p.nextToken.Kind != token.Identifier {
-		return nil, fmt.Errorf("expected a name for message but got %s", p.nextToken.Val)
+	err = mustBeNameFor(p.nextToken, "message", true)
+	if err != nil {
+		return nil, err
 	}
 
 	message = &ast.Message{
@@ -27,19 +28,26 @@ func (p *Parser) parseMessage() (message *ast.Message, err error) {
 
 	p.scanToken() // skip name
 
-	if p.nextToken.Kind != token.OpenCurl {
-		return nil, fmt.Errorf("expected { for message but got %s", p.nextToken.Val)
+	if p.nextToken.Kind != token.OpenCurly {
+		return nil, fmt.Errorf("expected { for message's body start but got %s", p.nextToken.Val)
 	}
 
 	p.scanToken() // skip {
 
-	for p.nextToken.Kind != token.CloseCurl {
+	for p.nextToken.Kind != token.CloseCurly {
+		if p.nextToken.Kind == token.Dot { // check for extends
+			p.scanToken() // skip first .
+			if p.nextToken.Kind != token.Dot {
+				return nil, fmt.Errorf("expect .. after the first . in message %s", message.Name.Name)
+			}
+			p.scanToken() // skip second .
+			if p.nextToken.Kind != token.Dot {
+				return nil, fmt.Errorf("expect . after .. in message %s", message.Name.Name)
+			}
+			p.scanToken() // skip third .
 
-		if p.nextToken.Kind == token.Ellipsis {
-			p.scanToken()
-
-			if p.nextToken.Kind != token.Type {
-				return nil, fmt.Errorf("expected a name for extends but got %s", p.nextToken.Val)
+			if p.nextToken.Kind != token.Word || !isIdentifier(p.nextToken.Val, true) {
+				return nil, fmt.Errorf("expected a valid name for extends but got %s", p.nextToken.Val)
 			}
 
 			message.Extends = append(message.Extends, &ast.TypeCustom{
@@ -47,7 +55,7 @@ func (p *Parser) parseMessage() (message *ast.Message, err error) {
 				Name:  p.nextToken.Val,
 			})
 
-			p.scanToken()
+			p.scanToken() // skip name
 
 			continue
 		}
@@ -66,8 +74,8 @@ func (p *Parser) parseMessage() (message *ast.Message, err error) {
 }
 
 func (p *Parser) parseField() (field *ast.Field, err error) {
-	if p.nextToken.Kind != token.Identifier {
-		return nil, fmt.Errorf("expected a name for field but got %s", p.nextToken.Val)
+	if p.nextToken.Kind != token.Word || !isIdentifier(p.nextToken.Val, true) {
+		return nil, fmt.Errorf("expected a valid name for field name but got %s", p.nextToken.Val)
 	}
 
 	field = &ast.Field{
@@ -81,7 +89,7 @@ func (p *Parser) parseField() (field *ast.Field, err error) {
 	p.scanToken() // skip name
 
 	if p.nextToken.Kind != token.Colon {
-		return nil, fmt.Errorf("expected : for field but got %s", p.nextToken.Val)
+		return nil, fmt.Errorf("expected : after the field's name but got %s", p.nextToken.Val)
 	}
 
 	p.scanToken() // skip :
@@ -91,7 +99,7 @@ func (p *Parser) parseField() (field *ast.Field, err error) {
 		return nil, err
 	}
 
-	if p.nextToken.Kind == token.OpenCurl {
+	if p.nextToken.Kind == token.OpenCurly {
 		field.Options, err = p.parseFieldOptions()
 		if err != nil {
 			return nil, err
@@ -102,15 +110,15 @@ func (p *Parser) parseField() (field *ast.Field, err error) {
 }
 
 func (p *Parser) parseFieldOptions() ([]*ast.Constant, error) {
-	if p.nextToken.Kind != token.OpenCurl {
-		return nil, fmt.Errorf("expected { for field options but got %s", p.nextToken.Val)
+	if p.nextToken.Kind != token.OpenCurly {
+		return nil, fmt.Errorf("expected { for defining field options but got %s", p.nextToken.Val)
 	}
 
 	p.scanToken() // skip {
 
 	options := make([]*ast.Constant, 0)
 
-	for p.nextToken.Kind != token.CloseCurl {
+	for p.nextToken.Kind != token.CloseCurly {
 		option, err := p.parseConstant(true)
 		if err != nil {
 			return nil, err

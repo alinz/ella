@@ -28,8 +28,9 @@ func (p *Parser) parseEnum() (*ast.Enum, error) {
 
 	p.scanToken() // skip 'enum'
 
-	if p.nextToken.Kind != token.Identifier {
-		return nil, fmt.Errorf("expected identifier but got %s", p.nextToken.Kind)
+	err = mustBeNameFor(p.nextToken, "enum", true)
+	if err != nil {
+		return nil, err
 	}
 
 	enum := &ast.Enum{}
@@ -41,10 +42,6 @@ func (p *Parser) parseEnum() (*ast.Enum, error) {
 
 	p.scanToken()
 
-	if p.nextToken.Kind != token.Type {
-		return nil, fmt.Errorf("expected type but got %s", p.nextToken.Kind)
-	}
-
 	enum.Type, err = parseEnumType(p.nextToken)
 	if err != nil {
 		return nil, err
@@ -52,13 +49,13 @@ func (p *Parser) parseEnum() (*ast.Enum, error) {
 
 	p.scanToken()
 
-	if p.nextToken.Kind != token.OpenCurl {
-		return nil, fmt.Errorf("expected '{' but got %s", p.nextToken.Kind)
+	if p.nextToken.Kind != token.OpenCurly {
+		return nil, fmt.Errorf("expected '{' for enum's body start but got %s", p.nextToken.Kind)
 	}
 
 	p.scanToken() // skip '{'
 
-	for p.nextToken.Kind != token.CloseCurl {
+	for p.nextToken.Kind != token.CloseCurly {
 		constant, err := p.parseConstant(true)
 		if err != nil {
 			return nil, err
@@ -71,7 +68,7 @@ func (p *Parser) parseEnum() (*ast.Enum, error) {
 		if _, ok := enum.Type.(*ast.TypeUint); ok {
 			if v, ok := constant.Value.(*ast.ValueInt); ok {
 				if v.Content < 0 {
-					return nil, fmt.Errorf("enum type unsiged int value cannot be negative")
+					return nil, fmt.Errorf("enum %s type is unsiged int and one of its value is negative", enum.Name.Name)
 				}
 
 				constant.Value = &ast.ValueUint{
@@ -92,47 +89,47 @@ func (p *Parser) parseEnum() (*ast.Enum, error) {
 
 func parseEnumType(token *token.Token) (ast.Type, error) {
 	switch token.Val {
-	case "Int8":
+	case "int8":
 		return &ast.TypeInt{
 			Token: token,
 			Size:  8,
 		}, nil
-	case "Int16":
+	case "int16":
 		return &ast.TypeInt{
 			Token: token,
 			Size:  16,
 		}, nil
-	case "Int32":
+	case "int32":
 		return &ast.TypeInt{
 			Token: token,
 			Size:  32,
 		}, nil
-	case "Int64":
+	case "int64":
 		return &ast.TypeInt{
 			Token: token,
 			Size:  64,
 		}, nil
-	case "Uint8":
+	case "uint8":
 		return &ast.TypeUint{
 			Token: token,
 			Size:  8,
 		}, nil
-	case "Uint16":
+	case "uint16":
 		return &ast.TypeUint{
 			Token: token,
 			Size:  16,
 		}, nil
-	case "Uint32":
+	case "uint32":
 		return &ast.TypeUint{
 			Token: token,
 			Size:  32,
 		}, nil
-	case "Uint64":
+	case "uint64":
 		return &ast.TypeUint{
 			Token: token,
 			Size:  64,
 		}, nil
 	default:
-		return nil, fmt.Errorf("only Int8, Int16, Int32, Int64, Uint8, Uint16, Uint32 and Uint64 are supported for enum type but got %s", token.Val)
+		return nil, fmt.Errorf("only int8, int16, int32, int64, uint8, uint16, uint32 and uint64 are supported for enum type but got %s", token.Val)
 	}
 }

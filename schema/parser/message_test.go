@@ -8,13 +8,23 @@ func TestMessageParser(t *testing.T) {
 	runTests(t, TestCases{
 		{
 			Input: `message A {
-				value: Map<String, String> {
+				Value: map<string, string> # hello world
+			}`,
+			Output: `
+message A {
+	Value: map<string, string>
+}			
+			`,
+		},
+		{
+			Input: `message A {
+				Value: map<string, string> {
 					json = "hello's world"
 				}
 			}`,
 			Output: `
 message A {
-	value: Map<String, String> {
+	Value: map<string, string> {
 		json = "hello's world"
 	}
 }			
@@ -22,13 +32,13 @@ message A {
 		},
 		{
 			Input: `message A {
-				value: Int64 {
+				Value: int64 {
 					json = "hello's world"
 				}
 			}`,
 			Output: `
 message A {
-	value: Int64 {
+	Value: int64 {
 		json = "hello's world"
 	}
 }			
@@ -36,13 +46,13 @@ message A {
 		},
 		{
 			Input: `message A {
-				value: Int64 {
+				Value: int64 {
 					json = 'hello world'
 				}
 			}`,
 			Output: `
 message A {
-	value: Int64 {
+	Value: int64 {
 		json = "hello world"
 	}
 }			
@@ -50,13 +60,13 @@ message A {
 		},
 		{
 			Input: `message A {
-				value: Int64 {
+				Value: int64 {
 					json = "hello world"
 				}
 			}`,
 			Output: `
 message A {
-	value: Int64 {
+	Value: int64 {
 		json = "hello world"
 	}
 }			
@@ -64,27 +74,27 @@ message A {
 		},
 		{
 			Input: `message A {
-				value: Int64 {
+				Value: int64 {
 					json = "value"
 				}
 			}`,
 			Output: `
 message A {
-	value: Int64 {
-		json = value
+	Value: int64 {
+		json = "value"
 	}
 }			
 			`,
 		},
 		{
 			Input: `message B {
-				value: int64
+				Value: int64
 				...A
 			}`,
 			Output: `
 message B {
 	...A
-	value: int64
+	Value: int64
 }`,
 		},
 		{
@@ -98,11 +108,11 @@ message B {
 		},
 		{
 			Input: `message B {
-				value: Int32
+				Value: int32
 			}`,
 			Output: `
 message B {
-	value: Int32
+	Value: int32
 }`,
 		},
 		{

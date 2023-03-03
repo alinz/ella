@@ -13,13 +13,13 @@ func addStringFieldOption(key, value string) *ast.Constant {
 		Name: &ast.Identifier{
 			Name: key,
 			Token: &token.Token{
-				Kind: token.Identifier,
+				Kind: token.Word,
 				Val:  key,
 			},
 		},
 		Value: &ast.ValueString{
 			Token: &token.Token{
-				Kind: token.Value,
+				Kind: token.ConstantString,
 				Val:  value,
 			},
 			Content: value,

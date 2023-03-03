@@ -1,4 +1,4 @@
-package lexer
+package scanner
 
 import (
 	"fmt"
@@ -15,12 +15,6 @@ type Lexer struct {
 	start   int
 	pos     int
 	width   int
-
-	Counter int // this is a hack to get the argument comma position
-	// detected in the lexer, for example (a: map<string, string>, b:int)
-	// there is no way for us to detect the comma position whether it's inside
-	// map or ouside. This counter increment when we see < and decrement when we
-	// see >. When we see , and counter is 0, we know that it's a comma outside
 }
 
 func (l *Lexer) Current() string {
@@ -53,31 +47,6 @@ func (l *Lexer) Peek() rune {
 	r := l.Next()
 	l.Backup()
 	return r
-}
-
-// PeekN is a function that returns the next runes in the input
-// based on given number without advancing the position
-// returns two values, the runes and the number of iteration <= n
-func (l *Lexer) PeekN(n int) (string, int) {
-	sb := strings.Builder{}
-
-	total := 0
-	i := 0
-
-	for i < n {
-		value := l.Next()
-		if value == 0 {
-			break
-		}
-
-		total += l.width
-		sb.WriteRune(value)
-		i++
-	}
-
-	l.pos -= total
-
-	return sb.String(), i
 }
 
 func (l *Lexer) Backup() {
@@ -113,21 +82,6 @@ func (l *Lexer) AcceptRunUntil(invalid string) {
 	l.Backup()
 }
 
-func (l *Lexer) PeekRunUntil(invalid string) (value string) {
-	pos := l.pos
-	start := l.start
-	width := l.width
-
-	l.AcceptRunUntil(invalid)
-	value = l.Current()
-
-	l.pos = pos
-	l.start = start
-	l.width = width
-
-	return value
-}
-
 func (l *Lexer) Errorf(format string, args ...interface{}) {
 	l.emitter.Emit(&token.Token{
 		Kind:  token.Error,
@@ -137,15 +91,15 @@ func (l *Lexer) Errorf(format string, args ...interface{}) {
 	})
 }
 
-func (l *Lexer) Run(state StateFn) {
+func (l *Lexer) Run(state State) {
 	for state != nil {
 		state = state(l)
 	}
 }
 
-type StateFn func(*Lexer) StateFn
+type State func(*Lexer) State
 
-func Start(input string, emitter token.Emitter, inital StateFn) {
+func Start(input string, emitter token.Emitter, inital State) {
 	lexer := &Lexer{
 		emitter: emitter,
 		input:   input,
@@ -157,10 +111,5 @@ func Start(input string, emitter token.Emitter, inital StateFn) {
 
 func IgnoreWhiteSpace(l *Lexer) {
 	l.AcceptRun(" \t\n")
-	l.Ignore()
-}
-
-func IgnoreSpaceTabs(l *Lexer) {
-	l.AcceptRun(" \t")
 	l.Ignore()
 }

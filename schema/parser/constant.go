@@ -14,8 +14,12 @@ import (
 func (p *Parser) parseConstant(permitEmpty bool) (*ast.Constant, error) {
 	constant := &ast.Constant{}
 
-	if p.nextToken.Kind != token.Identifier {
-		return nil, fmt.Errorf("expected identifier but got %s", p.nextToken.Kind)
+	if p.nextToken.Kind != token.Word {
+		return nil, fmt.Errorf("expected a name for constant but got %s", p.nextToken.Kind)
+	}
+
+	if !isConstantName(p.nextToken.Val) {
+		return nil, fmt.Errorf("invalid constant name %s", p.nextToken.Val)
 	}
 
 	constant.Name = &ast.Identifier{
@@ -28,13 +32,13 @@ func (p *Parser) parseConstant(permitEmpty bool) (*ast.Constant, error) {
 	if permitEmpty && p.nextToken.Kind != token.Assign {
 		return constant, nil
 	} else if p.nextToken.Kind != token.Assign {
-		return nil, fmt.Errorf("expected '=' but got %s", p.nextToken.Kind)
+		return nil, fmt.Errorf("expected '=' after constant name but got %s", p.nextToken.Kind)
 	}
 
 	p.scanToken() // skip '='
 
-	if p.nextToken.Kind != token.Value {
-		return nil, fmt.Errorf("expected value but got %s", p.nextToken.Kind)
+	if !p.nextToken.OneOf(token.ConstantNumber, token.ConstantString, token.Word) {
+		return nil, fmt.Errorf("expected value for constant but got %s", p.nextToken.Kind)
 	}
 
 	constant.Value = ast.ParseValue(p.nextToken)
@@ -42,4 +46,8 @@ func (p *Parser) parseConstant(permitEmpty bool) (*ast.Constant, error) {
 	p.scanToken()
 
 	return constant, nil
+}
+
+func isConstantName(word string) bool {
+	return isIdentifier(word, false) || isIdentifier(word, true)
 }

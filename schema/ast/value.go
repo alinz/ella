@@ -21,18 +21,14 @@ func (v ValueString) valueNode() {}
 func (v *ValueString) TokenLiteral() string {
 	var sb strings.Builder
 
-	if strings.Contains(v.Token.Val, ` `) {
-		if strings.Contains(v.Token.Val, `"`) {
-			sb.WriteString(`'`)
-			sb.WriteString(v.Token.Val)
-			sb.WriteString(`'`)
-		} else {
-			sb.WriteString(`"`)
-			sb.WriteString(v.Token.Val)
-			sb.WriteString(`"`)
-		}
-	} else {
+	if strings.Contains(v.Token.Val, `"`) {
+		sb.WriteString(`'`)
 		sb.WriteString(v.Token.Val)
+		sb.WriteString(`'`)
+	} else {
+		sb.WriteString(`"`)
+		sb.WriteString(v.Token.Val)
+		sb.WriteString(`"`)
 	}
 
 	return sb.String()

@@ -1,8 +1,10 @@
 package parser
 
 import (
+	"fmt"
+
 	"github.com/alinz/rpc.go/schema/ast"
-	"github.com/alinz/rpc.go/schema/lexer"
+	"github.com/alinz/rpc.go/schema/scanner"
 	"github.com/alinz/rpc.go/schema/token"
 )
 
@@ -16,8 +18,6 @@ func (p *Parser) scanToken() {
 	for {
 		p.nextToken = p.tokens.NextToken()
 		if p.nextToken.Kind == token.Comment {
-			// the next token must be a value
-			p.tokens.NextToken()
 			continue
 		}
 		break
@@ -40,7 +40,7 @@ func (p *Parser) Parse() (*ast.Program, error) {
 			node, err = p.parseMessage()
 		case token.Service:
 			node, err = p.parseService()
-		case token.Identifier:
+		case token.Word:
 			node, err = p.parseConstant(false)
 		}
 
@@ -55,8 +55,33 @@ func (p *Parser) Parse() (*ast.Program, error) {
 
 func New(input string) *Parser {
 	tokenEmitter := token.NewEmitterIterator()
-	go lexer.Start(input, tokenEmitter, lexer.Stmt(nil))
+	go scanner.Start(input, tokenEmitter, scanner.Lex)
 	parser := &Parser{tokens: tokenEmitter}
 	parser.scanToken()
 	return parser
+}
+
+func isIdentifier(word string, isFirstCharCapital bool) bool {
+	if word == "" {
+		return false
+	}
+	if isFirstCharCapital && !(word[0] >= 'A' && word[0] <= 'Z') {
+		return false
+	}
+	if !isFirstCharCapital && !(word[0] >= 'a' && word[0] <= 'z') {
+		return false
+	}
+	return true
+}
+
+func mustBeNameFor(tok *token.Token, name string, firstChatCaptial bool) error {
+	if tok.Kind != token.Word {
+		return fmt.Errorf("expected a name for %s but got %s", name, tok.Kind)
+	}
+
+	if !(isIdentifier(tok.Val, firstChatCaptial)) {
+		return fmt.Errorf("invalid %s name %s", name, tok.Val)
+	}
+
+	return nil
 }

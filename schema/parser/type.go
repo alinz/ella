@@ -14,65 +14,67 @@ import (
 
 func (p *Parser) parseType() (typ ast.Type, err error) {
 	switch p.nextToken.Kind {
-	case token.Type:
-		switch p.nextToken.Val {
-		case "Map":
-			return p.parseMapType()
-		case "Int8", "Int16", "Int32", "Int64":
-			typ = &ast.TypeInt{
-				Token: p.nextToken,
-				Size:  extractBits("Int", p.nextToken.Val),
-			}
-		case "Uint8", "Uint16", "Uint32", "Uint64":
-			typ = &ast.TypeUint{
-				Token: p.nextToken,
-				Size:  extractBits("Uint", p.nextToken.Val),
-			}
-		case "Float32", "Float64":
-			typ = &ast.TypeFloat{
-				Token: p.nextToken,
-				Size:  extractBits("Float", p.nextToken.Val),
-			}
-		case "String":
-			typ = &ast.TypeString{
-				Token: p.nextToken,
-			}
-		case "Bool":
-			typ = &ast.TypeBool{
-				Token: p.nextToken,
-			}
-		case "Byte":
-			typ = &ast.TypeByte{
-				Token: p.nextToken,
-			}
-		case "Timestamp":
-			typ = &ast.TypeTimestamp{
-				Token: p.nextToken,
-			}
-		case "Any":
-			typ = &ast.TypeAny{
-				Token: p.nextToken,
-			}
-		default:
-			typ = &ast.TypeCustom{
-				Token: p.nextToken,
-				Name:  p.nextToken.Val,
-			}
-		}
-		p.scanToken()
-		return typ, nil
-	case token.OpenBracket:
+	case token.Map:
+		return p.parseMapType()
+	case token.OpenSquare:
 		return p.parseArrayType()
+	case token.Int8, token.Int16, token.Int32, token.Int64:
+		typ = &ast.TypeInt{
+			Token: p.nextToken,
+			Size:  extractBits("int", p.nextToken.Val),
+		}
+	case token.Uint8, token.Uint16, token.Uint32, token.Uint64:
+		typ = &ast.TypeUint{
+			Token: p.nextToken,
+			Size:  extractBits("uint", p.nextToken.Val),
+		}
+	case token.Float32, token.Float64:
+		typ = &ast.TypeFloat{
+			Token: p.nextToken,
+			Size:  extractBits("float", p.nextToken.Val),
+		}
+	case token.String:
+		typ = &ast.TypeString{
+			Token: p.nextToken,
+		}
+	case token.Bool:
+		typ = &ast.TypeBool{
+			Token: p.nextToken,
+		}
+	case token.Byte:
+		typ = &ast.TypeByte{
+			Token: p.nextToken,
+		}
+	case token.Timestamp:
+		typ = &ast.TypeTimestamp{
+			Token: p.nextToken,
+		}
+	case token.Any:
+		typ = &ast.TypeAny{
+			Token: p.nextToken,
+		}
+	case token.Word:
+		if !isIdentifier(p.nextToken.Val, true) {
+			return nil, fmt.Errorf("expected a valid name for custom type but got %s", p.nextToken.Val)
+		}
+		typ = &ast.TypeCustom{
+			Token: p.nextToken,
+			Name:  p.nextToken.Val,
+		}
+	default:
+		return nil, fmt.Errorf("expected type but got %s", p.nextToken.Val)
 	}
 
-	return nil, fmt.Errorf("expected type but got %s", p.nextToken.Val)
+	p.scanToken() // skip type
+
+	return typ, nil
 }
 
 func (p *Parser) parseMapType() (typ *ast.TypeMap, err error) {
 	typ = &ast.TypeMap{}
 
-	if p.nextToken.Kind != token.Type || p.nextToken.Val != "Map" {
-		return nil, fmt.Errorf("expected Map keyword but got %s", p.nextToken.Val)
+	if p.nextToken.Kind != token.Map || p.nextToken.Val != "map" {
+		return nil, fmt.Errorf("expected map keyword but got %s", p.nextToken.Val)
 	}
 
 	typ.Token = p.nextToken
@@ -80,7 +82,7 @@ func (p *Parser) parseMapType() (typ *ast.TypeMap, err error) {
 	p.scanToken() // skip map
 
 	if p.nextToken.Kind != token.OpenAngle {
-		return nil, fmt.Errorf("expected < but got %s", p.nextToken.Val)
+		return nil, fmt.Errorf("expected < after map keyword but got %s", p.nextToken.Val)
 	}
 
 	p.scanToken() // skip <
@@ -91,7 +93,7 @@ func (p *Parser) parseMapType() (typ *ast.TypeMap, err error) {
 	}
 
 	if p.nextToken.Kind != token.Comma {
-		return nil, fmt.Errorf("expected , but got %s", p.nextToken.Val)
+		return nil, fmt.Errorf("expected , after defining key type for map but got %s", p.nextToken.Val)
 	}
 
 	p.scanToken() // skip ,
@@ -102,7 +104,7 @@ func (p *Parser) parseMapType() (typ *ast.TypeMap, err error) {
 	}
 
 	if p.nextToken.Kind != token.CloseAngle {
-		return nil, fmt.Errorf("expected > but got %s", p.nextToken.Val)
+		return nil, fmt.Errorf("expected > after defining key and value types for map but got %s", p.nextToken.Val)
 	}
 
 	p.scanToken() // skip >
@@ -113,16 +115,16 @@ func (p *Parser) parseMapType() (typ *ast.TypeMap, err error) {
 func (p *Parser) parseArrayType() (typ *ast.TypeArray, err error) {
 	typ = &ast.TypeArray{}
 
-	if p.nextToken.Kind != token.OpenBracket {
-		return nil, fmt.Errorf("expected [ but got %s", p.nextToken.Val)
+	if p.nextToken.Kind != token.OpenSquare {
+		return nil, fmt.Errorf("expected [ for defining array but got %s", p.nextToken.Val)
 	}
 
 	typ.Token = p.nextToken
 
 	p.scanToken() // skip [
 
-	if p.nextToken.Kind != token.CloseBracket {
-		return nil, fmt.Errorf("expected ] but got %s", p.nextToken.Val)
+	if p.nextToken.Kind != token.CloseSquare {
+		return nil, fmt.Errorf("expected ] for defining array but got %s", p.nextToken.Val)
 	}
 
 	p.scanToken() // skip ]
@@ -136,39 +138,37 @@ func (p *Parser) parseArrayType() (typ *ast.TypeArray, err error) {
 }
 
 func (p *Parser) parseKeyType() (typ ast.Type, err error) {
-	if p.nextToken.Kind != token.Type {
-		return nil, fmt.Errorf("expected a type but got %s", p.nextToken.Val)
-	}
+	p.nextToken.OneOf(token.Uint64)
 
 	switch p.nextToken.Val {
-	case "Int8", "Int16", "Int32", "Int64":
+	case "int8", "int16", "int32", "int64":
 		typ = &ast.TypeInt{
 			Token: p.nextToken,
-			Size:  extractBits("Int", p.nextToken.Val),
+			Size:  extractBits("int", p.nextToken.Val),
 		}
-	case "Uint8", "Uint16", "Uint32", "Uint64":
+	case "uint8", "uint16", "uint32", "uint64":
 		typ = &ast.TypeUint{
 			Token: p.nextToken,
-			Size:  extractBits("Uint", p.nextToken.Val),
+			Size:  extractBits("uint", p.nextToken.Val),
 		}
-	case "Float32", "Float64":
+	case "float32", "float64":
 		typ = &ast.TypeFloat{
 			Token: p.nextToken,
-			Size:  extractBits("Float", p.nextToken.Val),
+			Size:  extractBits("float", p.nextToken.Val),
 		}
-	case "String":
+	case "string":
 		typ = &ast.TypeString{
 			Token: p.nextToken,
 		}
-	case "Bool":
+	case "bool":
 		typ = &ast.TypeBool{
 			Token: p.nextToken,
 		}
-	case "Byte":
+	case "byte":
 		typ = &ast.TypeByte{
 			Token: p.nextToken,
 		}
-	case "Timestamp":
+	case "timestamp":
 		typ = &ast.TypeTimestamp{
 			Token: p.nextToken,
 		}

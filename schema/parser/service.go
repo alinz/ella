@@ -14,8 +14,9 @@ func (p *Parser) parseService() (*ast.Service, error) {
 
 	p.scanToken() // skip service keyword
 
-	if p.nextToken.Kind != token.Identifier {
-		return nil, fmt.Errorf("expected identifier but got %s", p.nextToken.Kind)
+	err := mustBeNameFor(p.nextToken, "service", true)
+	if err != nil {
+		return nil, err
 	}
 
 	service := &ast.Service{
@@ -27,13 +28,13 @@ func (p *Parser) parseService() (*ast.Service, error) {
 
 	p.scanToken() // skip service name
 
-	if p.nextToken.Kind != token.OpenCurl {
-		return nil, fmt.Errorf("expected { but got %s", p.nextToken.Kind)
+	if p.nextToken.Kind != token.OpenCurly {
+		return nil, fmt.Errorf("expected { for service's body start but got %s", p.nextToken.Val)
 	}
 
 	p.scanToken() // skip {
 
-	for p.nextToken.Kind != token.CloseCurl {
+	for p.nextToken.Kind != token.CloseCurly {
 		method, err := p.parseMethod()
 		if err != nil {
 			return nil, err
@@ -50,8 +51,9 @@ func (p *Parser) parseService() (*ast.Service, error) {
 func (p *Parser) parseMethod() (*ast.Method, error) {
 	var err error
 
-	if p.nextToken.Kind != token.Identifier {
-		return nil, fmt.Errorf("expected identifier but got %s", p.nextToken.Kind)
+	err = mustBeNameFor(p.nextToken, "method", true)
+	if err != nil {
+		return nil, err
 	}
 
 	method := &ast.Method{
@@ -67,7 +69,7 @@ func (p *Parser) parseMethod() (*ast.Method, error) {
 	p.scanToken() // skip method name
 
 	if p.nextToken.Kind != token.OpenParen {
-		return nil, fmt.Errorf("expected ( but got %s", p.nextToken.Kind)
+		return nil, fmt.Errorf("expected ( for starting defining method's arguments but got %s", p.nextToken.Val)
 	}
 
 	p.scanToken() // skip (
@@ -83,21 +85,24 @@ func (p *Parser) parseMethod() (*ast.Method, error) {
 
 	p.scanToken() // skip )
 
-	if p.nextToken.Kind == token.OpenCurl {
+	if p.nextToken.Kind == token.OpenCurly {
 		method.Options, err = p.parseMethodOptions()
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	if p.nextToken.Kind != token.Return {
+	if p.nextToken.Kind != token.Assign {
 		return method, nil
 	}
-
-	p.scanToken() // skip =>
+	p.scanToken() // skip =
+	if p.nextToken.Kind != token.CloseAngle {
+		return nil, fmt.Errorf("expected > after = for return keyword but got %s", p.nextToken.Kind)
+	}
+	p.scanToken() // skip >
 
 	if p.nextToken.Kind != token.OpenParen {
-		return nil, fmt.Errorf("expected ( for return args but got %s", p.nextToken.Kind)
+		return nil, fmt.Errorf("expected ( for starting defining method's return args but got %s", p.nextToken.Kind)
 	}
 
 	p.scanToken() // skip (
@@ -113,7 +118,7 @@ func (p *Parser) parseMethod() (*ast.Method, error) {
 
 	p.scanToken() // skip )
 
-	if p.nextToken.Kind == token.OpenCurl {
+	if p.nextToken.Kind == token.OpenCurly {
 		method.Options, err = p.parseMethodOptions()
 		if err != nil {
 			return nil, err
@@ -124,13 +129,13 @@ func (p *Parser) parseMethod() (*ast.Method, error) {
 }
 
 func (p *Parser) parseMethodOptions() (options []*ast.Constant, err error) {
-	if p.nextToken.Kind != token.OpenCurl {
-		return nil, fmt.Errorf("expected { but got %s", p.nextToken.Kind)
+	if p.nextToken.Kind != token.OpenCurly {
+		return nil, fmt.Errorf("expected { for starting defining method's options but got %s", p.nextToken.Kind)
 	}
 
 	p.scanToken() // skip {
 
-	for p.nextToken.Kind != token.CloseCurl {
+	for p.nextToken.Kind != token.CloseCurly {
 		option, err := p.parseConstant(true)
 		if err != nil {
 			return nil, err
@@ -145,8 +150,9 @@ func (p *Parser) parseMethodOptions() (options []*ast.Constant, err error) {
 }
 
 func (p *Parser) parseArg() (arg *ast.Arg, err error) {
-	if p.nextToken.Kind != token.Identifier {
-		return nil, fmt.Errorf("expected identifier but got %s", p.nextToken.Kind)
+	err = mustBeNameFor(p.nextToken, "arg", false)
+	if err != nil {
+		return nil, err
 	}
 
 	arg = &ast.Arg{
@@ -159,7 +165,7 @@ func (p *Parser) parseArg() (arg *ast.Arg, err error) {
 	p.scanToken() // skip arg name
 
 	if p.nextToken.Kind != token.Colon {
-		return nil, fmt.Errorf("expected : but got %s", p.nextToken.Kind)
+		return nil, fmt.Errorf("expected : after defining a name for argument but got %s", p.nextToken.Kind)
 	}
 
 	p.scanToken() // skip :
@@ -177,8 +183,9 @@ func (p *Parser) parseArg() (arg *ast.Arg, err error) {
 }
 
 func (p *Parser) parseReturn() (ret *ast.Return, err error) {
-	if p.nextToken.Kind != token.Identifier {
-		return nil, fmt.Errorf("expected identifier but got %s", p.nextToken.Kind)
+	err = mustBeNameFor(p.nextToken, "return arg", false)
+	if err != nil {
+		return nil, err
 	}
 
 	ret = &ast.Return{
@@ -191,7 +198,7 @@ func (p *Parser) parseReturn() (ret *ast.Return, err error) {
 	p.scanToken() // skip return name
 
 	if p.nextToken.Kind != token.Colon {
-		return nil, fmt.Errorf("expected : but got %s", p.nextToken.Kind)
+		return nil, fmt.Errorf("expected : after defining name for return arg but got %s", p.nextToken.Kind)
 	}
 
 	p.scanToken() // skip :
@@ -204,6 +211,10 @@ func (p *Parser) parseReturn() (ret *ast.Return, err error) {
 	ret.Type, err = p.parseType()
 	if err != nil {
 		return nil, err
+	}
+
+	if p.nextToken.Kind == token.Comma {
+		p.scanToken() // skip ,
 	}
 
 	return ret, nil

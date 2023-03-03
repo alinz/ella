@@ -8,23 +8,23 @@ import (
 )
 
 const (
-	rpcVersion = "0.0.1"
+	ellaVersion = `"0.0.1"`
 )
 
 func validateConstants(constantsMap map[string]*ast.Constant) ([]*ast.Constant, error) {
 	constants := make([]*ast.Constant, 0, len(constantsMap))
 
-	rpcConstant, ok := constantsMap["rpc"]
+	value, ok := constantsMap["ella"]
 	if !ok {
 		return nil, fmt.Errorf("rpc constant is not defined")
 	}
 
-	if rpcConstant.Value.TokenLiteral() != rpcVersion {
+	if value.Value.TokenLiteral() != ellaVersion {
 		return nil, fmt.Errorf("rpc version is not supported")
 	}
 
 	for _, constant := range constantsMap {
-		if constant.Name.Name == "rpc" {
+		if constant.Name.Name == "ella" {
 			continue
 		}
 
@@ -35,8 +35,8 @@ func validateConstants(constantsMap map[string]*ast.Constant) ([]*ast.Constant, 
 		return constants[i].Name.Name < constants[j].Name.Name
 	})
 
-	// add rpcConstant to the beginning of the list
-	constants = append([]*ast.Constant{rpcConstant}, constants...)
+	// add ellaVersion to the beginning of the list
+	constants = append([]*ast.Constant{value}, constants...)
 
 	return constants, nil
 }
