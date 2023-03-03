@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/alinz/ella.to/schema/ast"
 	"github.com/alinz/ella.to/schema/scanner"
@@ -9,6 +10,7 @@ import (
 )
 
 type Parser struct {
+	input     string
 	tokens    token.Iterator
 	nextToken *token.Token
 }
@@ -53,10 +55,31 @@ func (p *Parser) Parse() (*ast.Program, error) {
 	return program, nil
 }
 
+func (p *Parser) ShowContext(token *token.Token, lines int) string {
+	start := token.Start
+	end := token.End
+
+	for i := 0; i < lines; i++ {
+		if start > 0 {
+			start = strings.LastIndex(p.input[:start], "\n") - 1
+		}
+
+		if end < len(p.input)-1 {
+			end = strings.Index(p.input[end+1:], "\n") + end + 1
+			if end == -1 {
+				end = len(p.input)
+			}
+		}
+	}
+
+	return p.input[start:end]
+
+}
+
 func New(input string) *Parser {
 	tokenEmitter := token.NewEmitterIterator()
 	go scanner.Start(input, tokenEmitter, scanner.Lex)
-	parser := &Parser{tokens: tokenEmitter}
+	parser := &Parser{input: input, tokens: tokenEmitter}
 	parser.scanToken()
 	return parser
 }

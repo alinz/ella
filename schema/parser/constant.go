@@ -15,7 +15,7 @@ func (p *Parser) parseConstant(permitEmpty bool) (*ast.Constant, error) {
 	constant := &ast.Constant{}
 
 	if p.nextToken.Kind != token.Word {
-		return nil, fmt.Errorf("expected a name for constant but got %s", p.nextToken.Kind)
+		return nil, fmt.Errorf("expected a name for constant but got %s\n%s", p.nextToken.Kind, p.ShowContext(p.nextToken, 5))
 	}
 
 	if !isConstantName(p.nextToken.Val) {
