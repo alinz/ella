@@ -1,9 +1,10 @@
-module github.com/alinz/ella.to
+module ella.to
 
 go 1.19
 
 require (
 	github.com/stretchr/testify v1.8.1
+	github.com/traefik/yaegi v0.15.0
 	github.com/urfave/cli/v2 v2.24.4
 )
 

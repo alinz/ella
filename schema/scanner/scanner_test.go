@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/alinz/ella.to/schema/scanner"
-	"github.com/alinz/ella.to/schema/token"
+	"ella.to/schema/scanner"
+	"ella.to/schema/token"
 )
 
 type Tokens []token.Token

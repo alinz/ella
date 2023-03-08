@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/alinz/ella.to/schema/token"
+	"ella.to/schema/token"
 )
 
 type Value interface {

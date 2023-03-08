@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/alinz/ella.to/schema/ast"
-	"github.com/alinz/ella.to/schema/token"
+	"ella.to/schema/ast"
+	"ella.to/schema/token"
 )
 
 // T -> map < key , T >

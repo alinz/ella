@@ -12,9 +12,9 @@ import (
 
 	"github.com/urfave/cli/v2"
 
-	"github.com/alinz/ella.to/schema/parser"
-	"github.com/alinz/ella.to/schema/validator"
-	"github.com/alinz/ella.to/templates/golang"
+	"ella.to/schema/parser"
+	"ella.to/schema/validator"
+	"ella.to/templates/golang"
 )
 
 func fmtCmd() *cli.Command {

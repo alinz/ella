@@ -1,8 +1,8 @@
 package golang
 
 import (
-	"github.com/alinz/ella.to/schema/ast"
-	"github.com/alinz/ella.to/transform"
+	"ella.to/schema/ast"
+	"ella.to/transform"
 )
 
 func Package(name string) transform.Func {

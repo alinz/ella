@@ -3,7 +3,7 @@ package scanner
 import (
 	"unicode"
 
-	"github.com/alinz/ella.to/schema/token"
+	"ella.to/schema/token"
 )
 
 func Lex(l *Lexer) State {

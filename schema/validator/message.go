@@ -3,9 +3,9 @@ package validator
 import (
 	"sort"
 
-	"github.com/alinz/ella.to/pkg/stringcase"
-	"github.com/alinz/ella.to/schema/ast"
-	"github.com/alinz/ella.to/schema/token"
+	"ella.to/pkg/stringcase"
+	"ella.to/schema/ast"
+	"ella.to/schema/token"
 )
 
 func addStringFieldOption(key, value string) *ast.Constant {

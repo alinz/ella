@@ -5,7 +5,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/alinz/ella.to/schema/token"
+	"ella.to/schema/token"
 )
 
 // Lexer lexer struct

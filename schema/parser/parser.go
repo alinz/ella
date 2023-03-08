@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/alinz/ella.to/schema/ast"
-	"github.com/alinz/ella.to/schema/scanner"
-	"github.com/alinz/ella.to/schema/token"
+	"ella.to/schema/ast"
+	"ella.to/schema/scanner"
+	"ella.to/schema/token"
 )
 
 type Parser struct {

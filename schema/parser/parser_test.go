@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/alinz/ella.to/schema/parser"
+	"ella.to/schema/parser"
 )
 
 type TestCase struct {

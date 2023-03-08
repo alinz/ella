@@ -3,7 +3,7 @@ package golang
 import (
 	"fmt"
 
-	"github.com/alinz/ella.to/schema/ast"
+	"ella.to/schema/ast"
 )
 
 func parseType(typ ast.Type, messagesMap map[string]*ast.Message, enumsMap map[string]*ast.Enum) (string, error) {

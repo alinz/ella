@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/alinz/ella.to/schema/ast"
+	"ella.to/schema/ast"
 )
 
 const (
