@@ -16,25 +16,27 @@ type counter struct {
 
 func (c *counter) increment(ptr *ast.Constant) {
 	if c.unsigned {
-		c.unsignedCounter++
 		ptr.Value = &ast.ValueUint{
 			Size:    c.size,
 			Content: c.unsignedCounter,
 		}
+		c.unsignedCounter++
 	} else {
-		c.signedCounter++
 		ptr.Value = &ast.ValueInt{
 			Size:    c.size,
 			Content: c.signedCounter,
 		}
+		c.signedCounter++
 	}
 }
 
 func (c *counter) set(val any) {
 	if c.unsigned {
 		c.unsignedCounter = val.(uint64)
+		c.unsignedCounter++
 	} else {
 		c.signedCounter = val.(int64)
+		c.signedCounter++
 	}
 }
 

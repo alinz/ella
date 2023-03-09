@@ -24,5 +24,25 @@ enum MyEnum int32 {
 }
 `,
 		},
+		{
+			Input: `
+		hello = 1
+		ella = "0.0.1"
+
+		enum MyEnum int32 {
+			A
+			B
+		}
+					`,
+			Output: `
+ella = "0.0.1"
+hello = 1
+
+enum MyEnum int32 {
+	A = 0
+	B = 1
+}
+		`,
+		},
 	})
 }

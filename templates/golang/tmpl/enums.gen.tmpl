@@ -11,6 +11,7 @@ const (
 	{{- end }}
 )
 
+
 func (e *{{ $enum.Name }}) UnmarshalText(text []byte) error {
 	switch string(text) {
 	{{- range $const := $enum.Constants }}
@@ -24,6 +25,14 @@ func (e *{{ $enum.Name }}) UnmarshalText(text []byte) error {
 }
 
 func (e {{ $enum.Name }}) MarshalText() ([]byte, error) {
+	name := e.String()
+	if name == "" {
+		return nil, fmt.Errorf("invalid enum {{ $enum.Name }} value: %d", e)
+	}
+	return []byte(name), nil
+}
+
+func (e {{ $enum.Name }}) String() string {
 	var name string
 	switch e {
 	{{- range $const := $enum.Constants }}	
@@ -31,8 +40,8 @@ func (e {{ $enum.Name }}) MarshalText() ([]byte, error) {
 		name = "{{ $const.Value }}"
 	{{- end }}
 	default:
-		return nil, fmt.Errorf("invalid enum value: %d", e)
+		name = ""
 	}
-	return []byte(name), nil
+	return name
 }
 {{- end }}

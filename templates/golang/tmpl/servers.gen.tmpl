@@ -82,6 +82,9 @@ func (s *{{ $serviceNameImpl }}Server) create{{ $methodName }}MethodHandler() se
 	}) (ret *struct {
 		{{ $method.Returns | ToStructReturns }}
 	}, err error) {
+		ret = &struct {
+			{{ $method.Returns | ToStructReturns }}
+		}{}
 		{{ $method.Returns | ReturnsExtract }} = s.service.{{ $methodName }}(
 			ctx, 
 			{{ $method.Args | ToExtractArgs }}
