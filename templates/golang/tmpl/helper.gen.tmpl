@@ -64,7 +64,7 @@ func callServiceMethod[ReqMsg, RespMsg any](ctx context.Context, method string, 
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 300 {
-		return nil
+		return parseError(resp.Body)
 	}
 
 	if isStructEmpty(out) {
@@ -106,7 +106,7 @@ func callServiceStreamMethod[ReqMsg any](ctx context.Context, method string, cli
 	}
 
 	if resp.StatusCode >= 300 {
-		return nil
+		return parseError(resp.Body)
 	}
 
 	go func() {
@@ -288,7 +288,7 @@ func createStreamServiceMethod[ReqMsg any](method string, fn func(ctx context.Co
 
 		events, err := fn(ctx, &reqMsg)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			ResponseError(w, err)
 			return
 		}
 
@@ -346,7 +346,7 @@ func createServiceMethodHandler[ReqMsg, RespMsg any](method string, fn func(ctx 
 
 		respMsg, err := fn(ctx, &reqMsg)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			ResponseError(w, err)
 			return
 		}
 
@@ -562,6 +562,20 @@ type Error struct {
 	code  int
 	cause error
 	msg   string
+}
+
+func parseError(r io.Reader) *Error {
+	msg := struct {
+		Code  int    `json:"code"`
+		Error string `json:"error"`
+	}{}
+
+	json.NewDecoder(r).Decode(&msg)
+
+	return &Error{
+		code: msg.Code,
+		msg:  msg.Error,
+	}
 }
 
 func (e Error) MarshalText() ([]byte, error) {
