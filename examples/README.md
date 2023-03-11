@@ -9,8 +9,8 @@ go install ella.to/cmd/ella-gen
 then the following will generate code for all examples
 
 ```bash
-ella-gen rpc -i ./examples/constants -o ./examples/constants
-ella-gen rpc -i ./examples/enums -o ./examples/enums
-ella-gen rpc -i ./examples/messages -o ./examples/messages
-ella-gen rpc -i ./examples/services -o ./examples/services
+ella-gen -t rpc,workload -i ./examples/constants -o ./examples/constants
+ella-gen -t rpc,workload -i ./examples/enums -o ./examples/enums
+ella-gen -t rpc,workload -i ./examples/messages -o ./examples/messages
+ella-gen -t rpc,workload -i ./examples/services -o ./examples/services
 ```
