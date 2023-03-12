@@ -103,7 +103,7 @@ func rpcCmd() *cli.Command {
 						continue
 					}
 
-					if filepath.Ext(file.Name()) != ".rpc" {
+					if filepath.Ext(file.Name()) != ".ella" {
 						continue
 					}
 
