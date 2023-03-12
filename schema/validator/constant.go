@@ -14,17 +14,17 @@ const (
 func validateConstants(constantsMap map[string]*ast.Constant) ([]*ast.Constant, error) {
 	constants := make([]*ast.Constant, 0, len(constantsMap))
 
-	value, ok := constantsMap["ella"]
+	value, ok := constantsMap["Ella"]
 	if !ok {
-		return nil, fmt.Errorf("rpc constant is not defined")
+		return nil, fmt.Errorf("Ella constant is not defined")
 	}
 
 	if value.Value.TokenLiteral() != ellaVersion {
-		return nil, fmt.Errorf("rpc version is not supported")
+		return nil, fmt.Errorf("Ella version is not supported")
 	}
 
 	for _, constant := range constantsMap {
-		if constant.Name.Name == "ella" {
+		if constant.Name.Name == "Ella" {
 			continue
 		}
 

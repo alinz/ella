@@ -7,7 +7,7 @@ func TestValidatorEnum(t *testing.T) {
 		{
 			Input: `
 hello = 1
-ella = "0.0.1"
+Ella = "0.0.1"
 
 enum MyEnum int32 {
 	A = 1
@@ -15,7 +15,7 @@ enum MyEnum int32 {
 }
 			`,
 			Output: `
-ella = "0.0.1"
+Ella = "0.0.1"
 hello = 1
 
 enum MyEnum int32 {
@@ -27,7 +27,7 @@ enum MyEnum int32 {
 		{
 			Input: `
 		hello = 1
-		ella = "0.0.1"
+		Ella = "0.0.1"
 
 		enum MyEnum int32 {
 			A
@@ -35,7 +35,7 @@ enum MyEnum int32 {
 		}
 					`,
 			Output: `
-ella = "0.0.1"
+Ella = "0.0.1"
 hello = 1
 
 enum MyEnum int32 {
