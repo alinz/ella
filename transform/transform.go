@@ -3,13 +3,19 @@ package transform
 import (
 	"fmt"
 	"io"
+	"strings"
+
+	"ella.to/pkg/stringcase"
 )
 
 type Writer interface {
+	Lines(n int) Writer
 	Tabs(n int) Writer
-	NewLines(n int) Writer
-	Indents(n int) Writer
-	String(format string, args ...any) Writer
+	Snake(s string) Writer
+	Pascal(s string) Writer
+	Camel(s string) Writer
+	Str(format string, args ...any) Writer
+	StrCond(cond bool, format string, args ...any) Writer
 }
 
 type Func func(out Writer) error
@@ -31,59 +37,56 @@ func Run(out io.Writer, funcs ...Func) error {
 }
 
 type writer struct {
-	err    error
-	out    io.Writer
-	intend int
+	err error
+	out io.Writer
 }
 
 var _ Writer = (*writer)(nil)
 
-func (w *writer) action(value string) *writer {
+func (w *writer) Lines(n int) Writer {
 	if w.err != nil {
 		return w
 	}
 
-	_, w.err = w.out.Write([]byte(value))
-
-	return w
-}
-
-func (w *writer) actionN(value string, n int) *writer {
-	if w.err != nil {
-		return w
-	}
-
-	for i := 0; i < n; i++ {
-		_, w.err = w.out.Write([]byte(value))
-		if w.err != nil {
-			return w
-		}
-	}
-
+	fmt.Fprintf(w.out, "%s", strings.Repeat("\n", n))
 	return w
 }
 
 func (w *writer) Tabs(n int) Writer {
-	return w.actionN("\t", n)
-}
-
-func (w *writer) NewLines(n int) Writer {
-	return w.actionN("\n", n)
-}
-
-func (w *writer) Indents(n int) Writer {
 	if w.err != nil {
 		return w
 	}
 
-	w.intend += n
-
+	fmt.Fprintf(w.out, "%s", strings.Repeat("\t", n))
 	return w
 }
 
-func (w *writer) String(value string, args ...any) Writer {
-	w.actionN("\t", w.intend)
-	w.action(fmt.Sprintf(value, args...))
+func (w *writer) Snake(s string) Writer {
+	return w.Str(stringcase.ToSnake(s))
+}
+
+func (w *writer) Pascal(s string) Writer {
+	return w.Str(stringcase.ToPascal(s))
+}
+
+func (w *writer) Camel(s string) Writer {
+	return w.Str(stringcase.ToCamel(s))
+}
+
+func (w *writer) Str(format string, args ...any) Writer {
+	if w.err != nil {
+		return w
+	}
+
+	fmt.Fprintf(w.out, format, args...)
+	return w
+}
+
+func (w *writer) StrCond(cond bool, format string, args ...any) Writer {
+	if cond {
+		return w.Str(format, args...)
+	}
+
 	return w
 }
 
