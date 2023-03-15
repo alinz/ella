@@ -17,7 +17,7 @@ func Signature() transform.Func {
 	}
 }
 
-func hasStream(method *ast.Method) bool {
+func containsStream(method *ast.Method) bool {
 	for _, ret := range method.Returns {
 		if ret.Stream {
 			return true
