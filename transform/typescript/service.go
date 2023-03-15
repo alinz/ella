@@ -30,11 +30,17 @@ func ServiceMethodArgs(serviceName string, method *ast.Method) transform.Func {
 
 func ServiceMethodReturns(serviceName string, method *ast.Method) transform.Func {
 	return func(out transform.Writer) error {
+		hasStream := containsStream(method)
+
+		// the follwing operation created 2 different lines based on hasStream
+		// interface Service1Method1Stream {
+		// interface Service1Method1Returns {
 		out.
 			Str("interface ").
 			Pascal(serviceName+method.Name.Name).
-			StrCond(hasStream(method), "Stream").
-			Str("Returns {").
+			StrCond(hasStream, "Stream").
+			StrCond(!hasStream, "Returns").
+			Str(" {").
 			Lines(1)
 
 		for _, ret := range method.Returns {
@@ -63,6 +69,8 @@ func ServiceInterface(service *ast.Service) transform.Func {
 			Lines(1)
 
 		for _, method := range service.Methods {
+			hasStream := containsStream(method)
+
 			out.
 				Tabs(1).
 				Camel(method.Name.Name).Str(`: (`).
@@ -72,11 +80,17 @@ func ServiceInterface(service *ast.Service) transform.Func {
 				Tabs(2).Str(`args: `).Pascal(serviceName + method.Name.Name).Str(`Args,`).Lines(1).
 				Tabs(2).Str(`headers?: Record<string, string>`).Lines(1)
 
+			// the follwing operation created 2 different lines based on hasStream
+			// ) => Promise<Subscription<Service1Method1Stream>>;
+			// ) => Promise<Service1Method1Returns>;
 			out.
 				Tabs(1).
-				Str(`) => Promise<`).Pascal(serviceName+method.Name.Name).
-				StrCond(hasStream(method), "Stream").
-				Str("Returns>;")
+				Str(`) => Promise<`).
+				StrCond(hasStream, "Subscription<").
+				Pascal(serviceName+method.Name.Name).
+				StrCond(hasStream, "Stream>").
+				StrCond(!hasStream, "Returns").
+				Str(">;")
 
 			out.Lines(1)
 		}
@@ -102,7 +116,7 @@ func ServiceClient(service *ast.Service) transform.Func {
 
 		for _, method := range service.Methods {
 			methodName := method.Name.Name
-			isStream := hasStream(method)
+			hasStream := containsStream(method)
 
 			out.
 				Tabs(1).
@@ -115,12 +129,15 @@ func ServiceClient(service *ast.Service) transform.Func {
 
 			out.
 				Tabs(1).
-				Str(`) => Promise<`).Pascal(serviceName+methodName).
-				StrCond(hasStream(method), "Stream").
-				Str("Returns> {").Lines(1)
+				Str(`) => Promise<`).
+				StrCond(hasStream, "Subscription<").
+				Pascal(serviceName+method.Name.Name).
+				StrCond(hasStream, "Stream>").
+				StrCond(!hasStream, "Returns").
+				Str("> {").Lines(1)
 
 			out.
-				Tabs(3).Str(`return callService`).StrCond(isStream, "Stream").Str("Method(").Lines(1)
+				Tabs(3).Str(`return callService`).StrCond(hasStream, "Stream").Str("Method(").Lines(1)
 
 			var httpMethod string
 			httpMethodOpt := getConstByKey(method.Options, "http.method")
