@@ -1,6 +1,0 @@
-- [ ] Add comment to AST
-- [-] Golang example server is completed
-  - [x] regular interaction
-  - [x] stream
-  - [ ] file upload
-- [x] Golang example client is completed
