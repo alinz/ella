@@ -40,6 +40,8 @@ func parseType(typ ast.Type) (string, error) {
 		return `string`, nil
 	case *ast.TypeAny:
 		return `any`, nil
+	case *ast.TypeTimestamp:
+		return `string`, nil
 	case *ast.TypeArray:
 		typ, err := parseType(t.Type)
 		if err != nil {
