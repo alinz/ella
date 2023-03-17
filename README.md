@@ -33,7 +33,7 @@ ella has its own IDL which is very familiar as it was borrowed from great projec
 First, the extension of the IDL files should be `.ella` and run the following command to generate the output in golang:
 
 ```bash
-ella-gen -i ./schema -o ./rpc/rpc.gen.go
+ella-gen -p rpc -i ./schema -o ./rpc/rpc.gen.go
 ```
 
 or in typescript by changing the file ext from `.go` to `.ts`
