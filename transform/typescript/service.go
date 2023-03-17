@@ -120,7 +120,7 @@ func ServiceClient(service *ast.Service) transform.Func {
 
 			out.
 				Tabs(1).
-				Camel(methodName).Str(`: (`).
+				Camel(methodName).Str(`(`).
 				Lines(1)
 
 			out.
@@ -129,7 +129,7 @@ func ServiceClient(service *ast.Service) transform.Func {
 
 			out.
 				Tabs(1).
-				Str(`) => Promise<`).
+				Str(`): Promise<`).
 				StrCond(hasStream, "Subscription<").
 				Pascal(serviceName+method.Name.Name).
 				StrCond(hasStream, "Stream>").
@@ -140,7 +140,7 @@ func ServiceClient(service *ast.Service) transform.Func {
 				Tabs(3).Str(`return callService`).StrCond(hasStream, "Stream").Str("Method(").Lines(1)
 
 			var httpMethod string
-			httpMethodOpt := getConstByKey(method.Options, "http.method")
+			httpMethodOpt := getConstByKey(method.Options, "httpMethod")
 			if httpMethodOpt != nil {
 				httpMethod = getConstValueAsString(httpMethodOpt)
 			}
