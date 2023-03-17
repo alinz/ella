@@ -12,7 +12,7 @@ func Enum(enum *ast.Enum) transform.Func {
 		for _, v := range enum.Constants {
 			out.
 				Tabs(1).
-				Pascal(v.Name.Name).Str(` = `).Str(`"`).Pascal(v.Name.Name).Str(`"`).
+				Pascal(v.Name.Name).Str(` = `).Str(`"`).Pascal(v.Name.Name).Str(`",`).
 				Lines(1)
 		}
 
