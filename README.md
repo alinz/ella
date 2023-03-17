@@ -23,17 +23,23 @@ currently, it supports the following features
 install it using go install
 
 ```bash
-go install github.com/alinz/ella.to/cmd/ella-gen
+go install ella.to/cmd/ella-gen@latest
 ```
 
 # Schema
 
 ella has its own IDL which is very familiar as it was borrowed from great projects such as gRPC and webrpc. It has some novel ideas as well which are presented in this document.
 
-First, the extension of the IDL files should be `.ella` and run the following command to generate the output:
+First, the extension of the IDL files should be `.ella` and run the following command to generate the output in golang:
 
 ```bash
-ella-gen -t rpc -i ./schema -o ./rpc/rpc.gen.go
+ella-gen -i ./schema -o ./rpc/rpc.gen.go
+```
+
+or in typescript by changing the file ext from `.go` to `.ts`
+
+```bash
+ella-gen -i ./schema -o ./rpc/rpc.gen.ts
 ```
 
 Basically the above command will generate rpc and read all `*.ella` files and generate a single file call `rpc.gen.go`.
