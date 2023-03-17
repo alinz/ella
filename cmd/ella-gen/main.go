@@ -1,10 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"errors"
-	"fmt"
-	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -12,123 +9,60 @@ import (
 
 	"github.com/urfave/cli/v2"
 
+	"ella.to/schema/ast"
 	"ella.to/schema/parser"
 	"ella.to/schema/validator"
 	"ella.to/templates/golang"
+	"ella.to/transform"
+	"ella.to/transform/typescript"
 )
 
-func fmtCmd() *cli.Command {
-	var schemaFile string
-
-	return &cli.Command{
-		Name:  "fmt",
-		Usage: "format rpc schema file",
+func main() {
+	app := &cli.App{
+		Name:  "ella-gen",
+		Usage: "generate common code that you don't want to write yourself",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:        "input",
-				Aliases:     []string{"i"},
-				Usage:       "target's input schema file `./example/schema.rpc`",
-				Required:    true,
-				Destination: &schemaFile,
+				Name:     "input",
+				Aliases:  []string{"i"},
+				Usage:    "target's input schema folder `./example/schema`",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "output",
+				Aliases:  []string{"o"},
+				Usage:    "target's output file `./example/rpc.gen.go`",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:    "pkg",
+				Aliases: []string{"p"},
+				Usage:   "target's output package `example` for golang",
 			},
 		},
 		Action: func(ctx *cli.Context) (err error) {
-			in, err := os.Open(schemaFile)
-			if err != nil {
-				return err
-			}
-			inData, err := io.ReadAll(in)
-			if err != nil {
-				in.Close()
-				return err
-			}
-			in.Close()
+			output := ctx.String("output")
+			input := ctx.String("input")
+			pkg := ctx.String("pkg")
 
-			program, err := parser.New(string(inData)).Parse()
+			ext, err := checkFileExtension(output, []string{".go", ".ts"})
 			if err != nil {
 				return err
 			}
 
-			err = validator.Validate(program)
-			if err != nil {
-				return err
-			}
+			outputDir := filepath.Dir(output)
 
-			fmt.Fprintf(os.Stdout, "%s", program.TokenLiteral())
-
-			return nil
-		},
-	}
-}
-
-func rpcCmd() *cli.Command {
-	var outDir string
-	var schemaDir string
-
-	return &cli.Command{
-		Name:  "rpc",
-		Usage: "generate rpc client and server",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:        "output",
-				Aliases:     []string{"o"},
-				Usage:       "target's output directory `./example`",
-				Required:    true,
-				Destination: &outDir,
-			},
-			&cli.StringFlag{
-				Name:        "input",
-				Aliases:     []string{"i"},
-				Usage:       "target's input schema folder `./example/schema/`",
-				Required:    true,
-				Destination: &schemaDir,
-			},
-		},
-		Action: func(ctx *cli.Context) (err error) {
-			err = os.Mkdir(outDir, 0755)
+			err = os.Mkdir(outputDir, 0755)
 			if err != nil && !errors.Is(err, os.ErrExist) {
 				return err
 			}
 
-			var inData bytes.Buffer
-
-			{
-				files, err := os.ReadDir(schemaDir)
-				if err != nil {
-					return err
-				}
-
-				for _, file := range files {
-					if file.IsDir() {
-						continue
-					}
-
-					if filepath.Ext(file.Name()) != ".ella" {
-						continue
-					}
-
-					err = func(buffer *bytes.Buffer, filename string) error {
-						in, err := os.Open(filename)
-						if err != nil {
-							return err
-						}
-						defer in.Close()
-
-						_, err = io.Copy(buffer, in)
-						if err != nil {
-							return err
-						}
-
-						buffer.WriteString("\n")
-						return nil
-					}(&inData, filepath.Join(schemaDir, file.Name()))
-					if err != nil {
-						return err
-					}
-				}
+			content, err := combineFiles(input, ".ella")
+			if err != nil {
+				return err
 			}
 
-			program, err := parser.New(inData.String()).Parse()
+			program, err := parser.New(content).Parse()
 			if err != nil {
 				return err
 			}
@@ -138,37 +72,57 @@ func rpcCmd() *cli.Command {
 				return err
 			}
 
-			outFile := filepath.Join(outDir, "rpc.gen.go")
-			out, err := os.Create(outFile)
-			if err != nil {
-				return err
-			}
-			defer out.Close()
-
-			err = golang.Generate(out, "rpc", program)
-			if err != nil {
-				return err
+			if ext == ".go" {
+				err = golangGen(output, program, pkg)
+			} else if ext == ".ts" {
+				err = typescriptGen(output, program)
 			}
 
-			err = exec.Command("go", "fmt", outFile).Run()
-			if err != nil {
-				return err
-			}
-
-			return nil
-		},
-	}
-}
-
-func main() {
-	app := &cli.App{
-		Commands: []*cli.Command{
-			rpcCmd(),
-			fmtCmd(),
+			return err
 		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func golangGen(outputFile string, program *ast.Program, pkg string) error {
+	out, err := os.Create(outputFile)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	err = golang.Generate(out, pkg, program)
+	if err != nil {
+		return err
+	}
+
+	err = exec.Command("go", "fmt", outputFile).Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func typescriptGen(output string, program *ast.Program) error {
+	out, err := os.Create(output)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	transform.Run(
+		out,
+		typescript.Signature(),
+		typescript.Constants(ast.GetSlice[*ast.Constant](program)),
+		typescript.Enums(ast.GetSlice[*ast.Enum](program)),
+		typescript.Messages(ast.GetSlice[*ast.Message](program)),
+		typescript.Services(ast.GetSlice[*ast.Service](program)),
+		typescript.HelperFunc(),
+	)
+
+	return nil
 }

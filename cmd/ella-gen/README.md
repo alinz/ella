@@ -1,0 +1,1 @@
+- ella-gen -t rpc -t workflow -i ./schema -o ./rpc/rpc.gen.go
