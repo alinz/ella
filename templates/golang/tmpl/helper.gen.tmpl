@@ -286,6 +286,9 @@ func createStreamServiceMethod[ReqMsg any](method string, fn func(ctx context.Co
 			}
 		}
 
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
 		events, err := fn(ctx, &reqMsg)
 		if err != nil {
 			ResponseError(w, err)
@@ -298,7 +301,10 @@ func createStreamServiceMethod[ReqMsg any](method string, fn func(ctx context.Co
 
 		var lastID int64
 		for item := range events {
-			fmt.Fprintf(w, "id: %d\nevent: %s\ndata: %s\n\n", item.id, item.event, item.data)
+			_, err := fmt.Fprintf(w, "id: %d\nevent: %s\ndata: %s\n\n", item.id, item.event, item.data)
+			if err != nil {
+				return
+			}
 			fluser.Flush()
 			lastID = item.id
 		}
