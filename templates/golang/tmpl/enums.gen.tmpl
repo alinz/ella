@@ -7,16 +7,16 @@ type {{ $enum.Name }} {{ $enum.Type | ToLower }}
 
 const (
 	{{- range $i, $const := $enum.Constants }}
-	{{ $const.Key }} {{ $enum.Name }} = {{ $const.Value }}
+	{{ $enum.Name }}_{{ $const.Key }} {{ $enum.Name }} = {{ $const.Value }}
 	{{- end }}
 )
 
 
 func (e *{{ $enum.Name }}) UnmarshalText(text []byte) error {
-	switch string(text) {
+	switch strings.ToLower(string(text)) {
 	{{- range $const := $enum.Constants }}
-	case "{{ $const.Value }}":
-		*e = {{ $const.Key }}
+	case "{{ $const.Key | ToLower }}":
+		*e = {{ $enum.Name }}_{{ $const.Key }}
 	{{- end }}
 	default:
 		return fmt.Errorf("invalid enum value: %s", string(text))
@@ -27,7 +27,7 @@ func (e *{{ $enum.Name }}) UnmarshalText(text []byte) error {
 func (e {{ $enum.Name }}) MarshalText() ([]byte, error) {
 	name := e.String()
 	if name == "" {
-		return nil, fmt.Errorf("invalid enum {{ $enum.Name }} value: %d", e)
+		return nil, fmt.Errorf("invalid enum {{ $enum.Name }} value: %v", e)
 	}
 	return []byte(name), nil
 }
@@ -36,8 +36,8 @@ func (e {{ $enum.Name }}) String() string {
 	var name string
 	switch e {
 	{{- range $const := $enum.Constants }}	
-	case {{ $const.Key }}:
-		name = "{{ $const.Value }}"
+	case {{ $enum.Name }}_{{ $const.Key }}:
+		name = "{{ $const.Key | ToLower }}"
 	{{- end }}
 	default:
 		name = ""

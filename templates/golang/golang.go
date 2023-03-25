@@ -171,9 +171,9 @@ func genarateEnums(out io.Writer, nodes []*ast.Enum) error {
 			Constants: parseConstants(node.Constants),
 		}
 
-		for i, constant := range enum.Constants {
-			enum.Constants[i].Key = fmt.Sprintf("%s_%s", enum.Name, constant.Key)
-		}
+		// for i, constant := range enum.Constants {
+		// 	enum.Constants[i].Key = fmt.Sprintf("%s_%s", enum.Name, constant.Key)
+		// }
 
 		enums = append(enums, enum)
 	}
