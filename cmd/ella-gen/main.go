@@ -14,7 +14,7 @@ import (
 	"ella.to/schema/validator"
 	"ella.to/templates/golang"
 	"ella.to/transform"
-	"ella.to/transform/http"
+	"ella.to/transform/restclient"
 	"ella.to/transform/typescript"
 )
 
@@ -79,7 +79,7 @@ func main() {
 			case ".ts":
 				err = typescriptGen(output, program)
 			case ".http":
-				err = httpGen(output, program)
+				err = restClientGen(output, program)
 			}
 
 			return err
@@ -131,7 +131,7 @@ func typescriptGen(output string, program *ast.Program) error {
 	return nil
 }
 
-func httpGen(output string, program *ast.Program) error {
+func restClientGen(output string, program *ast.Program) error {
 	out, err := os.Create(output)
 	if err != nil {
 		return err
@@ -140,8 +140,8 @@ func httpGen(output string, program *ast.Program) error {
 
 	transform.Run(
 		out,
-		http.Constants(program),
-		http.Services(program),
+		restclient.Constants(program),
+		restclient.Services(program),
 	)
 
 	return nil

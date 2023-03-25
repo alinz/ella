@@ -1,7 +1,8 @@
-package http
+package restclient
 
 import (
 	"fmt"
+	"strings"
 
 	"ella.to/pkg/stringcase"
 	"ella.to/schema/ast"
@@ -115,7 +116,7 @@ func ExtraTypoInfo(out transform.Writer, typ ast.Type, enumsMap map[string]*ast.
 				if i != 0 {
 					out.Str(", ")
 				}
-				out.Str(constant.Name.Name)
+				out.Str(strings.ToLower(constant.Name.Name))
 			}
 		}
 	}
