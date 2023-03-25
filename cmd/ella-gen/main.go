@@ -14,6 +14,7 @@ import (
 	"ella.to/schema/validator"
 	"ella.to/templates/golang"
 	"ella.to/transform"
+	"ella.to/transform/http"
 	"ella.to/transform/typescript"
 )
 
@@ -45,7 +46,7 @@ func main() {
 			input := ctx.String("input")
 			pkg := ctx.String("pkg")
 
-			ext, err := checkFileExtension(output, []string{".go", ".ts"})
+			ext, err := checkFileExtension(output, []string{".go", ".ts", ".http"})
 			if err != nil {
 				return err
 			}
@@ -72,10 +73,13 @@ func main() {
 				return err
 			}
 
-			if ext == ".go" {
+			switch ext {
+			case ".go":
 				err = golangGen(output, program, pkg)
-			} else if ext == ".ts" {
+			case ".ts":
 				err = typescriptGen(output, program)
+			case ".http":
+				err = httpGen(output, program)
 			}
 
 			return err
@@ -122,6 +126,22 @@ func typescriptGen(output string, program *ast.Program) error {
 		typescript.Messages(ast.GetSlice[*ast.Message](program)),
 		typescript.Services(ast.GetSlice[*ast.Service](program)),
 		typescript.HelperFunc(),
+	)
+
+	return nil
+}
+
+func httpGen(output string, program *ast.Program) error {
+	out, err := os.Create(output)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	transform.Run(
+		out,
+		http.Constants(program),
+		http.Services(program),
 	)
 
 	return nil
