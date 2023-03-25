@@ -1,0 +1,16 @@
+@hostname = http://localhost
+@port = 8080
+@host = {{hostname}}:{{port}}
+
+###
+
+POST {{host}}/Gretting/Hello HTTP/1.1
+Content-Type: application/json
+Authorization: BEARER xxx
+
+{
+    "content": "foo bar", 
+    "cool": { 
+      "foo": "bar"
+    }
+}
