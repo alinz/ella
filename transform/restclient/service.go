@@ -137,7 +137,7 @@ func Type(out transform.Writer, typ ast.Type, tab int, enumsMap map[string]*ast.
 	case *ast.TypeAny:
 		out.Str("null")
 	case *ast.TypeTimestamp:
-		out.Str(`"2021-05-31T00:00:00Z"`)
+		out.Str(`"2021-05-30T00:00:00Z"`)
 	case *ast.TypeArray:
 		out.Str(`[]`)
 	case *ast.TypeMap:
