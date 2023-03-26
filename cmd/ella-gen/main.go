@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -18,10 +19,18 @@ import (
 	"ella.to/transform/typescript"
 )
 
+var Version = "main"
+var GitCommit = "development"
+
 func main() {
+	cli.VersionPrinter = func(cCtx *cli.Context) {
+		fmt.Printf("ella-gen version %s.%s\n", cCtx.App.Version, GitCommit)
+	}
+
 	app := &cli.App{
-		Name:  "ella-gen",
-		Usage: "generate common code that you don't want to write yourself",
+		Name:    "ella-gen",
+		Usage:   "generate common code that you don't want to write yourself",
+		Version: Version,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "input",
