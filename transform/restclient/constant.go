@@ -18,7 +18,7 @@ func Constants(program *ast.Program) transform.Func {
 				out.Str("@hostname = %s", constant.Value.(*ast.ValueString).Content).Lines(1)
 				isHostnameDefined = true
 			case "http_port":
-				out.Str("@port = %s", constant.Value.(*ast.ValueString).Content).Lines(1)
+				out.Str("@port = %d", constant.Value.(*ast.ValueInt).Content).Lines(1)
 				isPortDefined = true
 			}
 		}
