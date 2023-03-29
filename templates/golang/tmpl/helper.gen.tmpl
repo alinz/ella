@@ -633,6 +633,6 @@ func ResponseError(w http.ResponseWriter, err error) {
 	case *Error:
 		writeResponse(w, err.code, err)
 	default:
-		writeResponse(w, http.StatusInternalServerError, err)
+		writeResponse(w, http.StatusInternalServerError, WrapErr(http.StatusInternalServerError, err, ""))
 	}
 }
