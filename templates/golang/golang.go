@@ -14,6 +14,14 @@ import (
 //go:embed tmpl/*.tmpl
 var files embed.FS
 
+func hasArgsLength(args []Arg) string {
+	if len(args) > 0 {
+		return "true"
+	}
+
+	return "false"
+}
+
 func toStructArgs(args []Arg) string {
 	var sb strings.Builder
 

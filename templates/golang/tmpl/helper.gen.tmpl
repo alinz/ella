@@ -244,7 +244,7 @@ func createEventStream[T any](ctx context.Context, name string, stream <-chan T)
 	return out
 }
 
-func createStreamServiceMethod[ReqMsg any](method string, fn func(ctx context.Context, req *ReqMsg) (<-chan *stremEvent, error)) serviceMethodHandler {
+func createStreamServiceMethod[ReqMsg any](method string, hasFields bool, fn func(ctx context.Context, req *ReqMsg) (<-chan *stremEvent, error)) serviceMethodHandler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
 			ResponseError(w, Errorf(http.StatusMethodNotAllowed, "method %q not allowed", r.Method))
@@ -274,7 +274,7 @@ func createStreamServiceMethod[ReqMsg any](method string, fn func(ctx context.Co
 
 		var reqMsg ReqMsg
 
-		if method == http.MethodPost {
+		if hasFields && method == http.MethodPost {
 			if err := json.NewDecoder(r.Body).Decode(&reqMsg); err != nil {
 				w.WriteHeader(http.StatusBadRequest)
 				return
@@ -314,7 +314,7 @@ func createStreamServiceMethod[ReqMsg any](method string, fn func(ctx context.Co
 	}
 }
 
-func createServiceMethodHandler[ReqMsg, RespMsg any](method string, fn func(ctx context.Context, req *ReqMsg) (*RespMsg, error)) serviceMethodHandler {
+func createServiceMethodHandler[ReqMsg, RespMsg any](method string, hasFields bool, fn func(ctx context.Context, req *ReqMsg) (*RespMsg, error)) serviceMethodHandler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
 			ResponseError(w, Errorf(http.StatusMethodNotAllowed, "method %q not allowed", r.Method))
@@ -338,7 +338,7 @@ func createServiceMethodHandler[ReqMsg, RespMsg any](method string, fn func(ctx 
 
 		var reqMsg ReqMsg
 
-		if method == http.MethodPost {
+		if hasFields && method == http.MethodPost {
 			if err := json.NewDecoder(r.Body).Decode(&reqMsg); err != nil {
 				w.WriteHeader(http.StatusBadRequest)
 				return

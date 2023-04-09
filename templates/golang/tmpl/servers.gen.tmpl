@@ -52,7 +52,7 @@ func Create{{ $serviceName }}Server(service {{ $serviceName }}) http.Handler {
 {{- if $isStream }}
 
 func (s *{{ $serviceNameImpl }}Server) create{{ $methodName }}MethodHandler() serviceMethodHandler {
-	return createStreamServiceMethod("{{ $httpMethod }}", func(ctx context.Context, args *struct {
+	return createStreamServiceMethod("{{ $httpMethod }}", {{ $method.Args | HasArgsLength }}, func(ctx context.Context, args *struct {
 		{{ $method.Args | ToStructArgs }}
 	}) (out <-chan *stremEvent, err error) {
 		{{ $method.Returns | ToStreamReturnsName }}, err := s.service.{{ $methodName }}(
@@ -77,7 +77,7 @@ func (s *{{ $serviceNameImpl }}Server) create{{ $methodName }}MethodHandler() se
 {{- else }}
 
 func (s *{{ $serviceNameImpl }}Server) create{{ $methodName }}MethodHandler() serviceMethodHandler {
-	return createServiceMethodHandler("{{ $httpMethod }}", func(ctx context.Context, args *struct {
+	return createServiceMethodHandler("{{ $httpMethod }}", {{ $method.Args | HasArgsLength }}, func(ctx context.Context, args *struct {
 		{{ $method.Args | ToStructArgs }}
 	}) (ret *struct {
 		{{ $method.Returns | ToStructReturns }}

@@ -52,6 +52,8 @@ var tmplFuncs = template.FuncMap{
 
 	"ToStructArgs": toStructArgs,
 
+	"HasArgsLength": hasArgsLength,
+
 	"ToStructReturns": toStructReturns,
 
 	"ToExtractArgs": func(args []Arg) string {
