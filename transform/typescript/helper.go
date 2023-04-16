@@ -64,6 +64,12 @@ async function callServiceMethod<Req, Resp>(
     body = undefined;
   }
 
+  if (!headers) {
+    headers = {
+      "Content-Type": "application/json",
+    };
+  }
+
   const resp = await fetch(url, {
     method: method,
     body: body ? JSON.stringify(body) : undefined,
