@@ -584,18 +584,14 @@ func parseError(r io.Reader) *Error {
 	}
 }
 
-func (e Error) MarshalText() ([]byte, error) {
-	var buffer bytes.Buffer
-
-	err := json.NewEncoder(&buffer).Encode(struct {
+func (e Error) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
 		Code  int    `json:"code"`
 		Error string `json:"error"`
 	}{
 		Code:  e.code,
 		Error: e.Error(),
 	})
-
-	return buffer.Bytes(), err
 }
 
 func (e *Error) Error() string {
