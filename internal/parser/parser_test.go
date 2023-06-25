@@ -6,25 +6,32 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"ella.to/internal/ast"
 	"ella.to/internal/parser"
 )
 
 type TestCase struct {
 	Input  string
 	Output string
+	Error  string
 }
 
 type TestCases []TestCase
 
-func runTests(t *testing.T, testCases TestCases) {
+func runTests(t *testing.T, fn func(*parser.Parser) (ast.Node, error), testCases TestCases) {
 	for _, testCase := range testCases {
 		p := parser.New(testCase.Input)
 
-		program, err := p.Parse()
+		node, err := fn(p)
 		if err != nil {
-			t.Fatal(err)
+			if testCase.Error == "" {
+				t.Fatal(err)
+			} else {
+				assert.Equal(t, strings.TrimSpace(testCase.Error), strings.TrimSpace(err.Error()))
+				continue
+			}
 		}
 
-		assert.Equal(t, strings.TrimSpace(testCase.Output), strings.TrimSpace(program.String()))
+		assert.Equal(t, strings.TrimSpace(testCase.Output), strings.TrimSpace(node.String()))
 	}
 }

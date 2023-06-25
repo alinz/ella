@@ -23,7 +23,13 @@ func (c *Const) String() string {
 
 	switch v := c.Value.(type) {
 	case *ValueBool:
-		if v.IsUserSet {
+		if v.Defined {
+			sb.WriteString(" = ")
+			sb.WriteString(v.String())
+		}
+
+	case *ValueInt:
+		if v.Defined {
 			sb.WriteString(" = ")
 			sb.WriteString(v.String())
 		}

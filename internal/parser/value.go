@@ -7,45 +7,53 @@ import (
 	"ella.to/internal/token"
 )
 
-func (p *Parser) parseValue() (ast.Value, error) {
-	switch p.currTok.Type {
+func ParseValue(p *Parser) (value ast.Value, err error) {
+	peekTok := p.Peek()
+
+	switch peekTok.Type {
 	case token.ConstFloat:
-		value, err := strconv.ParseFloat(p.currTok.Val, 64)
+		float, err := strconv.ParseFloat(peekTok.Val, 64)
 		if err != nil {
-			return nil, p.newError(p.currTok, "failed to parse float value", err)
+			return nil, p.WithError(peekTok, "failed to parse float value", err)
 		}
-		return &ast.ValueFloat{
-			Token: p.currTok,
-			Value: value,
-		}, nil
+		value = &ast.ValueFloat{
+			Token: peekTok,
+			Value: float,
+		}
 	case token.ConstInt:
-		value, err := strconv.ParseInt(p.currTok.Val, 10, 64)
+		integer, err := strconv.ParseInt(peekTok.Val, 10, 64)
 		if err != nil {
-			return nil, p.newError(p.currTok, "failed to parse int value", err)
+			return nil, p.WithError(peekTok, "failed to parse int value", err)
 		}
-		return &ast.ValueInt{
-			Token: p.currTok,
-			Value: value,
-		}, nil
+		value = &ast.ValueInt{
+			Token:   peekTok,
+			Value:   integer,
+			Defined: true,
+		}
 	case token.ConstBool:
-		value, err := strconv.ParseBool(p.currTok.Val)
+		boolean, err := strconv.ParseBool(peekTok.Val)
 		if err != nil {
-			return nil, p.newError(p.currTok, "failed to parse bool value", err)
+			return nil, p.WithError(peekTok, "failed to parse bool value", err)
 		}
-		return &ast.ValueBool{
-			Token:     p.currTok,
-			Value:     value,
-			IsUserSet: true,
-		}, nil
+		value = &ast.ValueBool{
+			Token:   peekTok,
+			Value:   boolean,
+			Defined: true,
+		}
 	case token.ConstNull:
-		return &ast.ValueNull{
-			Token: p.currTok,
-		}, nil
+		value = &ast.ValueNull{
+			Token: peekTok,
+		}
 	case token.ConstStringSingleQuote, token.ConstStringDoubleQuote, token.ConstStringBacktickQoute:
-		return &ast.ValueString{
-			Token: p.currTok,
-			Value: p.currTok.Val,
-		}, nil
+		value = &ast.ValueString{
+			Token: peekTok,
+			Value: peekTok.Val,
+		}
+	default:
+		return nil, p.WithError(peekTok, "expected one of the following, 'int', 'float', 'bool', 'null', 'string' values")
 	}
-	return nil, p.newError(p.currTok, "expected one of the following, 'int', 'float', 'bool', 'null', 'string' values")
+
+	p.Next() // skip value if no error
+
+	return value, nil
 }

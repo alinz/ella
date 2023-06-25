@@ -5,26 +5,20 @@ import (
 	"ella.to/internal/token"
 )
 
-func (p *Parser) parseConst(permitEmpty bool) (*ast.Const, error) {
-	nameTok := p.currTok
-
-	p.scanToken() // skip identifier
-
-	if permitEmpty && p.currTok.Type != token.Assign {
-		return &ast.Const{
-			Name: &ast.Identifier{Token: nameTok},
-			Value: &ast.ValueBool{
-				Token: p.currTok,
-				Value: true,
-			},
-		}, nil
-	} else if !permitEmpty && p.currTok.Type != token.Assign {
-		return nil, p.newError(p.currTok, "expected '=' after an identifier for defining a constant")
+func ParseConst(p *Parser) (*ast.Const, error) {
+	if p.Peek().Type != token.Identifier {
+		return nil, p.WithError(p.Peek(), "expected identifier for defining a constant")
 	}
 
-	p.scanToken() // skip '='
+	nameTok := p.Next()
 
-	value, err := p.parseValue()
+	if p.Peek().Type != token.Assign {
+		return nil, p.WithError(p.Peek(), "expected '=' after an identifier for defining a constant")
+	}
+
+	p.Next() // skip '='
+
+	value, err := ParseValue(p)
 	if err != nil {
 		return nil, err
 	}

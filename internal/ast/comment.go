@@ -9,6 +9,15 @@ import (
 type Comment struct {
 	Tops  []*token.Token
 	Right *token.Token
+	// Bottom is used to collect all comments
+	// when they are inside of a block and at the end
+	// for example:
+	//
+	// enum foo int8 {
+	//  a = 1
+	// 	# comment
+	// }
+	Bottom []*token.Token
 }
 
 var _ Node = (*Comment)(nil)
@@ -19,6 +28,7 @@ func (c *Comment) String() string {
 
 	c.WriteTops(&sb)
 	c.WriteRright(&sb)
+	c.WriteBottom(&sb)
 
 	return sb.String()
 }
@@ -34,6 +44,13 @@ func (c *Comment) WriteRright(sb *strings.Builder) {
 	if c.Right != nil {
 		sb.WriteString("# ")
 		sb.WriteString(strings.TrimSpace(c.Right.Val))
+	}
+}
+
+func (c *Comment) WriteBottom(sb *strings.Builder) {
+	for _, t := range c.Bottom {
+		sb.WriteString("# ")
+		sb.WriteString(strings.TrimSpace(t.Val))
 	}
 }
 

@@ -155,3 +155,17 @@ func (t *Map) String() string {
 
 	return sb.String()
 }
+
+// TIMESTAMP
+
+type Timestamp struct {
+	Token *token.Token
+}
+
+var _ Type = (*Timestamp)(nil)
+
+func (t *Timestamp) nodeLiteral() {}
+func (t *Timestamp) typeLiteral() {}
+func (t *Timestamp) String() string {
+	return t.Token.Val
+}

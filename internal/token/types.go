@@ -24,6 +24,7 @@ const (
 	Timestamp                            // timestamp
 	String                               // string
 	Map                                  // map
+	Array                                // array []
 	Any                                  // any
 	ConstFloat                           // 1.0
 	ConstInt                             // 1
@@ -43,8 +44,6 @@ const (
 	CloseParen                           // )
 	OpenAngle                            // <
 	CloseAngle                           // >
-	OpenSquare                           // [
-	CloseSquare                          // ]
 	RightComment                         // #
 	TopComment                           // #
 )
@@ -97,6 +96,8 @@ func (t Type) String() string {
 		return "String"
 	case Map:
 		return "Map"
+	case Array:
+		return "Array"
 	case Any:
 		return "Any"
 	case ConstFloat:
@@ -135,10 +136,6 @@ func (t Type) String() string {
 		return "OpenAngle"
 	case CloseAngle:
 		return "CloseAngle"
-	case OpenSquare:
-		return "OpenSquare"
-	case CloseSquare:
-		return "CloseSquare"
 	case RightComment:
 		return "RightComment"
 	case TopComment:

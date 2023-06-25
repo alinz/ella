@@ -1,11 +1,15 @@
 package ast
 
-import "strings"
+import (
+	"strings"
+
+	"ella.to/internal/token"
+)
 
 type Field struct {
 	Name    *Identifier
 	Type    Type
-	Options []Const
+	Options []*Const
 }
 
 var _ Node = (*Field)(nil)
@@ -31,6 +35,7 @@ func (f *Field) String() string {
 }
 
 type Message struct {
+	Token   *token.Token
 	Name    *Identifier
 	Extends []*CustomType
 	Fields  []*Field

@@ -68,11 +68,12 @@ func Lex(l *Lexer) State {
 		return Lex
 	case '[':
 		l.Next()
-		l.Emit(token.OpenSquare)
-		return Lex
-	case ']':
+		if l.Peek() != ']' {
+			l.Errorf("expect ] to close array")
+			return nil
+		}
 		l.Next()
-		l.Emit(token.CloseSquare)
+		l.Emit(token.Array)
 		return Lex
 	case '#':
 		l.Next()

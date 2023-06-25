@@ -1,9 +1,16 @@
 package parser_test
 
-import "testing"
+import (
+	"testing"
+
+	"ella.to/internal/ast"
+	"ella.to/internal/parser"
+)
 
 func TestParseConst(t *testing.T) {
-	runTests(t, TestCases{
+	runTests(t, func(p *parser.Parser) (ast.Node, error) {
+		return parser.ParseConst(p)
+	}, TestCases{
 		{
 			Input:  `ella = "1.0.0-b01"`,
 			Output: `ella = "1.0.0-b01"`,
@@ -17,25 +24,11 @@ func TestParseConst(t *testing.T) {
 			Output: `ella = 1.33333`,
 		},
 		{
-			Input: `
-# a
-b = 1 # b
-
-
-
-
-# hello
-a = 2 # a
-# world
-`,
-			Output: `
-# a
-b = 1 # b
-
-# hello
-a = 2 # a
-
-# world
+			Input:  `ella`,
+			Output: ``,
+			Error: `
+expected '=' after an identifier for defining a constant
+ella
 `,
 		},
 	})

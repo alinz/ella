@@ -25,6 +25,7 @@ type Iterator interface {
 
 type EmitterIterator struct {
 	tokens chan *Token
+	end    *Token
 }
 
 var _ Emitter = (*EmitterIterator)(nil)
@@ -34,17 +35,31 @@ func (e *EmitterIterator) Emit(token *Token) {
 	e.tokens <- token
 }
 
-func (e EmitterIterator) NextToken() *Token {
-	value, ok := <-e.tokens
+func (e *EmitterIterator) NextToken() *Token {
+	tok, ok := <-e.tokens
 	if !ok {
-		return nil
+		return e.end
+	} else if tok.Type == EOF {
+		e.end = tok
+		close(e.tokens)
+		e.tokens = nil
 	}
 
-	return value
+	return tok
 }
 
 func NewEmitterIterator() *EmitterIterator {
 	return &EmitterIterator{
 		tokens: make(chan *Token, 2),
 	}
+}
+
+func OneOfTypes(tok *Token, types ...Type) bool {
+	for _, t := range types {
+		if tok.Type == t {
+			return true
+		}
+	}
+
+	return false
 }

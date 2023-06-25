@@ -10,7 +10,7 @@ type Enum struct {
 	Token     *token.Token // enum token
 	Name      *Identifier
 	Type      Type
-	Constants []Const
+	Constants []*Const
 	Comment   *Comment
 }
 

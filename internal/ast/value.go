@@ -11,12 +11,13 @@ type Value interface {
 	valueLiteral()
 }
 
-// INTEGER
+// SIGNED INTEGER
 
 type ValueInt struct {
-	Token *token.Token
-	Value int64
-	Size  int // 8, 16, 32, 64
+	Token   *token.Token
+	Value   int64
+	Size    int // 8, 16, 32, 64
+	Defined bool
 }
 
 var _ Value = (*ValueInt)(nil)
@@ -24,6 +25,23 @@ var _ Value = (*ValueInt)(nil)
 func (v *ValueInt) nodeLiteral()  {}
 func (v *ValueInt) valueLiteral() {}
 func (v *ValueInt) String() string {
+	return v.Token.Val
+}
+
+// UNSIGNED INTEGER
+
+type ValueUint struct {
+	Token   *token.Token
+	Value   uint64
+	Size    int // 8, 16, 32, 64
+	Defined bool
+}
+
+var _ Value = (*ValueUint)(nil)
+
+func (v *ValueUint) nodeLiteral()  {}
+func (v *ValueUint) valueLiteral() {}
+func (v *ValueUint) String() string {
 	return v.Token.Val
 }
 
@@ -79,9 +97,9 @@ func (v *ValueString) String() string {
 // BOOL
 
 type ValueBool struct {
-	Token     *token.Token
-	Value     bool
-	IsUserSet bool // means if user explicitly set it
+	Token   *token.Token
+	Value   bool
+	Defined bool // means if user explicitly set it
 }
 
 var _ Value = (*ValueBool)(nil)
