@@ -12,9 +12,11 @@ func (p *Program) nodeLiteral() {}
 func (p *Program) String() string {
 	var sb strings.Builder
 
-	for _, n := range p.Nodes {
+	for i, n := range p.Nodes {
+		if i > 0 {
+			sb.WriteString("\n\n")
+		}
 		sb.WriteString(n.String())
-		sb.WriteString("\n")
 	}
 
 	return sb.String()
