@@ -21,7 +21,7 @@ message Message1 {
 
 service Service1 {
   http Ping() {
-   http.method = GET
+   http_method = GET
   }
 
   rpc Activity() => (result: Message1)

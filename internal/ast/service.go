@@ -47,6 +47,7 @@ type Method struct {
 	Name    *Identifier
 	Args    []*Arg
 	Returns []*Return
+	Options []*Const
 }
 
 var _ Node = (*Method)(nil)
@@ -78,6 +79,15 @@ func (m *Method) String() string {
 			sb.WriteString(r.String())
 		}
 		sb.WriteString(")")
+	}
+
+	if len(m.Options) > 0 {
+		sb.WriteString(" {")
+		for _, o := range m.Options {
+			sb.WriteString("\n\t\t")
+			sb.WriteString(o.String())
+		}
+		sb.WriteString("\n\t}")
 	}
 
 	return sb.String()

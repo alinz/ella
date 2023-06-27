@@ -131,3 +131,18 @@ func (v *ValueNull) valueLiteral() {}
 func (v *ValueNull) String() string {
 	return v.Token.Val
 }
+
+// VARIABLE
+
+type ValueVariable struct {
+	Token *token.Token
+}
+
+var _ Value = (*ValueVariable)(nil)
+var _ Node = (*ValueVariable)(nil)
+
+func (v *ValueVariable) nodeLiteral()  {}
+func (v *ValueVariable) valueLiteral() {}
+func (v *ValueVariable) String() string {
+	return v.Token.Val
+}

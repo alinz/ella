@@ -31,5 +31,12 @@ expected '=' after an identifier for defining a constant
 ella
 `,
 		},
+		{
+			Input: `
+			ella = version`,
+			Output: `
+ella = version
+			`,
+		},
 	})
 }

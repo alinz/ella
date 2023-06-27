@@ -49,6 +49,10 @@ func ParseValue(p *Parser) (value ast.Value, err error) {
 			Token: peekTok,
 			Value: peekTok.Val,
 		}
+	case token.Identifier:
+		value = &ast.ValueVariable{
+			Token: peekTok,
+		}
 	default:
 		return nil, p.WithError(peekTok, "expected one of the following, 'int', 'float', 'bool', 'null', 'string' values")
 	}
