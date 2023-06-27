@@ -3,6 +3,7 @@ package parser
 import (
 	"ella.to/internal/ast"
 	"ella.to/internal/token"
+	"ella.to/pkg/strcase"
 )
 
 func ParseConst(p *Parser) (*ast.Const, error) {
@@ -11,6 +12,10 @@ func ParseConst(p *Parser) (*ast.Const, error) {
 	}
 
 	nameTok := p.Next()
+
+	if !strcase.IsPascal(nameTok.Val) {
+		return nil, p.WithError(nameTok, "constant name must be in PascalCase format")
+	}
 
 	if p.Peek().Type != token.Assign {
 		return nil, p.WithError(p.Peek(), "expected '=' after an identifier for defining a constant")

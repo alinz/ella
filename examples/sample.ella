@@ -1,5 +1,5 @@
-hello = 1
+Hello = 1
 
 message Foo {
-	a: int
+	A: CustomType
 }

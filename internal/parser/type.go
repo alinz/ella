@@ -5,6 +5,7 @@ import (
 
 	"ella.to/internal/ast"
 	"ella.to/internal/token"
+	"ella.to/pkg/strcase"
 )
 
 func ParseType(p *Parser) (ast.Type, error) {
@@ -38,7 +39,13 @@ func ParseType(p *Parser) (ast.Type, error) {
 	case token.Any:
 		return &ast.Any{Token: p.Next()}, nil
 	case token.Identifier:
-		return &ast.CustomType{Token: p.Next()}, nil
+		nameTok := p.Next()
+
+		if !strcase.IsPascal(nameTok.Val) {
+			return nil, p.WithError(nameTok, "custom type name must be in PascalCase format")
+		}
+
+		return &ast.CustomType{Token: nameTok}, nil
 	default:
 		return nil, p.WithError(p.Peek(), "expected type")
 	}

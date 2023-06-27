@@ -3,6 +3,7 @@ package parser
 import (
 	"ella.to/internal/ast"
 	"ella.to/internal/token"
+	"ella.to/pkg/strcase"
 )
 
 func ParseMessage(p *Parser) (*ast.Message, error) {
@@ -16,7 +17,13 @@ func ParseMessage(p *Parser) (*ast.Message, error) {
 		return nil, p.WithError(p.Peek(), "expected identifier for defining a message")
 	}
 
-	message.Name = &ast.Identifier{Token: p.Next()}
+	nameTok := p.Next()
+
+	if !strcase.IsPascal(nameTok.Val) {
+		return nil, p.WithError(nameTok, "message name must be in PascalCase format")
+	}
+
+	message.Name = &ast.Identifier{Token: nameTok}
 
 	if p.Peek().Type != token.OpenCurly {
 		return nil, p.WithError(p.Peek(), "expected '{' after message declaration")
@@ -43,8 +50,14 @@ func ParseMessageField(p *Parser) (field *ast.Field, err error) {
 		return nil, p.WithError(p.Peek(), "expected identifier for defining a message field")
 	}
 
+	nameTok := p.Next()
+
+	if !strcase.IsPascal(nameTok.Val) {
+		return nil, p.WithError(nameTok, "message field name must be in PascalCase format")
+	}
+
 	field = &ast.Field{
-		Name:    &ast.Identifier{Token: p.Next()},
+		Name:    &ast.Identifier{Token: nameTok},
 		Options: make([]*ast.Const, 0),
 	}
 
@@ -84,8 +97,14 @@ func ParseMessageFieldConstant(p *Parser) (constant *ast.Const, err error) {
 		return nil, p.WithError(p.Peek(), "expected identifier for defining a message field constant")
 	}
 
+	nameTok := p.Next()
+
+	if !strcase.IsPascal(nameTok.Val) {
+		return nil, p.WithError(nameTok, "constant name must be in PascalCase format")
+	}
+
 	constant = &ast.Const{
-		Name: &ast.Identifier{Token: p.Next()},
+		Name: &ast.Identifier{Token: nameTok},
 	}
 
 	if p.Peek().Type != token.Colon {

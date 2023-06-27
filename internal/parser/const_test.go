@@ -12,30 +12,30 @@ func TestParseConst(t *testing.T) {
 		return parser.ParseConst(p)
 	}, TestCases{
 		{
-			Input:  `ella = "1.0.0-b01"`,
-			Output: `ella = "1.0.0-b01"`,
+			Input:  `Ella = "1.0.0-b01"`,
+			Output: `Ella = "1.0.0-b01"`,
 		},
 		{
-			Input:  `ella = 'cool this is a string'`,
-			Output: `ella = 'cool this is a string'`,
+			Input:  `Ella = 'cool this is a string'`,
+			Output: `Ella = 'cool this is a string'`,
 		},
 		{
-			Input:  `ella = 1.33333`,
-			Output: `ella = 1.33333`,
+			Input:  `Ella = 1.33333`,
+			Output: `Ella = 1.33333`,
 		},
 		{
-			Input:  `ella`,
+			Input:  `Ella`,
 			Output: ``,
 			Error: `
 expected '=' after an identifier for defining a constant
-ella
+Ella
 `,
 		},
 		{
 			Input: `
-			ella = version`,
+			Ella = version`,
 			Output: `
-ella = version
+Ella = version
 			`,
 		},
 	})

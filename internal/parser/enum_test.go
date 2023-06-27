@@ -10,47 +10,47 @@ import (
 func TestParseEnum(t *testing.T) {
 	testCases := TestCases{
 		{
-			Input: `enum foo {}`,
+			Input: `enum Foo {}`,
 			Error: `
 expected enum type
-enum foo {			
+enum Foo {			
 			`,
 		},
 		{
 			Input: `
-enum foo int8 {
-	a = 1
-	b
-	c
+enum Foo int8 {
+	A = 1
+	B
+	C
 }
 			`,
 			Output: `
-enum foo int8 {
-	a = 1
-	b
-	c
+enum Foo int8 {
+	A = 1
+	B
+	C
 }			
 			`,
 		},
 		{
 			Input: `
 
-					enum foo int8 {
-						a = 1
+					enum Foo int8 {
+						A = 1
 					}
 
 					`,
 			Output: `
-enum foo int8 {
-	a = 1
+enum Foo int8 {
+	A = 1
 }
 		`,
 		},
 		{
-			Input: `enum foo int8 {
+			Input: `enum Foo int8 {
 
 					}`,
-			Output: `enum foo int8 {}`,
+			Output: `enum Foo int8 {}`,
 		},
 	}
 

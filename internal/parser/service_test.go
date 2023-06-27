@@ -10,33 +10,33 @@ import (
 func TestParseService(t *testing.T) {
 	testCases := TestCases{
 		{
-			Input:  `service foo {}`,
-			Output: `service foo {}`,
+			Input:  `service Foo {}`,
+			Output: `service Foo {}`,
 		},
 		{
 			Input: `
-	service foo {
+	service Foo {
 		rpc GetFoo() => (value: int64) {}
 	}
 		`,
 			Output: `
-service foo {
+service Foo {
 	rpc GetFoo() => (value: int64)
 }
 		`,
 		},
 		{
 			Input: `
-service foo {
+service Foo {
 	rpc GetFoo() => (value: int64) {
-		required
+		Required
 	}
 }
 `,
 			Output: `
-service foo {
+service Foo {
 	rpc GetFoo() => (value: int64) {
-		required
+		Required
 	}
 }
 `,

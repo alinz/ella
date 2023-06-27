@@ -10,19 +10,19 @@ import (
 func TestParseMessage(t *testing.T) {
 	testCases := TestCases{
 		{
-			Input:  `message foo {}`,
-			Output: `message foo {}`,
+			Input:  `message Foo {}`,
+			Output: `message Foo {}`,
 		},
 		{
-			Input: `message foo {
-				first_name: string {
-					required
+			Input: `message Foo {
+				FirstName: string {
+					Required
 				}
 			}`,
 			Output: `
-message foo {
-	first_name: string {
-		required
+message Foo {
+	FirstName: string {
+		Required
 	}
 }
 `,

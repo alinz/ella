@@ -3,6 +3,7 @@ package parser
 import (
 	"ella.to/internal/ast"
 	"ella.to/internal/token"
+	"ella.to/pkg/strcase"
 )
 
 func ParseService(p *Parser) (service *ast.Service, err error) {
@@ -16,7 +17,13 @@ func ParseService(p *Parser) (service *ast.Service, err error) {
 		return nil, p.WithError(p.Peek(), "expected identifier for defining a service")
 	}
 
-	service.Name = &ast.Identifier{Token: p.Next()}
+	nameTok := p.Next()
+
+	if !strcase.IsPascal(nameTok.Val) {
+		return nil, p.WithError(nameTok, "service name must be in PascalCase format")
+	}
+
+	service.Name = &ast.Identifier{Token: nameTok}
 
 	if p.Peek().Type != token.OpenCurly {
 		return nil, p.WithError(p.Peek(), "expected '{' after service declaration")
@@ -56,7 +63,13 @@ func ParseServiceMethod(p *Parser) (method *ast.Method, err error) {
 		return nil, p.WithError(p.Peek(), "expected identifier for defining a service method")
 	}
 
-	method.Name = &ast.Identifier{Token: p.Next()}
+	nameTok := p.Next()
+
+	if !strcase.IsPascal(nameTok.Val) {
+		return nil, p.WithError(nameTok, "service method name must be in PascalCase format")
+	}
+
+	method.Name = &ast.Identifier{Token: nameTok}
 
 	if p.Peek().Type != token.OpenParen {
 		return nil, p.WithError(p.Peek(), "expected '(' after service method name")
@@ -123,7 +136,13 @@ func ParseServiceMethodArgument(p *Parser) (arg *ast.Arg, err error) {
 		return nil, p.WithError(p.Peek(), "expected identifier for defining a service method argument")
 	}
 
-	arg = &ast.Arg{Name: &ast.Identifier{Token: p.Next()}}
+	nameTok := p.Next()
+
+	if !strcase.IsCamel(nameTok.Val) {
+		return nil, p.WithError(nameTok, "service method argument name must be in camelCase format")
+	}
+
+	arg = &ast.Arg{Name: &ast.Identifier{Token: nameTok}}
 
 	if p.Peek().Type != token.Colon {
 		return nil, p.WithError(p.Peek(), "expected ':' after service method argument name")
@@ -148,7 +167,13 @@ func ParseServiceMethodReturnArg(p *Parser) (ret *ast.Return, err error) {
 		return nil, p.WithError(p.Peek(), "expected identifier for defining a service method argument")
 	}
 
-	ret = &ast.Return{Name: &ast.Identifier{Token: p.Next()}}
+	nameTok := p.Next()
+
+	if !strcase.IsCamel(nameTok.Val) {
+		return nil, p.WithError(nameTok, "service method argument name must be in camelCase format")
+	}
+
+	ret = &ast.Return{Name: &ast.Identifier{Token: nameTok}}
 
 	if p.Peek().Type != token.Colon {
 		return nil, p.WithError(p.Peek(), "expected ':' after service method argument name")
@@ -173,8 +198,14 @@ func ParseServiceMethodOption(p *Parser) (constant *ast.Const, err error) {
 		return nil, p.WithError(p.Peek(), "expected identifier for defining a message field constant")
 	}
 
+	nameTok := p.Next()
+
+	if !strcase.IsPascal(nameTok.Val) {
+		return nil, p.WithError(nameTok, "service method option name must be in PascalCase format")
+	}
+
 	constant = &ast.Const{
-		Name: &ast.Identifier{Token: p.Next()},
+		Name: &ast.Identifier{Token: nameTok},
 	}
 
 	if p.Peek().Type != token.Colon {

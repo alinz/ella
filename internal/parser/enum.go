@@ -5,6 +5,7 @@ import (
 
 	"ella.to/internal/ast"
 	"ella.to/internal/token"
+	"ella.to/pkg/strcase"
 )
 
 var enumTypes = []token.Type{
@@ -29,7 +30,13 @@ func ParseEnum(p *Parser) (enum *ast.Enum, err error) {
 		return nil, p.WithError(p.Peek(), "expected identifier for defining an enum")
 	}
 
-	enum.Name = &ast.Identifier{Token: p.Next()}
+	nameTok := p.Next()
+
+	if !strcase.IsPascal(nameTok.Val) {
+		return nil, p.WithError(nameTok, "enum name must be in PascalCase format")
+	}
+
+	enum.Name = &ast.Identifier{Token: nameTok}
 
 	enum.Type, err = ParseEnumType(p)
 	if err != nil {
@@ -91,6 +98,10 @@ func ParseEnumConstant(p *Parser) (*ast.Const, error) {
 	}
 
 	nameTok := p.Next()
+
+	if !strcase.IsPascal(nameTok.Val) {
+		return nil, p.WithError(nameTok, "enum constant name must be in PascalCase format")
+	}
 
 	if p.Peek().Type != token.Assign {
 		return &ast.Const{
