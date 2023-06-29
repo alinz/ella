@@ -97,7 +97,6 @@ type Service struct {
 	Token   *token.Token
 	Name    *Identifier
 	Methods []*Method
-	Comment *Comment
 }
 
 var _ Node = (*Service)(nil)

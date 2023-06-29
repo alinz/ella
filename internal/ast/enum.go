@@ -11,7 +11,6 @@ type Enum struct {
 	Name      *Identifier
 	Type      Type
 	Constants []*Const
-	Comment   *Comment
 }
 
 var _ Node = (*Enum)(nil)

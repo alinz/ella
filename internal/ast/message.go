@@ -39,7 +39,6 @@ type Message struct {
 	Name    *Identifier
 	Extends []*CustomType
 	Fields  []*Field
-	Comment *Comment
 }
 
 var _ Node = (*Message)(nil)
