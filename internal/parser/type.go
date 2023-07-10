@@ -14,6 +14,10 @@ func ParseType(p *Parser) (ast.Type, error) {
 		return ParseMapType(p)
 	case token.Array:
 		return ParseArrayType(p)
+	case token.Bool:
+		return &ast.Bool{Token: p.Next()}, nil
+	case token.Byte:
+		return &ast.Byte{Token: p.Next()}, nil
 	case token.Int8, token.Int16, token.Int32, token.Int64:
 		tok := p.Next()
 		return &ast.Int{

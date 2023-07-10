@@ -1,0 +1,45 @@
+//
+// Enums
+//
+{{range $enum := . }}
+type {{ $enum.Name }} {{ $enum.Type }}
+
+const (
+	{{- range $i, $key := $enum.Keys }}
+	{{ $enum.Name }}_{{ $key.Name }} {{ $enum.Name }} = {{ $key.Value }}
+	{{- end }}
+)
+
+func (e *{{ $enum.Name }}) UnmarshalText(text []byte) error {
+	switch strings.ToLower(string(text)) {
+	{{- range $key := $enum.Keys }}
+	case "{{ $key.Name | ToLower }}":
+		*e = {{ $enum.Name }}_{{ $key.Name }}
+	{{- end }}
+	default:
+		return fmt.Errorf("invalid enum value: %s", string(text))
+	}
+	return nil
+}
+
+func (e {{ $enum.Name }}) MarshalText() ([]byte, error) {
+	name := e.String()
+	if name == "" {
+		return nil, fmt.Errorf("invalid enum {{ $enum.Name }} value: %v", e)
+	}
+	return []byte(name), nil
+}
+
+func (e {{ $enum.Name }}) String() string {
+	var name string
+	switch e {
+	{{- range $key := $enum.Keys }}	
+	case {{ $enum.Name }}_{{ $key.Name }}:
+		name = "{{ $key.Name | ToLower }}"
+	{{- end }}
+	default:
+		name = ""
+	}
+	return name
+}
+{{ end -}}

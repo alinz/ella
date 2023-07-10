@@ -1,0 +1,20 @@
+//
+// Services
+//
+{{ range $service := . }}
+type {{ $service.Name }}HandlerService interface {
+	{{- range $method := $service.Methods }}
+    {{- if eq $method.Type "http" }}
+	{{ $method.Name }}({{ $method.Args }}) ({{ $method.Returns }})
+    {{- end }}
+	{{- end }}
+}
+
+type {{ $service.Name }}RpcService interface {
+    {{- range $method := $service.Methods }}
+    {{- if eq $method.Type "rpc" }}
+    {{ $method.Name }}({{ $method.Args }}) ({{ $method.Returns }})
+    {{- end }}
+    {{- end }}
+}
+{{- end }}

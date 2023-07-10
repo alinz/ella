@@ -1,0 +1,9 @@
+//
+// Constants
+//
+
+const (
+{{- range $constant := . }}
+  {{ $constant.Name }} = {{ $constant.Value }}
+{{- end }}
+)

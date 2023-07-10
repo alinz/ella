@@ -99,10 +99,6 @@ func ParseMessageFieldConstant(p *Parser) (constant *ast.Const, err error) {
 
 	nameTok := p.Next()
 
-	if !strcase.IsPascal(nameTok.Val) {
-		return nil, p.WithError(nameTok, "constant name must be in PascalCase format")
-	}
-
 	constant = &ast.Const{
 		Name: &ast.Identifier{Token: nameTok},
 	}

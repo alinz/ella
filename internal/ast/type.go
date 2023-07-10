@@ -25,6 +25,20 @@ func (t *CustomType) String() string {
 	return t.Token.Val
 }
 
+// BYTE
+
+type Byte struct {
+	Token *token.Token
+}
+
+var _ Type = (*Byte)(nil)
+
+func (t *Byte) nodeLiteral() {}
+func (t *Byte) typeLiteral() {}
+func (t *Byte) String() string {
+	return t.Token.Val
+}
+
 // UNSIGNED INTEGER
 
 type Uint struct {
