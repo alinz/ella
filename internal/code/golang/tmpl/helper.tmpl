@@ -74,90 +74,9 @@ func callServiceMethod[ReqMsg, RespMsg any](ctx context.Context, method string, 
 	return json.NewDecoder(resp.Body).Decode(out)
 }
 
-type serviceMethodHandler func(context.Context, http.ResponseWriter, *http.Request)
+type httpServiceMethodHandler func(context.Context, http.ResponseWriter, *http.Request)
 
-type stremEvent struct {
-	id    int64
-	event string
-	data  string
-}
-
-func parseStreamEvents(r io.Reader) <-chan *stremEvent {
-	out := make(chan *stremEvent)
-
-	scanner := bufio.NewScanner(r)
-
-	// Set the scanner's split function to split on "\n\n"
-	scanner.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		// Return nothing if at end of file and no data passed
-		if atEOF && len(data) == 0 {
-			return 0, nil, nil
-		}
-
-		idx := bytes.Index(data, []byte("\n\n"))
-		if idx >= 0 {
-			return idx + 2, data[:idx], nil
-		}
-
-		if atEOF {
-			return len(data), data, nil
-		}
-
-		// We need more data
-		return 0, nil, nil
-	})
-
-	secondPart := func(value string) (string, bool) {
-		segments := strings.Split(value, ":")
-		if len(segments) != 2 {
-			return "", false
-		}
-		return strings.TrimSpace(segments[1]), true
-	}
-
-	go func() {
-		defer close(out)
-
-		for scanner.Scan() {
-			item := scanner.Text()
-			lines := strings.Split(item, "\n")
-
-			if len(lines) != 3 {
-				continue
-			}
-
-			identifier, ok := secondPart(lines[0])
-			if !ok {
-				continue
-			}
-
-			id, err := strconv.ParseInt(identifier, 10, 64)
-			if err != nil {
-				continue
-			}
-
-			event, ok := secondPart(lines[1])
-			if !ok {
-				continue
-			}
-
-			data, ok := secondPart(lines[2])
-			if !ok {
-				continue
-			}
-
-			out <- &stremEvent{
-				id:    id,
-				event: event,
-				data:  data,
-			}
-		}
-	}()
-
-	return out
-}
-
-func createServiceMethodHandler[ReqMsg, RespMsg any](method string, hasFields bool, fn func(ctx context.Context, req *ReqMsg) (*RespMsg, error)) serviceMethodHandler {
+func createServiceMethodHandler[ReqMsg, RespMsg any](method string, hasFields bool, fn func(ctx context.Context, req *ReqMsg) (*RespMsg, error)) httpServiceMethodHandler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
 			ResponseError(w, Errorf(http.StatusMethodNotAllowed, "method %q not allowed", r.Method))

@@ -2,7 +2,7 @@
 // Services
 //
 {{ range $service := . }}
-type {{ $service.Name }}HandlerService interface {
+type Http{{ $service.Name }}Service interface {
 	{{- range $method := $service.Methods }}
     {{- if eq $method.Type "http" }}
 	{{ $method.Name }}({{ $method.Args }}) ({{ $method.Returns }})
@@ -10,7 +10,7 @@ type {{ $service.Name }}HandlerService interface {
 	{{- end }}
 }
 
-type {{ $service.Name }}RpcService interface {
+type Rpc{{ $service.Name }}Service interface {
     {{- range $method := $service.Methods }}
     {{- if eq $method.Type "rpc" }}
     {{ $method.Name }}({{ $method.Args }}) ({{ $method.Returns }})

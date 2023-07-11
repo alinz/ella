@@ -54,7 +54,7 @@ func generateServerHandlers(out io.Writer, services []*ast.Service, isMessage fu
 			return methods[i].Name.String() < methods[j].Name.String()
 		})
 
-		servicePathName := strcase.ToPascal(serviceName) + "HandlerServicePrefixPath"
+		servicePathName := "Http" + strcase.ToPascal(serviceName) + "ServicePrefixPath"
 		servicePath := "/http/" + strcase.ToPascal(serviceName) + "/"
 
 		return struct {
@@ -64,8 +64,8 @@ func generateServerHandlers(out io.Writer, services []*ast.Service, isMessage fu
 			Path     string
 			Methods  any
 		}{
-			Name:     strcase.ToPascal(serviceName) + "HandlerService",
-			NameImpl: strcase.ToCamel(serviceName) + "HandlerServiceServer",
+			Name:     "Http" + strcase.ToPascal(serviceName) + "Service",
+			NameImpl: "http" + strcase.ToPascal(serviceName) + "ServiceServer",
 			PathName: servicePathName,
 			Path:     servicePath,
 			Methods: code.Mapper(methods, func(method *ast.Method) any {
@@ -128,7 +128,7 @@ func generateServerHandlers(out io.Writer, services []*ast.Service, isMessage fu
 				}{
 					Name:             strcase.ToPascal(method.Name.String()),
 					Http:             getHttpMethodCall(method),
-					PathName:         strcase.ToPascal(serviceName) + strcase.ToPascal(method.Name.String()) + "MethodPrefixPath",
+					PathName:         "Http" + strcase.ToPascal(serviceName) + strcase.ToPascal(method.Name.String()) + "MethodPrefixPath",
 					Path:             servicePath + strcase.ToPascal(method.Name.String()),
 					HasArgs:          hasArgs,
 					ArgsWithTypes:    sbArgsWithTypes.String(),

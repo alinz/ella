@@ -31,7 +31,7 @@ func generateClientHandlers(out io.Writer, services []*ast.Service, isMessage fu
 			return methods[i].Name.String() < methods[j].Name.String()
 		})
 
-		servicePathName := strcase.ToPascal(serviceName) + "HandlerServicePrefixPath"
+		servicePathName := "Http" + strcase.ToPascal(serviceName) + "ServicePrefixPath"
 
 		return struct {
 			Name     string
@@ -39,8 +39,8 @@ func generateClientHandlers(out io.Writer, services []*ast.Service, isMessage fu
 			PathName string
 			Methods  any
 		}{
-			Name:     strcase.ToPascal(serviceName) + "HandlerService",
-			NameImpl: strcase.ToCamel(serviceName) + "HandlerServiceClient",
+			Name:     "Http" + strcase.ToPascal(serviceName) + "Service",
+			NameImpl: "http" + strcase.ToPascal(serviceName) + "ServiceClient",
 			PathName: servicePathName,
 			Methods: code.Mapper(methods, func(method *ast.Method) any {
 
@@ -114,7 +114,7 @@ func generateClientHandlers(out io.Writer, services []*ast.Service, isMessage fu
 				}{
 					Name:             strcase.ToPascal(method.Name.String()),
 					Http:             getHttpMethodCall(method),
-					PathName:         strcase.ToPascal(serviceName) + strcase.ToPascal(method.Name.String()) + "MethodPrefixPath",
+					PathName:         "Http" + strcase.ToPascal(serviceName) + strcase.ToPascal(method.Name.String()) + "MethodPrefixPath",
 					HasArgs:          hasArgs,
 					ArgsInput:        sbArgsInput.String(),
 					ArgsWithTypes:    sbArgsWithTypes.String(),

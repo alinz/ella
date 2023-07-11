@@ -15,7 +15,7 @@ const (
 
 type {{ $service.NameImpl }} struct {
 	service {{ $service.Name }}
-	routes  map[string]serviceMethodHandler
+	routes  map[string]httpServiceMethodHandler
 }
 
 var _ http.Handler = (*{{ $service.NameImpl }})(nil)
@@ -32,12 +32,12 @@ func (s *{{ $service.NameImpl }}) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	handler(ctx, w, r)
 }
 
-func Create{{ $service.Name }}(service {{ $service.Name }}) http.Handler {
+func Create{{ $service.Name }}Server(service {{ $service.Name }}) http.Handler {
 	server := {{ $service.NameImpl }}{
 		service: service,
 	}
 
-	server.routes = map[string]serviceMethodHandler{
+	server.routes = map[string]httpServiceMethodHandler{
 		{{- range $method := $service.Methods }}
 		{{ $method.PathName }}: server.create{{ $method.Name }}(),
 		{{- end }}
@@ -48,7 +48,7 @@ func Create{{ $service.Name }}(service {{ $service.Name }}) http.Handler {
 
 {{- range $method := $service.Methods }}
 
-func (s *{{ $service.NameImpl }}) create{{ $method.Name }}() serviceMethodHandler {
+func (s *{{ $service.NameImpl }}) create{{ $method.Name }}() httpServiceMethodHandler {
 	return createServiceMethodHandler({{ $method.Http }}, {{ $method.HasArgs }}, func(ctx context.Context, args *struct {
 		{{ $method.ArgsWithTypes }}
 	}) (ret *struct {
