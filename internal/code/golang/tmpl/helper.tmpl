@@ -3,6 +3,21 @@
 // Helper functions
 //
 
+// RPC
+
+type rpcMsg interface {
+    Topic() string
+    Data() []byte
+    Reply(reply []byte) error
+}
+
+type rpcAdaptor interface {
+    Register(topic string, recv func(msg rpcMsg)) (drain func(), err error)
+    Send(ctx context.Context, topic string, data []byte) ([]byte, error)
+}
+
+// Context
+
 type CtxKey string
 
 const (

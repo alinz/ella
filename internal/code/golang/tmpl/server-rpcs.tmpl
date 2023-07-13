@@ -1,0 +1,72 @@
+//
+// Server RPCs
+//
+
+const (
+{{- range $service := . }}
+	{{ $service.TopicName }} = "{{ $service.Topic }}"
+{{- range $method := $service.Methods }}
+    {{ $method.TopicName }} = "{{ $method.Topic }}"
+{{- end }}    
+{{- end }}
+)
+
+{{- range $service := . }}
+
+func StartRpc{{ $service.Name }}ServiceServer(service Rpc{{ $service.Name }}Service, adaptor rpcAdaptor) (drain func (), err error) {
+    var unsubscribe func()
+    var unsubscribes []func()
+
+    drain = func() {
+        for _, unsubscribe := range unsubscribes {
+            unsubscribe()
+        }
+    }
+
+    {{ range $method := $service.Methods }}
+    unsubscribe, err = adaptor.Register({{ $method.TopicName }}, func(msg rpcMsg) {
+        data := msg.Data()
+        in := struct {
+            {{ $method.InputDefinitions }}
+        }{}
+
+        err := json.Unmarshal(data, &in)
+        if err != nil {
+            msg.Reply([]byte(err.Error()))
+            return
+        }
+
+        p, err := service.{{ $method.Name }}(
+            context.Background(), 
+            {{ $method.InputNames }}
+        )
+        if err != nil {
+            msg.Reply([]byte(err.Error()))
+            return
+        }
+
+        out := struct {
+            {{ $method.OutputDefinitions }}
+        }{
+            {{ $method.OutputNames }}
+        }
+
+        data, err = json.Marshal(out)
+        if err != nil {
+            msg.Reply([]byte(err.Error()))
+            return
+        }
+
+        msg.Reply(data)
+    })
+    if err != nil {
+        return
+    }
+
+    unsubscribes = append(unsubscribes, unsubscribe)
+    {{- end }}
+
+	return
+}
+
+{{- end }}

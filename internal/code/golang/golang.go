@@ -80,6 +80,20 @@ func New() code.Generator {
 
 		fmt.Fprint(w, "\n")
 
+		err = generateServerRpcs(w, services, isMessage)
+		if err != nil {
+			return err
+		}
+
+		fmt.Fprint(w, "\n")
+
+		err = generateClientRpcs(w, services, isMessage)
+		if err != nil {
+			return err
+		}
+
+		fmt.Fprint(w, "\n")
+
 		err = generateHelper(w)
 		if err != nil {
 			return err
