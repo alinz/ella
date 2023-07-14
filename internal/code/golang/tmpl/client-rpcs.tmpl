@@ -18,33 +18,14 @@ func CreateRpc{{ $service.Name }}ServiceClient(adaptor rpcAdaptor) Rpc{{ $servic
 
 {{- range $method := $service.Methods }}
 
-func (s *rpc{{ $service.Name }}ServiceClient) {{ $method.Name }}(ctx context.Context, {{ $method.ArgsWithTypes }}) ({{ $method.ReturnsWithTypes }}, err error) {
-    in := struct {
+func (s *rpc{{ $service.Name }}ServiceClient) {{ $method.Name }}(ctx context.Context, {{ $method.ArgsWithTypes }}) ({{ $method.ReturnsWithTypes }}, err error) { 
+    out, err := rpcSend(ctx, s.adaptor, {{ $method.TopicName }}, &struct {
         {{ $method.ArgsDefinitions }}
     }{
         {{ $method.ArgsAssign }}
-    }
-
-    data, err := json.Marshal(in)
-    if err != nil {
-        return
-    }
-
-    data, err = s.adaptor.Send(ctx, {{ $method.TopicName }}, data)
-    if err != nil {
-        return
-    }
-
-    if data[0] != '{' {
-        err = errors.New(string(data))
-        return
-    }
-
-    out := struct {
+    }, &struct {
         {{ $method.ReturnsDefinitions }}
-    }{}
-
-    err = json.Unmarshal(data, &out)
+    }{})
     if err != nil {
         return
     }
