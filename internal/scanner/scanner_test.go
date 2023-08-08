@@ -10,6 +10,15 @@ import (
 func TestLex(t *testing.T) {
 	runTestCase(t, -1, scanner.Lex, TestCases{
 		{
+			input: `A = 1MB`,
+			output: Tokens{
+				{Type: token.Identifier, Start: 0, End: 1, Val: "A"},
+				{Type: token.Assign, Start: 2, End: 3, Val: "="},
+				{Type: token.ConstIntBytes, Start: 4, End: 7, Val: "1MB"},
+				{Type: token.EOF, Start: 7, End: 7, Val: ""},
+			},
+		},
+		{
 			input: `
 			
 			# this is a comment 1
@@ -172,8 +181,8 @@ func TestLex(t *testing.T) {
 				}
 			}
 
-			http MyService {
-				GetUserById (id: int64) => (user: User) {
+			service MyService {
+				http GetUserById (id: int64) => (user: User) {
 					method = "GET"
 				}
 			}
@@ -196,28 +205,29 @@ func TestLex(t *testing.T) {
 				{Type: token.ConstStringDoubleQuote, Start: 86, End: 97, Val: "^[a-zA-Z]+$"},
 				{Type: token.CloseCurly, Start: 103, End: 104, Val: "}"},
 				{Type: token.CloseCurly, Start: 108, End: 109, Val: "}"},
-				{Type: token.Http, Start: 114, End: 118, Val: "http"},
-				{Type: token.Identifier, Start: 119, End: 128, Val: "MyService"},
-				{Type: token.OpenCurly, Start: 129, End: 130, Val: "{"},
-				{Type: token.Identifier, Start: 135, End: 146, Val: "GetUserById"},
-				{Type: token.OpenParen, Start: 147, End: 148, Val: "("},
-				{Type: token.Identifier, Start: 148, End: 150, Val: "id"},
-				{Type: token.Colon, Start: 150, End: 151, Val: ":"},
-				{Type: token.Int64, Start: 152, End: 157, Val: "int64"},
-				{Type: token.CloseParen, Start: 157, End: 158, Val: ")"},
-				{Type: token.Return, Start: 159, End: 161, Val: "=>"},
-				{Type: token.OpenParen, Start: 162, End: 163, Val: "("},
-				{Type: token.Identifier, Start: 163, End: 167, Val: "user"},
-				{Type: token.Colon, Start: 167, End: 168, Val: ":"},
-				{Type: token.Identifier, Start: 169, End: 173, Val: "User"},
-				{Type: token.CloseParen, Start: 173, End: 174, Val: ")"},
-				{Type: token.OpenCurly, Start: 175, End: 176, Val: "{"},
-				{Type: token.Identifier, Start: 182, End: 188, Val: "method"},
-				{Type: token.Assign, Start: 189, End: 190, Val: "="},
-				{Type: token.ConstStringDoubleQuote, Start: 192, End: 195, Val: "GET"},
-				{Type: token.CloseCurly, Start: 201, End: 202, Val: "}"},
-				{Type: token.CloseCurly, Start: 206, End: 207, Val: "}"},
-				{Type: token.EOF, Start: 215, End: 215, Val: ""},
+				{Type: token.Service, Start: 114, End: 121, Val: "service"},
+				{Type: token.Identifier, Start: 122, End: 131, Val: "MyService"},
+				{Type: token.OpenCurly, Start: 132, End: 133, Val: "{"},
+				{Type: token.Http, Start: 138, End: 142, Val: "http"},
+				{Type: token.Identifier, Start: 143, End: 154, Val: "GetUserById"},
+				{Type: token.OpenParen, Start: 155, End: 156, Val: "("},
+				{Type: token.Identifier, Start: 156, End: 158, Val: "id"},
+				{Type: token.Colon, Start: 158, End: 159, Val: ":"},
+				{Type: token.Int64, Start: 160, End: 165, Val: "int64"},
+				{Type: token.CloseParen, Start: 165, End: 166, Val: ")"},
+				{Type: token.Return, Start: 167, End: 169, Val: "=>"},
+				{Type: token.OpenParen, Start: 170, End: 171, Val: "("},
+				{Type: token.Identifier, Start: 171, End: 175, Val: "user"},
+				{Type: token.Colon, Start: 175, End: 176, Val: ":"},
+				{Type: token.Identifier, Start: 177, End: 181, Val: "User"},
+				{Type: token.CloseParen, Start: 181, End: 182, Val: ")"},
+				{Type: token.OpenCurly, Start: 183, End: 184, Val: "{"},
+				{Type: token.Identifier, Start: 190, End: 196, Val: "method"},
+				{Type: token.Assign, Start: 197, End: 198, Val: "="},
+				{Type: token.ConstStringDoubleQuote, Start: 200, End: 203, Val: "GET"},
+				{Type: token.CloseCurly, Start: 209, End: 210, Val: "}"},
+				{Type: token.CloseCurly, Start: 214, End: 215, Val: "}"},
+				{Type: token.EOF, Start: 223, End: 223, Val: ""},
 			},
 		},
 	})

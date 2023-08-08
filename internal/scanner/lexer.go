@@ -49,6 +49,25 @@ func (l *Lexer) Peek() rune {
 	return r
 }
 
+func (l *Lexer) PeekN(n int) string {
+	end := l.pos + n
+	if end > len(l.input) {
+		end = len(l.input)
+	}
+
+	return l.input[l.pos:end]
+}
+
+func (l *Lexer) NextN(n int) string {
+	end := l.pos + n
+	if end > len(l.input) {
+		end = len(l.input)
+	}
+
+	l.pos = end
+	return l.input[l.start:end]
+}
+
 func (l *Lexer) Backup() {
 	l.pos -= l.width
 	l.width = 0

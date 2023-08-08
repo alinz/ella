@@ -26,6 +26,9 @@ const (
 	Map                                  // map
 	Array                                // array []
 	Any                                  // any
+	File                                 // file
+	ConstFloatBytes                      // 1.0MB
+	ConstIntBytes                        // 1KB
 	ConstFloat                           // 1.0
 	ConstInt                             // 1
 	ConstStringSingleQuote               // 'string'
@@ -100,6 +103,12 @@ func (t Type) String() string {
 		return "Array"
 	case Any:
 		return "Any"
+	case File:
+		return "File"
+	case ConstFloatBytes:
+		return "ConstFloatBytes"
+	case ConstIntBytes:
+		return "ConstIntBytes"
 	case ConstFloat:
 		return "ConstFloat"
 	case ConstInt:

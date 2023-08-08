@@ -144,7 +144,7 @@ func Number(l *Lexer) State {
 }
 
 func parseNumber(l *Lexer) (ok bool, found bool) {
-	isFLoat := false
+	isFloat := false
 
 	l.Accept("+-")
 
@@ -162,7 +162,7 @@ func parseNumber(l *Lexer) (ok bool, found bool) {
 	}
 
 	if l.Accept(".") {
-		isFLoat = true
+		isFloat = true
 		if !l.AcceptRun(digits) {
 			l.Errorf("expected digit after decimal point")
 			return false, false // not founding number and with error
@@ -181,6 +181,24 @@ func parseNumber(l *Lexer) (ok bool, found bool) {
 
 	l.Accept("i")
 
+	isBytes := false
+	// checking if there is any B, KB, MB, GB, TB, PB, EB, ZB, YB
+	if l.Accept("B") {
+		isBytes = true
+	} else {
+		value := l.PeekN(2)
+		if value == "KB" || // kilobyte
+			value == "MB" || // megabyte
+			value == "GB" || // gigabyte
+			value == "TB" || // terabyte
+			value == "PB" || // petabyte
+			value == "EB" { // exabyte
+			isBytes = true
+			l.Next()
+			l.Next()
+		}
+	}
+
 	peek := l.Peek()
 
 	if peek == 0 || peek == ' ' || peek == '\t' || peek == '\n' || peek == '\r' || peek == '#' {
@@ -189,8 +207,12 @@ func parseNumber(l *Lexer) (ok bool, found bool) {
 			return false, false // not founding number and with error
 		}
 
-		if isFLoat {
+		if isFloat && isBytes {
+			l.Emit(token.ConstFloatBytes)
+		} else if isFloat {
 			l.Emit(token.ConstFloat)
+		} else if isBytes {
+			l.Emit(token.ConstIntBytes)
 		} else {
 			l.Emit(token.ConstInt)
 		}
@@ -267,6 +289,9 @@ func reservedKeywrod(l *Lexer) bool {
 		return true
 	case "any":
 		l.Emit(token.Any)
+		return true
+	case "file":
+		l.Emit(token.File)
 		return true
 	case "true", "false":
 		l.Emit(token.ConstBool)
