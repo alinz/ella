@@ -38,9 +38,15 @@ func ParseValue(p *Parser) (value ast.Value, err error) {
 		if err != nil {
 			return nil, p.WithError(peekTok, "failed to parse float value", err)
 		}
-		value = &ast.ValueFloat{
-			Token: peekTok,
-			Value: float * float64(mul),
+		// NOTE: because the size of bytes usually normalized to int,
+		// we treat float bytes as int bytes
+		// also first we need to multiply float to mul then convert it to int
+		// to make sure int64(0.5) will become 0 and make the whole multiplication
+		// to zero
+		value = &ast.ValueInt{
+			Token:   peekTok,
+			Value:   int64(float * float64(mul)),
+			Defined: true,
 		}
 	case token.ConstIntBytes:
 		num, mul := parseBytesSizeNumber(peekTok.Val)
