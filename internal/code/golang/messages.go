@@ -98,6 +98,8 @@ func parseFieldOptions(field *ast.Field) string {
 
 func parseType(typ ast.Type) string {
 	switch typ := typ.(type) {
+	case *ast.File:
+		return typ.String()
 	case *ast.CustomType:
 		return typ.String()
 	case *ast.Any:

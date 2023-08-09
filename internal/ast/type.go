@@ -11,6 +11,20 @@ type Type interface {
 	typeLiteral()
 }
 
+// FILE TYPE
+
+type File struct {
+	Token *token.Token
+}
+
+var _ Type = (*File)(nil)
+
+func (t *File) nodeLiteral() {}
+func (t *File) typeLiteral() {}
+func (t *File) String() string {
+	return t.Token.Val
+}
+
 // CUSTOM TYPE
 
 type CustomType struct {

@@ -42,6 +42,8 @@ func ParseType(p *Parser) (ast.Type, error) {
 		return &ast.String{Token: p.Next()}, nil
 	case token.Any:
 		return &ast.Any{Token: p.Next()}, nil
+	case token.File:
+		return &ast.File{Token: p.Next()}, nil
 	case token.Identifier:
 		nameTok := p.Next()
 
