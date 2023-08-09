@@ -47,7 +47,7 @@ func (p *Parser) WithError(token *token.Token, args ...any) error {
 		}
 	}
 
-	return fmt.Errorf("%s\n%s", sb.String(), p.showContext(token, 5))
+	return fmt.Errorf("%s:\n%s", sb.String(), p.showContext(token, 5))
 }
 
 func (p *Parser) showContext(token *token.Token, lines int) string {
@@ -56,7 +56,7 @@ func (p *Parser) showContext(token *token.Token, lines int) string {
 
 	for i := 0; i < lines; i++ {
 		if start > 0 {
-			start = strings.LastIndex(p.input[:start], "\n") - 1
+			start = strings.LastIndex(p.input[:start], "\n")
 		}
 
 		if end < len(p.input)-1 {
