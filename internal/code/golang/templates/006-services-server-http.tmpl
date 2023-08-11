@@ -1,0 +1,97 @@
+//
+// Handler Servers
+//
+
+const (
+{{- range $service := .HttpServices }}
+	{{ $service.PathName }} = "{{ $service.PathValue }}"
+{{- range $method := $service.Methods }}
+	{{ $method.PathName }} = "{{ $method.PathValue }}"
+{{- end }}
+{{- end }}
+)
+
+{{- range $service := .HttpServices }}
+
+type {{ $service.NameImpl }} struct {
+	service Http{{ $service.Name }}Service
+	routes  map[string]httpServiceMethodHandler
+}
+
+var _ http.Handler = (*{{ $service.NameImpl }})(nil)
+
+func (s *{{ $service.NameImpl }}) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	handler, ok := s.routes[r.URL.Path]
+	if !ok {
+		ResponseError(w, Errorf(http.StatusNotFound, "method %q not found", r.URL.Path))
+		return
+	}
+
+	ctx := injectCommonVars(r.Context(), w, r)
+
+	handler(ctx, w, r)
+}
+
+func Create{{ $service.Name }}ServiceServer(service Http{{ $service.Name }}Service) http.Handler {
+	server := {{ $service.NameImpl }}{
+		service: service,
+	}
+
+	server.routes = map[string]httpServiceMethodHandler{
+		{{- range $method := $service.Methods }}
+		{{ $method.PathName }}: server.create{{ $method.Name }}(),
+		{{- end }}
+	}
+
+	return &server
+}
+
+{{- range $method := $service.Methods }}
+
+func (s *{{ $service.NameImpl }}) create{{ $method.Name }}() httpServiceMethodHandler {
+{{- if $method.IsStream }}
+{{- else if $method.Options.RawWriter }}
+	return createRawWriterServiceMethodHandler(http.MethodPost, {{ $method.HasArgs }}, func(ctx context.Context, w http.ResponseWriter, args *struct {
+		{{ $method.ArgsStructDefinitions }}
+	}) {
+		s.service.{{ $method.Name }}(ctx, w, {{ $method.ArgsNames "args." }})
+	})
+{{- else if $method.IsFileUpload }}
+	return createServiceMethodUploadHandler(
+		{{ $method.Options.MaxUploadSize }},
+		func(ctx context.Context, files <-chan *fileUpload, args *struct{
+			{{ $method.ArgsStructDefinitions }}
+		})(ret *struct {
+		{{ $method.ReturnsStructDefinitions }}
+		}, err error){
+			ret = &struct {
+				{{ $method.ReturnsStructDefinitions }}
+			}{}
+			{{ $method.ReturnsNames "ret." }} err = s.service.{{ $method.Name }}(
+				ctx,
+				files,
+				{{ $method.ArgsNames "args." }}
+			)
+			return
+		},
+	)
+{{- else }}
+	return createServiceMethodHandler({{ $method.Options.HttpMethod }}, {{ $method.HasArgs }}, func(ctx context.Context, args *struct {
+		{{ $method.ArgsStructDefinitions }}
+	}) (ret *struct {
+		{{ $method.ReturnsStructDefinitions }}
+	}, err error) {
+		ret = &struct {
+			{{ $method.ReturnsStructDefinitions }}
+		}{}
+		{{ $method.ReturnsNames "ret." }} err = s.service.{{ $method.Name }}(
+			ctx, 
+			{{ $method.ArgsNames "args." }}
+		)
+		return
+	})
+{{- end }}
+}
+
+{{- end }}
+{{- end }}

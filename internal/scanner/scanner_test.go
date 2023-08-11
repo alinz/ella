@@ -10,11 +10,46 @@ import (
 func TestLex(t *testing.T) {
 	runTestCase(t, -1, scanner.Lex, TestCases{
 		{
-			input: `A = 1MB`,
+			input: `service Foo {
+				rpc GetFoo() => (value: int64) {
+					Required
+					A = 1mb
+					B = 100h
+				}
+			}`,
+			output: Tokens{
+				{Type: token.Service, Start: 0, End: 7, Val: "service"},
+				{Type: token.Identifier, Start: 8, End: 11, Val: "Foo"},
+				{Type: token.OpenCurly, Start: 12, End: 13, Val: "{"},
+				{Type: token.Rpc, Start: 18, End: 21, Val: "rpc"},
+				{Type: token.Identifier, Start: 22, End: 28, Val: "GetFoo"},
+				{Type: token.OpenParen, Start: 28, End: 29, Val: "("},
+				{Type: token.CloseParen, Start: 29, End: 30, Val: ")"},
+				{Type: token.Return, Start: 31, End: 33, Val: "=>"},
+				{Type: token.OpenParen, Start: 34, End: 35, Val: "("},
+				{Type: token.Identifier, Start: 35, End: 40, Val: "value"},
+				{Type: token.Colon, Start: 40, End: 41, Val: ":"},
+				{Type: token.Int64, Start: 42, End: 47, Val: "int64"},
+				{Type: token.CloseParen, Start: 47, End: 48, Val: ")"},
+				{Type: token.OpenCurly, Start: 49, End: 50, Val: "{"},
+				{Type: token.Identifier, Start: 56, End: 64, Val: "Required"},
+				{Type: token.Identifier, Start: 70, End: 71, Val: "A"},
+				{Type: token.Assign, Start: 72, End: 73, Val: "="},
+				{Type: token.ConstBytes, Start: 74, End: 77, Val: "1mb"},
+				{Type: token.Identifier, Start: 83, End: 84, Val: "B"},
+				{Type: token.Assign, Start: 85, End: 86, Val: "="},
+				{Type: token.ConstDuration, Start: 87, End: 91, Val: "100h"},
+				{Type: token.CloseCurly, Start: 96, End: 97, Val: "}"},
+				{Type: token.CloseCurly, Start: 101, End: 102, Val: "}"},
+				{Type: token.EOF, Start: 102, End: 102, Val: ""},
+			},
+		},
+		{
+			input: `A = 1mb`,
 			output: Tokens{
 				{Type: token.Identifier, Start: 0, End: 1, Val: "A"},
 				{Type: token.Assign, Start: 2, End: 3, Val: "="},
-				{Type: token.ConstIntBytes, Start: 4, End: 7, Val: "1MB"},
+				{Type: token.ConstBytes, Start: 4, End: 7, Val: "1mb"},
 				{Type: token.EOF, Start: 7, End: 7, Val: ""},
 			},
 		},

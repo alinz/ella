@@ -1,7 +1,7 @@
 //
 // Enums
 //
-{{range $enum := . }}
+{{range $enum := .Enums }}
 type {{ $enum.Name }} {{ $enum.Type }}
 
 const (
@@ -42,4 +42,4 @@ func (e {{ $enum.Name }}) String() string {
 	}
 	return name
 }
-{{ end -}}
+{{ end }}

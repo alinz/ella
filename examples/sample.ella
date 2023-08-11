@@ -1,5 +1,0 @@
-Hello = 1
-
-message Foo {
-	A: CustomType
-}

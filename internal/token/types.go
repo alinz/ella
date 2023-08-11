@@ -27,8 +27,9 @@ const (
 	Array                                // array []
 	Any                                  // any
 	File                                 // file
-	ConstFloatBytes                      // 1.0MB
-	ConstIntBytes                        // 1KB
+	Stream                               // stream
+	ConstDuration                        // 1ns, 1us, 1ms, 1s, 1m, 1h
+	ConstBytes                           // 1b, 1kb, 1mb, 1gb, 1tb, 1pb, 1eb
 	ConstFloat                           // 1.0
 	ConstInt                             // 1
 	ConstStringSingleQuote               // 'string'
@@ -105,10 +106,12 @@ func (t Type) String() string {
 		return "Any"
 	case File:
 		return "File"
-	case ConstFloatBytes:
-		return "ConstFloatBytes"
-	case ConstIntBytes:
-		return "ConstIntBytes"
+	case Stream:
+		return "Stream"
+	case ConstDuration:
+		return "ConstDuration"
+	case ConstBytes:
+		return "ConstBytes"
 	case ConstFloat:
 		return "ConstFloat"
 	case ConstInt:

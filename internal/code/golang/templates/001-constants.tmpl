@@ -3,7 +3,8 @@
 //
 
 const (
-{{- range $constant := . }}
+{{- range $constant := .Constants }}
   {{ $constant.Name }} = {{ $constant.Value }}
 {{- end }}
 )
+

@@ -1,17 +1,24 @@
 package code
 
 import (
-	"io"
-
 	"ella.to/internal/ast"
 )
 
 type Generator interface {
-	Generate(w io.Writer, pkg string, prog *ast.Program) error
+	Generate(outFilename string, prog *ast.Program) error
 }
 
-type GeneratorFunc func(w io.Writer, pkg string, prog *ast.Program) error
+type GeneratorFunc func(outFilename string, prog *ast.Program) error
 
-func (f GeneratorFunc) Generate(w io.Writer, pkg string, prog *ast.Program) error {
-	return f(w, pkg, prog)
+func (f GeneratorFunc) Generate(outFilename string, prog *ast.Program) error {
+	return f(outFilename, prog)
+}
+
+func RunParsers(prog *ast.Program, fns ...func(prog *ast.Program) error) error {
+	for _, fn := range fns {
+		if err := fn(prog); err != nil {
+			return err
+		}
+	}
+	return nil
 }

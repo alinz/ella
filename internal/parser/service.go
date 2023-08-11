@@ -181,12 +181,20 @@ func ParseServiceMethodReturnArg(p *Parser) (ret *ast.Return, err error) {
 
 	p.Next() // skip ':'
 
+	if p.Peek().Type == token.Stream {
+		ret.Stream = true
+		p.Next() // skip 'stream'
+	}
+
 	ret.Type, err = ParseType(p)
 	if err != nil {
 		return nil, err
 	}
 
 	if p.Peek().Type == token.Comma {
+		if ret.Stream {
+			return nil, p.WithError(p.Peek(), "there should be only one stream on the return type")
+		}
 		p.Next() // skip ','
 	}
 
@@ -208,7 +216,7 @@ func ParseServiceMethodOption(p *Parser) (constant *ast.Const, err error) {
 		Name: &ast.Identifier{Token: nameTok},
 	}
 
-	if p.Peek().Type != token.Colon {
+	if p.Peek().Type != token.Assign {
 		constant.Value = &ast.ValueBool{
 			Token:   nil,
 			Value:   true,

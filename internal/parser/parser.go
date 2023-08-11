@@ -47,7 +47,7 @@ func (p *Parser) WithError(token *token.Token, args ...any) error {
 		}
 	}
 
-	return fmt.Errorf("%s:\n%s", sb.String(), p.showContext(token, 5))
+	return fmt.Errorf("%s: ->%s<-\n%s", sb.String(), token.Val, p.showContext(token, 5))
 }
 
 func (p *Parser) showContext(token *token.Token, lines int) string {
@@ -71,7 +71,7 @@ func (p *Parser) showContext(token *token.Token, lines int) string {
 		start = 0
 	}
 
-	return p.input[start:end]
+	return p.input[start:end] + "\n"
 }
 
 func New(input string) *Parser {

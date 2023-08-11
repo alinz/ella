@@ -25,8 +25,9 @@ func (a *Arg) String() string {
 }
 
 type Return struct {
-	Name *Identifier
-	Type Type
+	Name   *Identifier
+	Type   Type
+	Stream bool
 }
 
 var _ Node = (*Return)(nil)
@@ -37,6 +38,9 @@ func (r *Return) String() string {
 
 	sb.WriteString(r.Name.String())
 	sb.WriteString(": ")
+	if r.Stream {
+		sb.WriteString("stream ")
+	}
 	sb.WriteString(r.Type.String())
 
 	return sb.String()

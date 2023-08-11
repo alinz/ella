@@ -145,6 +145,216 @@ func createServiceMethodHandler[ReqMsg, RespMsg any](method string, hasFields bo
 	}
 }
 
+func createRawWriterServiceMethodHandler[ReqMsg any](method string, hasFields bool, fn func(ctx context.Context, w http.ResponseWriter, req *ReqMsg)) httpServiceMethodHandler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		if r.Method != method {
+			ResponseError(w, Errorf(http.StatusMethodNotAllowed, "method %q not allowed", r.Method))
+			return
+		}
+
+		if method != http.MethodGet {
+			if err := checkContentType(r, "application/json"); err != nil {
+				w.WriteHeader(http.StatusUnsupportedMediaType)
+				return
+			}
+		}
+
+		var reqMsg ReqMsg
+
+		if hasFields && method == http.MethodPost {
+			if err := json.NewDecoder(r.Body).Decode(&reqMsg); err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		} else if method == http.MethodGet {
+			if err := valuesToStruct(r.URL.Query(), &reqMsg); err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		}
+
+		fn(ctx, w, &reqMsg)
+	}
+}
+
+func createServiceMethodUploadHandler[ReqMsg, RespMsg any](
+	totalMaxSize int64,
+	fn func(ctx context.Context, files <-chan *fileUpload, req *ReqMsg) (*RespMsg, error),
+) httpServiceMethodHandler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			ResponseError(w, Errorf(http.StatusMethodNotAllowed, "method %q not allowed", r.Method))
+			return
+		}
+
+		r.Body = http.MaxBytesReader(w, r.Body, totalMaxSize)
+
+		reader, err := r.MultipartReader()
+		if err != nil {
+			ResponseError(w, err)
+			return
+		}
+
+		files := make(chan *fileUpload, 1)
+		defer close(files)
+
+		part, err := reader.NextPart()
+		if err != nil {
+			ResponseError(w, err)
+			return
+		}
+		defer part.Close()
+
+		if part.FormName() != "payload" {
+			ResponseError(w, Errorf(http.StatusBadRequest, "missing payload name"))
+			return
+		}
+
+		var req ReqMsg
+		err = json.NewDecoder(part).Decode(&req)
+		if err != nil {
+			ResponseError(w, err)
+			return
+		}
+
+		errChan := make(chan error, 1)
+
+		go func() {
+			defer close(files)
+			defer close(errChan)
+
+			for {
+				part, err := reader.NextPart()
+				if errors.Is(err, io.EOF) {
+					return
+				} else if err != nil {
+					errChan <- err
+					return
+				}
+
+				if part.FormName() == "files" {
+					errChan <- Errorf(http.StatusBadRequest, "missing files field")
+					return
+				}
+
+				files <- &fileUpload{
+					Filename: part.FileName(),
+					Body:     part,
+				}
+			}
+		}()
+
+		resp, err := fn(ctx, files, &req)
+		if err != nil {
+			ResponseError(w, err)
+			return
+		}
+
+		err, ok := <-errChan
+		if ok {
+			ResponseError(w, err)
+			return
+		}
+
+		var buffer bytes.Buffer
+		if err := json.NewEncoder(&buffer).Encode(resp); err != nil {
+			ResponseError(w, err)
+			return
+		}
+
+		io.Copy(w, &buffer)
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func createStreamServiceMethod[ReqMsg any](method string, hasFields bool, fn func(ctx context.Context, req *ReqMsg) (<-chan *stremEvent, error)) httpServiceMethodHandler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		if r.Method != method {
+			ResponseError(w, Errorf(http.StatusMethodNotAllowed, "method %q not allowed", r.Method))
+			return
+		}
+
+		fluser, ok := w.(http.Flusher)
+		if !ok {
+			ResponseError(w, Errorf(http.StatusInternalServerError, "response writer does not support flushing"))
+			return
+		}
+
+		defer func() {
+			if err := recover(); err != nil {
+				// In case of a panic, serve a 500 error and then panic.
+				w.WriteHeader(http.StatusInternalServerError)
+				panic(err)
+			}
+		}()
+
+		if method != http.MethodGet {
+			if err := checkContentType(r, "application/json"); err != nil {
+				w.WriteHeader(http.StatusUnsupportedMediaType)
+				return
+			}
+		}
+
+		var reqMsg ReqMsg
+
+		if hasFields && method == http.MethodPost {
+			if err := json.NewDecoder(r.Body).Decode(&reqMsg); err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		} else if method == http.MethodGet {
+			if err := valuesToStruct(r.URL.Query(), &reqMsg); err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		}
+
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
+		events, err := fn(ctx, &reqMsg)
+		if err != nil {
+			ResponseError(w, err)
+			return
+		}
+
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+		fluser.Flush()
+
+		var buffer bytes.Buffer
+
+		var lastID int64
+		for item := range events {
+			buffer.Reset()
+
+			buffer.WriteString("id: ")
+			buffer.WriteString(strconv.FormatInt(item.id, 10))
+			buffer.WriteString("\nevent: ")
+			buffer.WriteString(item.event)
+			buffer.WriteString("\ndata: ")
+			buffer.WriteString(item.data)
+			buffer.WriteString("\n\n")
+
+			_, err := io.Copy(w, &buffer)
+			if err != nil {
+				return
+			}
+			fluser.Flush()
+			lastID = item.id
+		}
+
+		lastID++
+		fmt.Fprintf(w, "id: %d\nevent: done\ndata: {}\n\n", lastID)
+	}
+}
+
+type fileUpload struct {
+	Filename string
+	Body     io.ReadCloser
+}
+
 // Utility functions
 
 func structToValues(ptr any) url.Values {
@@ -239,40 +449,33 @@ func structToURL(host string, ptr any) (string, error) {
 	return u.String(), nil
 }
 
-func mergeChannels[Resp any](ctx context.Context, chans ...<-chan Resp) <-chan Resp {
-	out := make(chan Resp)
-	done := make(chan struct{})
-	wait := make(chan struct{}, len(chans))
+type stremEvent struct {
+	id    int64
+	event string
+	data  string
+}
 
-	output := func(c <-chan Resp) {
-		defer func() {
-			wait <- struct{}{}
-		}()
-
-		for n := range c {
-			select {
-			case <-done:
-				return
-			case out <- n:
-			case <-ctx.Done():
-				return
-			}
-		}
-	}
-
-	for _, c := range chans {
-		go output(c)
-	}
+func createEventStream[T any](ctx context.Context, name string, stream <-chan T) <-chan *stremEvent {
+	out := make(chan *stremEvent)
 
 	go func() {
-		defer close(done)
 		defer close(out)
-
-		for i := 0; i < len(chans); i++ {
+		var id int64 = 1
+		for {
 			select {
-			case <-wait:
 			case <-ctx.Done():
 				return
+			case item, ok := <-stream:
+				if !ok {
+					return
+				}
+				b, _ := json.Marshal(item)
+				out <- &stremEvent{
+					id:    id,
+					event: name,
+					data:  string(b),
+				}
+				id++
 			}
 		}
 	}()
@@ -416,7 +619,7 @@ func rpcSend[T any](ctx context.Context, adaptor rpcAdaptor, topic string, in an
 		return nil, err
 	}
 
-	data, err = adaptor.Send(ctx, RpcHrGetTopic, data)
+	data, err = adaptor.Send(ctx, topic, data)
 	if err != nil {
 		return nil, err
 	}

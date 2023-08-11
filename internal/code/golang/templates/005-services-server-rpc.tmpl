@@ -1,17 +1,17 @@
 //
-// Server RPCs
+// RPC Servers
 //
 
 const (
-{{- range $service := . }}
-	{{ $service.TopicName }} = "{{ $service.Topic }}"
+{{- range $service := .RpcServices }}
+	{{ $service.TopicName }} = "{{ $service.TopicValue }}"
 {{- range $method := $service.Methods }}
-    {{ $method.TopicName }} = "{{ $method.Topic }}"
+    {{ $method.TopicName }} = "{{ $method.TopicValue }}"
 {{- end }}    
 {{- end }}
 )
 
-{{- range $service := . }}
+{{- range $service := .RpcServices }}
 
 func StartRpc{{ $service.Name }}ServiceServer(service Rpc{{ $service.Name }}Service, adaptor rpcAdaptor) (drain func (), err error) {
     var unsubscribe func()
@@ -27,7 +27,7 @@ func StartRpc{{ $service.Name }}ServiceServer(service Rpc{{ $service.Name }}Serv
     unsubscribe, err = adaptor.Register({{ $method.TopicName }}, func(msg rpcMsg) {
         data := msg.Data()
         in := struct {
-            {{ $method.InputDefinitions }}
+            {{ $method.ArgsStructDefinitions }}
         }{}
 
         err := json.Unmarshal(data, &in)
@@ -36,19 +36,17 @@ func StartRpc{{ $service.Name }}ServiceServer(service Rpc{{ $service.Name }}Serv
             return
         }
 
-        p, err := service.{{ $method.Name }}(
+        out := struct {
+            {{ $method.ReturnsStructDefinitions }}
+        }{}
+
+        {{ $method.ReturnsNames "out." }} err = service.{{ $method.Name }}(
             context.Background(), 
-            {{ $method.InputNames }}
+            {{ $method.ArgsNames "in." }}
         )
         if err != nil {
             msg.Reply([]byte(err.Error()))
             return
-        }
-
-        out := struct {
-            {{ $method.OutputDefinitions }}
-        }{
-            {{ $method.OutputNames }}
         }
 
         data, err = json.Marshal(out)
@@ -69,4 +67,4 @@ func StartRpc{{ $service.Name }}ServiceServer(service Rpc{{ $service.Name }}Serv
 	return
 }
 
-{{- end }}
+{{ end }}

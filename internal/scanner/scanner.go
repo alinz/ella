@@ -181,22 +181,10 @@ func parseNumber(l *Lexer) (ok bool, found bool) {
 
 	l.Accept("i")
 
-	isBytes := false
-	// checking if there is any B, KB, MB, GB, TB, PB, EB, ZB, YB
-	if l.Accept("B") {
-		isBytes = true
-	} else {
-		value := l.PeekN(2)
-		if value == "KB" || // kilobyte
-			value == "MB" || // megabyte
-			value == "GB" || // gigabyte
-			value == "TB" || // terabyte
-			value == "PB" || // petabyte
-			value == "EB" { // exabyte
-			isBytes = true
-			l.Next()
-			l.Next()
-		}
+	isDuration := false
+	isBytes := isBytesTypeNum(l)
+	if !isBytes && isDurationTypeNum(l) {
+		isDuration = true
 	}
 
 	peek := l.Peek()
@@ -208,11 +196,17 @@ func parseNumber(l *Lexer) (ok bool, found bool) {
 		}
 
 		if isFloat && isBytes {
-			l.Emit(token.ConstFloatBytes)
+			l.Errorf("bytes number can't be presented as float")
+			return false, false
+		} else if isFloat && isDuration {
+			l.Errorf("duration number can't be presented as float")
+			return false, false
 		} else if isFloat {
 			l.Emit(token.ConstFloat)
 		} else if isBytes {
-			l.Emit(token.ConstIntBytes)
+			l.Emit(token.ConstBytes)
+		} else if isDuration {
+			l.Emit(token.ConstDuration)
 		} else {
 			l.Emit(token.ConstInt)
 		}
@@ -223,6 +217,40 @@ func parseNumber(l *Lexer) (ok bool, found bool) {
 	l.Errorf("unexpected character after number: %c", peek)
 
 	return false, false // not founding number and with error
+}
+
+// checking if there is any B, KB, MB, GB, TB, PB, EB, ZB, YB
+func isBytesTypeNum(l *Lexer) bool {
+	isBytes := false
+	if l.Accept("b") {
+		isBytes = true
+	} else {
+		value := l.PeekN(2)
+		if value == "kb" || // kilobyte
+			value == "mb" || // megabyte
+			value == "gb" || // gigabyte
+			value == "tb" || // terabyte
+			value == "pb" || // petabyte
+			value == "eb" { // exabyte
+			isBytes = true
+			l.Next()
+			l.Next()
+		}
+	}
+	return isBytes
+}
+
+// checking if there is any ms, s, m, h, which represent millisecond, second, minute, hour
+func isDurationTypeNum(l *Lexer) bool {
+	value := l.PeekN(2)
+
+	if value == "ns" || value == "us" || value == "ms" { // microsecond
+		l.Next()
+		l.Next()
+		return true
+	} else {
+		return l.Accept("smh")
+	}
 }
 
 func reservedKeywrod(l *Lexer) bool {
@@ -292,6 +320,9 @@ func reservedKeywrod(l *Lexer) bool {
 		return true
 	case "file":
 		l.Emit(token.File)
+		return true
+	case "stream":
+		l.Emit(token.Stream)
 		return true
 	case "true", "false":
 		l.Emit(token.ConstBool)

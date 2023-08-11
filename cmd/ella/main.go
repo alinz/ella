@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -85,19 +84,14 @@ func format(path string) error {
 	return nil
 }
 
-func gen(pkg, search, out string) error {
+func gen(pkg, search, out string) (err error) {
 	var code code.Generator
 
-	ext := filepath.Ext(out)
-
-	switch ext {
-	case ".go":
-		code = golang.New()
-	case ".ts":
-		code = typescript.New()
-	default:
-		return fmt.Errorf("unknown extension %s", out)
-	}
+	defer func() {
+		if err != nil {
+			//os.Remove(out)
+		}
+	}()
 
 	filenames, err := filepath.Glob(search)
 	if err != nil {
@@ -114,21 +108,18 @@ func gen(pkg, search, out string) error {
 		return err
 	}
 
-	fileout, err := os.Create(out)
-	if err != nil {
-		return err
+	ext := filepath.Ext(out)
+	switch ext {
+	case ".go":
+		code = golang.New(pkg)
+	case ".ts":
+		code = typescript.New()
+	default:
+		return fmt.Errorf("unknown extension %s", out)
 	}
 
-	err = code.Generate(fileout, pkg, prog)
-	if err != nil {
+	if err = code.Generate(out, prog); err != nil {
 		return err
-	}
-
-	if ext == ".go" {
-		err = exec.Command("go", "fmt", out).Run()
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil

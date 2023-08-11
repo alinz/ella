@@ -2,24 +2,25 @@ package parser
 
 import (
 	"strconv"
+	"time"
 
 	"ella.to/internal/ast"
 	"ella.to/internal/token"
 )
 
-func parseBytesSizeNumber(value string) (number string, mul int64) {
+func parseBytesNumber(value string) (number string, mul int64) {
 	switch value[len(value)-2] {
-	case 'K':
+	case 'k':
 		mul = 1024
-	case 'M':
+	case 'm':
 		mul = 1024 * 1024
-	case 'G':
+	case 'g':
 		mul = 1024 * 1024 * 1024
-	case 'T':
+	case 't':
 		mul = 1024 * 1024 * 1024 * 1024
-	case 'P':
+	case 'p':
 		mul = 1024 * 1024 * 1024 * 1024 * 1024
-	case 'E':
+	case 'e':
 		mul = 1024 * 1024 * 1024 * 1024 * 1024 * 1024
 	default:
 		return value[:len(value)-1], 1
@@ -28,31 +29,50 @@ func parseBytesSizeNumber(value string) (number string, mul int64) {
 	return value[:len(value)-2], mul
 }
 
+func parseDurationNumber(value string) (number string, mul int64) {
+	switch value[len(value)-2] {
+	case 'n':
+		mul = int64(time.Nanosecond)
+		return value[:len(value)-2], mul
+	case 'u':
+		mul = int64(time.Microsecond)
+		return value[:len(value)-2], mul
+	case 'm':
+		mul = int64(time.Millisecond)
+		return value[:len(value)-2], mul
+	default:
+		switch value[len(value)-1] {
+		case 's':
+			mul = int64(time.Second)
+		case 'm':
+			mul = int64(time.Minute)
+		case 'h':
+			mul = int64(time.Hour)
+		}
+		return value[:len(value)-1], mul
+	}
+}
+
 func ParseValue(p *Parser) (value ast.Value, err error) {
 	peekTok := p.Peek()
 
 	switch peekTok.Type {
-	case token.ConstFloatBytes:
-		num, mul := parseBytesSizeNumber(peekTok.Val)
-		float, err := strconv.ParseFloat(num, 64)
-		if err != nil {
-			return nil, p.WithError(peekTok, "failed to parse float value", err)
-		}
-		// NOTE: because the size of bytes usually normalized to int,
-		// we treat float bytes as int bytes
-		// also first we need to multiply float to mul then convert it to int
-		// to make sure int64(0.5) will become 0 and make the whole multiplication
-		// to zero
-		value = &ast.ValueInt{
-			Token:   peekTok,
-			Value:   int64(float * float64(mul)),
-			Defined: true,
-		}
-	case token.ConstIntBytes:
-		num, mul := parseBytesSizeNumber(peekTok.Val)
+	case token.ConstBytes:
+		num, mul := parseBytesNumber(peekTok.Val)
 		integer, err := strconv.ParseInt(num, 10, 64)
 		if err != nil {
-			return nil, p.WithError(peekTok, "failed to parse int value", err)
+			return nil, p.WithError(peekTok, "failed to parse int value for bytes size", err)
+		}
+		value = &ast.ValueInt{
+			Token:   peekTok,
+			Value:   integer * mul,
+			Defined: true,
+		}
+	case token.ConstDuration:
+		num, mul := parseDurationNumber(peekTok.Val)
+		integer, err := strconv.ParseInt(num, 10, 64)
+		if err != nil {
+			return nil, p.WithError(peekTok, "failed to parse int value for duration size", err)
 		}
 		value = &ast.ValueInt{
 			Token:   peekTok,

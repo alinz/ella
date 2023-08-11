@@ -1,10 +1,10 @@
 //
 // Messages
 //
-{{ range $msg := . }}
+{{ range $msg := .Messages }}
 type {{ $msg.Name }} struct {
 	{{- range $field := $msg.Fields }}
 	{{ $field.Name }} {{ $field.Type }} {{ if $field.Tags }}`{{ $field.Tags }}`{{ end }}
 	{{- end }}
 }
-{{ end -}}
+{{ end }}
