@@ -170,7 +170,7 @@ func (m MethodReturns) Definitions() string {
 type MethodOptions struct {
 	HttpMethod    string
 	MaxUploadSize int64
-	RawWriter     bool
+	RawControl    bool
 }
 
 type Method struct {
@@ -521,7 +521,7 @@ func parseMethodOptions(method *ast.Method) MethodOptions {
 	return MethodOptions{
 		HttpMethod:    "http." + strcase.ToPascal("Method"+castString(mapper["HttpMethod"], "POST")),
 		MaxUploadSize: castInt64(mapper["MaxUploadSize"], 1*1024*1024),
-		RawWriter:     castBool(mapper["RawWriter"], false),
+		RawControl:    castBool(mapper["RawControl"], false),
 	}
 }
 

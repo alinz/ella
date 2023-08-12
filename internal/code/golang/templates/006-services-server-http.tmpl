@@ -50,11 +50,11 @@ func Create{{ $service.Name }}ServiceServer(service Http{{ $service.Name }}Servi
 
 func (s *{{ $service.NameImpl }}) create{{ $method.Name }}() httpServiceMethodHandler {
 {{- if $method.IsStream }}
-{{- else if $method.Options.RawWriter }}
-	return createRawWriterServiceMethodHandler(http.MethodPost, {{ $method.HasArgs }}, func(ctx context.Context, w http.ResponseWriter, args *struct {
+{{- else if $method.Options.RawControl }}
+	return createRawControlServiceMethodHandler(http.MethodPost, {{ $method.HasArgs }}, func(ctx context.Context, args *struct {
 		{{ $method.ArgsStructDefinitions }}
 	}) {
-		s.service.{{ $method.Name }}(ctx, w, {{ $method.ArgsNames "args." }})
+		s.service.{{ $method.Name }}(ctx, {{ $method.ArgsNames "args." }})
 	})
 {{- else if $method.IsFileUpload }}
 	return createServiceMethodUploadHandler(

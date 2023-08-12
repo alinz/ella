@@ -145,7 +145,7 @@ func createServiceMethodHandler[ReqMsg, RespMsg any](method string, hasFields bo
 	}
 }
 
-func createRawWriterServiceMethodHandler[ReqMsg any](method string, hasFields bool, fn func(ctx context.Context, w http.ResponseWriter, req *ReqMsg)) httpServiceMethodHandler {
+func createRawControlServiceMethodHandler[ReqMsg any](method string, hasFields bool, fn func(ctx context.Context, req *ReqMsg)) httpServiceMethodHandler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
 			ResponseError(w, Errorf(http.StatusMethodNotAllowed, "method %q not allowed", r.Method))
@@ -173,7 +173,7 @@ func createRawWriterServiceMethodHandler[ReqMsg any](method string, hasFields bo
 			}
 		}
 
-		fn(ctx, w, &reqMsg)
+		fn(ctx, &reqMsg)
 	}
 }
 

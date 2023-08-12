@@ -1,0 +1,43 @@
+Integer = 1
+Float = 1.23
+Boolean = true
+StringSignle = 'Hello'
+StringDouble = "Hello"
+StringMutipleLines = `
+
+
+	Cool
+`
+BytesSize = 2b
+DurationSize = 3s
+
+enum Foo int64 {
+	Bar = 1
+}
+
+enum Bar int64 {
+	Foo = 1
+}
+
+message Person {
+	Firstname: string {
+		Json
+		Yaml
+	}
+	Lastname: string
+	Flag: Bar
+}
+
+service Hr {
+	rpc Get(id: string) => (p: Person)
+	rpc Put(id: string, name: string)
+	http GetById(id: string, reload: bool) => (p: Person)
+	http UploadAvatar(files: file) {
+		MaxUploadSize = 2mb
+	}
+	http UploadDocs(files: file, id: string) => (ref: string)
+	http GetEvents(id: string) => (events: stream string)
+	http DownloadFile(id: string) {
+		RawControl
+	}
+}

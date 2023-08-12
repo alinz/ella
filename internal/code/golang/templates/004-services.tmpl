@@ -4,8 +4,8 @@
 {{ range $service := .HttpServices }}
 type Http{{ $service.Name }}Service interface {
 	{{- range $method := $service.Methods }}
-    {{- if $method.Options.RawWriter }}
-    {{ $method.Name }}(ctx context.Context, w http.ResponseWriter{{ $method.Args.Definitions }})
+    {{- if $method.Options.RawControl }}
+    {{ $method.Name }}(ctx context.Context{{ $method.Args.Definitions }})
     {{- else }}
 	{{ $method.Name }}(ctx context.Context{{ $method.Args.Definitions }}) ({{ $method.Returns.Definitions }})
     {{- end }}
