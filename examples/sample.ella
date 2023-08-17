@@ -21,7 +21,7 @@ enum Bar int64 {
 
 message Person {
 	Firstname: string {
-		Json
+		Json = false
 		Yaml
 	}
 	Lastname: string

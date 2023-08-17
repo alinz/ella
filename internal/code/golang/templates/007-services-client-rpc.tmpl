@@ -1,0 +1,42 @@
+//
+// RPC Clients
+//
+
+{{- range $service := .RpcServices }}
+
+type rpc{{ $service.Name }}ServiceClient struct {
+    adaptor rpcAdaptor
+}
+
+var _ Rpc{{ $service.Name }}Service = (*rpc{{ $service.Name }}ServiceClient)(nil)
+
+func CreateRpc{{ $service.Name }}ServiceClient(adaptor rpcAdaptor) Rpc{{ $service.Name }}Service {
+    return &rpc{{ $service.Name }}ServiceClient{
+        adaptor: adaptor,
+    }
+}
+
+{{- range $method := $service.Methods }}
+
+func (s *rpc{{ $service.Name }}ServiceClient) {{ $method.Name }}(ctx context.Context {{ $method.Args.Definitions }}) ({{ $method.Returns.Definitions }}) { 
+    out, err := rpcSend(ctx, s.adaptor, {{ $method.TopicName }}, &struct {
+        {{ $method.ArgsStructDefinitions }}
+    }{
+        {{ $method.ArgsNamesValues }}
+    }, &struct {
+        {{ $method.ReturnsStructDefinitions }}
+    }{})
+    if err != nil {
+        return
+    }
+
+    {{ if not $method.HasReturns }} 
+    _ = out
+    {{ end }}
+
+    return {{ $method.ReturnsNames "out."}} nil
+}
+
+{{- end }}
+
+{{- end }}

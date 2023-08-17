@@ -113,21 +113,14 @@ type Message struct {
 type Messages []Message
 
 func (m *Messages) Parse(prog *ast.Program) error {
-	messages := code.GetMessages(prog)
-	messagesMap := make(map[string]struct{})
-	for _, message := range messages {
-		messagesMap[message.Name.String()] = struct{}{}
-	}
+	messages, isMessageType := createIsMessageType(prog)
 
 	*m = code.Mapper(messages, func(message *ast.Message) Message {
 		msg := Message{
 			Name: message.Name.String(),
 		}
 
-		msg.Fields.Parse(message, func(value string) bool {
-			_, ok := messagesMap[value]
-			return ok
-		})
+		msg.Fields.Parse(message, isMessageType)
 
 		return msg
 	})
@@ -181,12 +174,26 @@ type Method struct {
 	Returns MethodReturns
 }
 
+func (m Method) GetReturnStreamName() (string, error) {
+	for _, ret := range m.Returns {
+		if ret.Stream {
+			return strcase.ToCamel(ret.Name), nil
+		}
+	}
+
+	return "", fmt.Errorf("method has no stream return")
+}
+
 func (m Method) HasArgs() string {
 	if len(m.Args) > 0 {
 		return "true"
 	}
 
 	return "false"
+}
+
+func (m Method) HasReturns() bool {
+	return len(m.Returns) > 0
 }
 
 func (m Method) TopicName() string {
@@ -209,7 +216,7 @@ func (m Method) ArgsNames(prefix string) string {
 	return strings.Join(code.Mapper(code.Filter(m.Args, func(arg MethodArg) bool {
 		return arg.Type != "<-chan *fileUpload"
 	}), func(arg MethodArg) string {
-		return prefix + arg.Name + ","
+		return prefix + strcase.ToPascal(arg.Name) + ","
 	}), "\n")
 }
 
@@ -217,33 +224,36 @@ func (m Method) ArgsStructDefinitions() string {
 	return strings.Join(code.Mapper(code.Filter(m.Args, func(arg MethodArg) bool {
 		return arg.Type != "<-chan *fileUpload"
 	}), func(arg MethodArg) string {
-		return fmt.Sprintf("%s %s", arg.Name, arg.Type)
+		return fmt.Sprintf("%s %s", strcase.ToPascal(arg.Name), arg.Type)
+	}), "\n")
+}
+
+func (m Method) ArgsNamesValues() string {
+	return strings.Join(code.Mapper(m.Args, func(arg MethodArg) string {
+		return strcase.ToPascal(arg.Name) + ":" + arg.Name + ","
 	}), "\n")
 }
 
 func (m Method) ReturnsNames(prefix string) string {
 	return strings.Join(code.Mapper(m.Returns, func(arg MethodReturn) string {
-		return prefix + arg.Name + ", "
+		return prefix + strcase.ToPascal(arg.Name) + ", "
 	}), "")
 }
 
 func (m Method) ReturnsStructDefinitions() string {
 	return strings.Join(code.Mapper(m.Returns, func(arg MethodReturn) string {
-		return fmt.Sprintf("%s %s", arg.Name, arg.Type)
+		return fmt.Sprintf("%s %s", strcase.ToPascal(arg.Name), arg.Type)
 	}), "\n")
 }
 
 func (m Method) IsStream() bool {
-	var result bool
-
 	for _, ret := range m.Returns {
 		if ret.Stream {
-			result = true
-			break
+			return true
 		}
 	}
 
-	return result
+	return false
 }
 
 func (m Method) IsFileUpload() bool {
@@ -281,6 +291,8 @@ func (s HttpService) PathValue() string {
 type HttpServices []HttpService
 
 func (s *HttpServices) Parse(prog *ast.Program) error {
+	_, isMessageType := createIsMessageType(prog)
+
 	*s = code.Mapper(code.GetServices(prog), func(service *ast.Service) HttpService {
 		methods := code.Filter(service.Methods, func(method *ast.Method) bool {
 			return method.Type.Val == "http"
@@ -300,6 +312,9 @@ func (s *HttpServices) Parse(prog *ast.Program) error {
 							typ = "<-chan *fileUpload"
 						} else {
 							typ = arg.Type.String()
+							if isMessageType(arg.Type.String()) {
+								typ = fmt.Sprintf("*%s", typ)
+							}
 						}
 
 						return MethodArg{
@@ -308,9 +323,18 @@ func (s *HttpServices) Parse(prog *ast.Program) error {
 						}
 					}),
 					Returns: code.Mapper(method.Returns, func(ret *ast.Return) MethodReturn {
+						typ := ret.Type.String()
+						if isMessageType(ret.Type.String()) {
+							typ = fmt.Sprintf("*%s", typ)
+						}
+						if ret.Stream {
+							typ = "<-chan " + typ
+						}
+
 						return MethodReturn{
-							Name: ret.Name.String(),
-							Type: ret.Type.String(),
+							Name:   ret.Name.String(),
+							Type:   typ,
+							Stream: ret.Stream,
 						}
 					}),
 				}
@@ -337,6 +361,8 @@ func (s RpcService) TopicValue() string {
 type RpcServices []RpcService
 
 func (s *RpcServices) Parse(prog *ast.Program) error {
+	_, isMessageType := createIsMessageType(prog)
+
 	*s = code.Mapper(code.GetServices(prog), func(service *ast.Service) RpcService {
 		methods := code.Filter(service.Methods, func(method *ast.Method) bool {
 			return method.Type.Val == "rpc"
@@ -349,15 +375,25 @@ func (s *RpcServices) Parse(prog *ast.Program) error {
 					Name:    method.Name.String(),
 					Service: service.Name.String(),
 					Args: code.Mapper(method.Args, func(arg *ast.Arg) MethodArg {
+						typ := arg.Type.String()
+						if isMessageType(arg.Type.String()) {
+							typ = fmt.Sprintf("*%s", typ)
+						}
+
 						return MethodArg{
 							Name: arg.Name.String(),
-							Type: arg.Type.String(),
+							Type: typ,
 						}
 					}),
 					Returns: code.Mapper(method.Returns, func(ret *ast.Return) MethodReturn {
+						typ := ret.Type.String()
+						if isMessageType(ret.Type.String()) {
+							typ = fmt.Sprintf("*%s", typ)
+						}
+
 						return MethodReturn{
 							Name: ret.Name.String(),
-							Type: ret.Type.String(),
+							Type: typ,
 						}
 					}),
 				}
@@ -544,4 +580,17 @@ func castValue[T any](value any, defaultValue T) T {
 	}
 
 	return defaultValue
+}
+
+func createIsMessageType(prog *ast.Program) ([]*ast.Message, func(value string) bool) {
+	messages := code.GetMessages(prog)
+	messagesMap := make(map[string]struct{})
+	for _, message := range messages {
+		messagesMap[message.Name.String()] = struct{}{}
+	}
+
+	return messages, func(value string) bool {
+		_, ok := messagesMap[value]
+		return ok
+	}
 }

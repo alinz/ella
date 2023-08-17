@@ -27,7 +27,7 @@ func TestParseConst(t *testing.T) {
 			Input:  `Ella`,
 			Output: ``,
 			Error: `
-expected '=' after an identifier for defining a constant
+expected '=' after an identifier for defining a constant: -><-
 Ella
 `,
 		},

@@ -27,6 +27,20 @@ message Foo {
 }
 `,
 		},
+		{
+			Input: `message Foo {
+				FirstName: string {
+					Required = true
+				}
+			}`,
+			Output: `
+message Foo {
+	FirstName: string {
+		Required = true
+	}
+}
+`,
+		},
 	}
 
 	runTests(t, func(p *parser.Parser) (ast.Node, error) {

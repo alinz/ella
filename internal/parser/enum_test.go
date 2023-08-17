@@ -12,39 +12,39 @@ func TestParseEnum(t *testing.T) {
 		{
 			Input: `enum Foo {}`,
 			Error: `
-expected enum type
-enum Foo {			
-			`,
+		expected enum type: ->{<-
+enum Foo {
+					`,
 		},
 		{
 			Input: `
-enum Foo int8 {
-	A = 1
-	B
-	C
-}
-			`,
-			Output: `
-enum Foo int8 {
-	A = 1
-	B
-	C
-}			
-			`,
-		},
-		{
-			Input: `
-
-					enum Foo int8 {
-						A = 1
-					}
-
+		enum Foo int8 {
+			A = 1
+			B
+			C
+		}
 					`,
 			Output: `
 enum Foo int8 {
 	A = 1
+	B
+	C
 }
-		`,
+					`,
+		},
+		{
+			Input: `
+
+							enum Foo int8 {
+								A = 1
+							}
+
+							`,
+			Output: `
+enum Foo int8 {
+	A = 1
+}
+				`,
 		},
 		{
 			Input: `enum Foo int8 {

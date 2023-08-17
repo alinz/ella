@@ -103,7 +103,7 @@ func ParseMessageFieldConstant(p *Parser) (constant *ast.Const, err error) {
 		Name: &ast.Identifier{Token: nameTok},
 	}
 
-	if p.Peek().Type != token.Colon {
+	if p.Peek().Type != token.Assign {
 		constant.Value = &ast.ValueBool{
 			Token:   nil,
 			Value:   true,
@@ -113,7 +113,7 @@ func ParseMessageFieldConstant(p *Parser) (constant *ast.Const, err error) {
 		return constant, nil
 	}
 
-	p.Next() // skip ':'
+	p.Next() // skip '='
 
 	constant.Value, err = ParseValue(p)
 	if err != nil {

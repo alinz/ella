@@ -50,6 +50,42 @@ func Create{{ $service.Name }}ServiceServer(service Http{{ $service.Name }}Servi
 
 func (s *{{ $service.NameImpl }}) create{{ $method.Name }}() httpServiceMethodHandler {
 {{- if $method.IsStream }}
+	return createStreamServiceMethod(
+		{{ $method.Options.HttpMethod }},
+		{{ $method.HasArgs }},
+		func (ctx context.Context, args *struct { 
+			{{ $method.ArgsStructDefinitions }}
+		}) (<-chan *stremEvent, error) {
+			{{ $method.GetReturnStreamName }}, err := s.service.GetEvents(ctx, {{ $method.ArgsNames "args." }})
+			if err != nil {
+				return nil, err
+			}
+
+			out := make(chan *stremEvent, 1)
+			go func() {
+				defer close(out)
+				var id int64
+				for event := range {{ $method.GetReturnStreamName }} {
+					data, err := json.Marshal(event)
+					if err != nil {
+						out <- &stremEvent{
+							id: id,
+							event: "error",
+							data: err.Error(),
+						}
+						return
+					}
+
+					out <- &stremEvent{
+						id: id,
+						event: "{{ $method.GetReturnStreamName }}",
+						data: string(data),
+					}
+				}
+			}()
+			return out, nil
+		},
+	)
 {{- else if $method.Options.RawControl }}
 	return createRawControlServiceMethodHandler(http.MethodPost, {{ $method.HasArgs }}, func(ctx context.Context, args *struct {
 		{{ $method.ArgsStructDefinitions }}
