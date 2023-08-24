@@ -76,49 +76,10 @@ func ParseMessageField(p *Parser) (field *ast.Field, err error) {
 		return field, nil
 	}
 
-	p.Next() // skip '{'
-
-	for p.Peek().Type != token.CloseCurly {
-		constant, err := ParseMessageFieldConstant(p)
-		if err != nil {
-			return nil, err
-		}
-
-		field.Options = append(field.Options, constant)
-	}
-
-	p.Next() // skip '}'
-
-	return field, nil
-}
-
-func ParseMessageFieldConstant(p *Parser) (option *ast.Option, err error) {
-	if p.Peek().Type != token.Identifier {
-		return nil, p.WithError(p.Peek(), "expected identifier for defining a message field option")
-	}
-
-	nameTok := p.Next()
-
-	option = &ast.Option{
-		Name: &ast.Identifier{Token: nameTok},
-	}
-
-	if p.Peek().Type != token.Assign {
-		option.Value = &ast.ValueBool{
-			Token:   nil,
-			Value:   true,
-			Defined: false,
-		}
-
-		return option, nil
-	}
-
-	p.Next() // skip '='
-
-	option.Value, err = ParseValue(p)
+	field.Options, err = ParseOptions(p)
 	if err != nil {
 		return nil, err
 	}
 
-	return option, nil
+	return field, nil
 }

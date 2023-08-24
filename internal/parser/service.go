@@ -122,18 +122,10 @@ func ParseServiceMethod(p *Parser) (method *ast.Method, err error) {
 		return method, nil
 	}
 
-	p.Next() // skip '{'
-
-	for p.Peek().Type != token.CloseCurly {
-		option, err := ParseServiceMethodOption(p)
-		if err != nil {
-			return nil, err
-		}
-
-		method.Options = append(method.Options, option)
+	method.Options, err = ParseOptions(p)
+	if err != nil {
+		return nil, err
 	}
-
-	p.Next() // skip '}'
 
 	return method, nil
 }
@@ -206,39 +198,4 @@ func ParseServiceMethodReturnArg(p *Parser) (ret *ast.Return, err error) {
 	}
 
 	return ret, nil
-}
-
-func ParseServiceMethodOption(p *Parser) (option *ast.Option, err error) {
-	if p.Peek().Type != token.Identifier {
-		return nil, p.WithError(p.Peek(), "expected identifier for defining a message field option")
-	}
-
-	nameTok := p.Next()
-
-	if !strcase.IsPascal(nameTok.Literal) {
-		return nil, p.WithError(nameTok, "service method option name must be in PascalCase format")
-	}
-
-	option = &ast.Option{
-		Name: &ast.Identifier{Token: nameTok},
-	}
-
-	if p.Peek().Type != token.Assign {
-		option.Value = &ast.ValueBool{
-			Token:   nil,
-			Value:   true,
-			Defined: false,
-		}
-
-		return option, nil
-	}
-
-	p.Next() // skip ':'
-
-	option.Value, err = ParseValue(p)
-	if err != nil {
-		return nil, err
-	}
-
-	return option, nil
 }
