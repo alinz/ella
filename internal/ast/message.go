@@ -90,9 +90,10 @@ func (f Fields) String() string {
 }
 
 type Message struct {
-	Token  *token.Token
-	Name   *Identifier
-	Fields Fields
+	Token   *token.Token  `json:"token"`
+	Name    *Identifier   `json:"name"`
+	Extends []*Identifier `json:"extends"`
+	Fields  Fields        `json:"fields"`
 }
 
 var _ Statement = (*Message)(nil)
@@ -109,6 +110,16 @@ func (m *Message) String() string {
 	sb.WriteString("message ")
 	sb.WriteString(m.Name.String())
 	sb.WriteString(" {")
+
+	for _, extend := range m.Extends {
+		sb.WriteString("\n\t...")
+		sb.WriteString(extend.String())
+	}
+
+	if len(m.Extends) > 0 && len(m.Fields) == 0 {
+		sb.WriteString("\n")
+	}
+
 	sb.WriteString(m.Fields.String())
 	sb.WriteString("}")
 
