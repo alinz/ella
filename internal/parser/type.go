@@ -22,19 +22,19 @@ func ParseType(p *Parser) (ast.Type, error) {
 		tok := p.Next()
 		return &ast.Int{
 			Token: tok,
-			Size:  extractTypeBits("int", tok.Val),
+			Size:  extractTypeBits("int", tok.Literal),
 		}, nil
 	case token.Uint8, token.Uint16, token.Uint32, token.Uint64:
 		tok := p.Next()
 		return &ast.Uint{
 			Token: tok,
-			Size:  extractTypeBits("uint", tok.Val),
+			Size:  extractTypeBits("uint", tok.Literal),
 		}, nil
 	case token.Float32, token.Float64:
 		tok := p.Next()
 		return &ast.Float{
 			Token: tok,
-			Size:  extractTypeBits("float", tok.Val),
+			Size:  extractTypeBits("float", tok.Literal),
 		}, nil
 	case token.Timestamp:
 		return &ast.Timestamp{Token: p.Next()}, nil
@@ -47,7 +47,7 @@ func ParseType(p *Parser) (ast.Type, error) {
 	case token.Identifier:
 		nameTok := p.Next()
 
-		if !strcase.IsPascal(nameTok.Val) {
+		if !strcase.IsPascal(nameTok.Literal) {
 			return nil, p.WithError(nameTok, "custom type name must be in PascalCase format")
 		}
 

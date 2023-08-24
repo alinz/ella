@@ -2,6 +2,7 @@ package scanner
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"unicode/utf8"
 
@@ -23,10 +24,10 @@ func (l *Lexer) Current() string {
 
 func (l *Lexer) Emit(typ token.Type) {
 	token := &token.Token{
-		Type:  typ,
-		Val:   l.input[l.start:l.pos],
-		Start: l.start,
-		End:   l.pos,
+		Type:    typ,
+		Literal: l.input[l.start:l.pos],
+		Start:   l.start,
+		End:     l.pos,
 	}
 	l.emitter.Emit(token)
 	l.start = l.pos
@@ -106,10 +107,10 @@ func (l *Lexer) AcceptRunUntil(invalid string) {
 
 func (l *Lexer) Errorf(format string, args ...interface{}) {
 	l.emitter.Emit(&token.Token{
-		Type:  token.Error,
-		Val:   fmt.Sprintf(format, args...),
-		Start: l.start,
-		End:   l.pos,
+		Type:    token.Error,
+		Literal: fmt.Sprintf(format, args...),
+		Start:   l.start,
+		End:     l.pos,
 	})
 }
 
@@ -121,13 +122,38 @@ func (l *Lexer) Run(state State) {
 
 type State func(*Lexer) State
 
-func Start(input string, emitter token.Emitter, inital State) {
+func Start(emitter token.Emitter, inital State, input string) {
 	lexer := &Lexer{
 		emitter: emitter,
 		input:   input,
 	}
 	for state := inital; state != nil; {
 		state = state(lexer)
+	}
+}
+
+func StartWithFilenames(emitter token.Emitter, inital State, filenames ...string) {
+	for i, filename := range filenames {
+		b, err := os.ReadFile(filename)
+		if err != nil {
+			emitter.Emit(&token.Token{
+				Type:     token.Error,
+				Literal:  err.Error(),
+				Filename: filename,
+			})
+			return
+		}
+		Start(token.EmitterFunc(func(tok *token.Token) {
+			if tok.Type == token.EOF && i != len(filenames)-1 {
+				// because we havn't process all the files,
+				// we simply ignore EOF of previous procceed files
+				return
+			}
+
+			tok.Filename = filename
+			emitter.Emit(tok)
+
+		}), inital, string(b))
 	}
 }
 

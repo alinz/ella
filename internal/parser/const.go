@@ -7,13 +7,19 @@ import (
 )
 
 func ParseConst(p *Parser) (*ast.Const, error) {
+	if p.Peek().Type != token.Const {
+		return nil, p.WithError(p.Peek(), "expected 'const' keyword")
+	}
+
+	tok := p.Next()
+
 	if p.Peek().Type != token.Identifier {
 		return nil, p.WithError(p.Peek(), "expected identifier for defining a constant")
 	}
 
 	nameTok := p.Next()
 
-	if !strcase.IsPascal(nameTok.Val) {
+	if !strcase.IsPascal(nameTok.Literal) {
 		return nil, p.WithError(nameTok, "constant name must be in PascalCase format")
 	}
 
@@ -29,6 +35,7 @@ func ParseConst(p *Parser) (*ast.Const, error) {
 	}
 
 	return &ast.Const{
+		Token: tok,
 		Name:  &ast.Identifier{Token: nameTok},
 		Value: value,
 	}, nil

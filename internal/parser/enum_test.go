@@ -11,21 +11,20 @@ func TestParseEnum(t *testing.T) {
 	testCases := TestCases{
 		{
 			Input: `enum Foo {}`,
-			Error: `
-		expected enum type: ->{<-
-enum Foo {
-					`,
+			Output: `
+enum Foo {}
+			`,
 		},
 		{
 			Input: `
-		enum Foo int8 {
+		enum Foo {
 			A = 1
 			B
 			C
 		}
 					`,
 			Output: `
-enum Foo int8 {
+enum Foo {
 	A = 1
 	B
 	C
@@ -35,22 +34,22 @@ enum Foo int8 {
 		{
 			Input: `
 
-							enum Foo int8 {
+							enum Foo {
 								A = 1
 							}
 
 							`,
 			Output: `
-enum Foo int8 {
+enum Foo {
 	A = 1
 }
 				`,
 		},
 		{
-			Input: `enum Foo int8 {
+			Input: `enum Foo {
 
 					}`,
-			Output: `enum Foo int8 {}`,
+			Output: `enum Foo {}`,
 		},
 	}
 

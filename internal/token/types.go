@@ -4,6 +4,8 @@ const (
 	Error                    Type = -1   // Error token type which indicates error
 	EOF                      Type = iota // EOF token type which indicates end of input
 	Identifier                           // identifier
+	Define                               // define
+	Const                                // const
 	Enum                                 // enum
 	Message                              // message
 	Http                                 // http
@@ -60,6 +62,10 @@ func (t Type) String() string {
 		return "EOF"
 	case Identifier:
 		return "Identifier"
+	case Define:
+		return "Define"
+	case Const:
+		return "Const"
 	case Enum:
 		return "Enum"
 	case Message:

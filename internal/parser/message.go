@@ -19,7 +19,7 @@ func ParseMessage(p *Parser) (*ast.Message, error) {
 
 	nameTok := p.Next()
 
-	if !strcase.IsPascal(nameTok.Val) {
+	if !strcase.IsPascal(nameTok.Literal) {
 		return nil, p.WithError(nameTok, "message name must be in PascalCase format")
 	}
 
@@ -52,13 +52,13 @@ func ParseMessageField(p *Parser) (field *ast.Field, err error) {
 
 	nameTok := p.Next()
 
-	if !strcase.IsPascal(nameTok.Val) {
+	if !strcase.IsPascal(nameTok.Literal) {
 		return nil, p.WithError(nameTok, "message field name must be in PascalCase format")
 	}
 
 	field = &ast.Field{
 		Name:    &ast.Identifier{Token: nameTok},
-		Options: make([]*ast.Const, 0),
+		Options: make([]*ast.Option, 0),
 	}
 
 	if p.Peek().Type != token.Colon {
@@ -92,33 +92,33 @@ func ParseMessageField(p *Parser) (field *ast.Field, err error) {
 	return field, nil
 }
 
-func ParseMessageFieldConstant(p *Parser) (constant *ast.Const, err error) {
+func ParseMessageFieldConstant(p *Parser) (option *ast.Option, err error) {
 	if p.Peek().Type != token.Identifier {
-		return nil, p.WithError(p.Peek(), "expected identifier for defining a message field constant")
+		return nil, p.WithError(p.Peek(), "expected identifier for defining a message field option")
 	}
 
 	nameTok := p.Next()
 
-	constant = &ast.Const{
+	option = &ast.Option{
 		Name: &ast.Identifier{Token: nameTok},
 	}
 
 	if p.Peek().Type != token.Assign {
-		constant.Value = &ast.ValueBool{
+		option.Value = &ast.ValueBool{
 			Token:   nil,
 			Value:   true,
 			Defined: false,
 		}
 
-		return constant, nil
+		return option, nil
 	}
 
 	p.Next() // skip '='
 
-	constant.Value, err = ParseValue(p)
+	option.Value, err = ParseValue(p)
 	if err != nil {
 		return nil, err
 	}
 
-	return constant, nil
+	return option, nil
 }

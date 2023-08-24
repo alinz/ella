@@ -7,21 +7,21 @@ import (
 
 func ParseProgram(p *Parser) (prog *ast.Program, err error) {
 	prog = &ast.Program{
-		Nodes: make([]ast.Node, 0),
+		Statements: make([]ast.Statement, 0),
 	}
 
 	for p.Peek().Type != token.EOF {
-		var node ast.Node
+		var stmt ast.Statement
 
 		switch p.Peek().Type {
 		case token.Identifier:
-			node, err = ParseConst(p)
+			stmt, err = ParseConst(p)
 		case token.Enum:
-			node, err = ParseEnum(p)
+			stmt, err = ParseEnum(p)
 		case token.Message:
-			node, err = ParseMessage(p)
+			stmt, err = ParseMessage(p)
 		case token.Service:
-			node, err = ParseService(p)
+			stmt, err = ParseService(p)
 		default:
 			return nil, p.WithError(p.Peek(), "unexpected token")
 		}
@@ -30,7 +30,7 @@ func ParseProgram(p *Parser) (prog *ast.Program, err error) {
 			return nil, err
 		}
 
-		prog.Nodes = append(prog.Nodes, node)
+		prog.Statements = append(prog.Statements, stmt)
 	}
 
 	return prog, nil

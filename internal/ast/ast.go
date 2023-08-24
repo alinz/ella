@@ -1,6 +1,11 @@
 package ast
 
 type Node interface {
-	nodeLiteral()
+	TokenLiteral() string
 	String() string
+}
+
+type Statement interface {
+	Node
+	statementLiteral()
 }

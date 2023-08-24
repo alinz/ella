@@ -24,7 +24,7 @@ func (t Tokens) String() string {
 	var sb strings.Builder
 	sb.WriteString("\n")
 	for i := range t {
-		sb.WriteString(fmt.Sprintf("{Type: token.%s, Start: %d, End: %d, Val: \"%s\"},\n", t[i].Type, t[i].Start, t[i].End, t[i].Val))
+		sb.WriteString(fmt.Sprintf("{Type: token.%s, Start: %d, End: %d, Literal: \"%s\"},\n", t[i].Type, t[i].Start, t[i].End, t[i].Literal))
 	}
 	return sb.String()
 }
@@ -40,7 +40,7 @@ func runTestCase(t *testing.T, target int, initState scanner.State, testCases Te
 			output = append(output, *token)
 		})
 
-		scanner.Start(tc.input, emitter, initState)
+		scanner.Start(emitter, initState, tc.input)
 		assert.Equal(t, tc.output, output, "Failed scanner at %d: %s", i, output)
 	}
 }

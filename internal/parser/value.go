@@ -2,54 +2,54 @@ package parser
 
 import (
 	"strconv"
-	"time"
+	"strings"
 
 	"ella.to/internal/ast"
 	"ella.to/internal/token"
 )
 
-func parseBytesNumber(value string) (number string, mul int64) {
+func parseBytesNumber(value string) (number string, scale ast.ByteSize) {
 	switch value[len(value)-2] {
 	case 'k':
-		mul = 1024
+		scale = ast.ByteSizeKB
 	case 'm':
-		mul = 1024 * 1024
+		scale = ast.ByteSizeMB
 	case 'g':
-		mul = 1024 * 1024 * 1024
+		scale = ast.ByteSizeGB
 	case 't':
-		mul = 1024 * 1024 * 1024 * 1024
+		scale = ast.ByteSizeTB
 	case 'p':
-		mul = 1024 * 1024 * 1024 * 1024 * 1024
+		scale = ast.ByteSizePB
 	case 'e':
-		mul = 1024 * 1024 * 1024 * 1024 * 1024 * 1024
+		scale = ast.ByteSizeEB
 	default:
 		return value[:len(value)-1], 1
 	}
 
-	return value[:len(value)-2], mul
+	return value[:len(value)-2], scale
 }
 
-func parseDurationNumber(value string) (number string, mul int64) {
+func parseDurationNumber(value string) (number string, scale ast.DurationScale) {
 	switch value[len(value)-2] {
 	case 'n':
-		mul = int64(time.Nanosecond)
-		return value[:len(value)-2], mul
+		scale = ast.DurationScaleNanosecond
+		return value[:len(value)-2], scale
 	case 'u':
-		mul = int64(time.Microsecond)
-		return value[:len(value)-2], mul
+		scale = ast.DurationScaleMicrosecond
+		return value[:len(value)-2], scale
 	case 'm':
-		mul = int64(time.Millisecond)
-		return value[:len(value)-2], mul
+		scale = ast.DurationScaleMillisecond
+		return value[:len(value)-2], scale
 	default:
 		switch value[len(value)-1] {
 		case 's':
-			mul = int64(time.Second)
+			scale = ast.DurationScaleSecond
 		case 'm':
-			mul = int64(time.Minute)
+			scale = ast.DurationScaleMinute
 		case 'h':
-			mul = int64(time.Hour)
+			scale = ast.DurationScaleHour
 		}
-		return value[:len(value)-1], mul
+		return value[:len(value)-1], scale
 	}
 }
 
@@ -58,29 +58,32 @@ func ParseValue(p *Parser) (value ast.Value, err error) {
 
 	switch peekTok.Type {
 	case token.ConstBytes:
-		num, mul := parseBytesNumber(peekTok.Val)
+		literal := strings.ReplaceAll(peekTok.Literal, "_", "")
+		num, scale := parseBytesNumber(literal)
 		integer, err := strconv.ParseInt(num, 10, 64)
 		if err != nil {
 			return nil, p.WithError(peekTok, "failed to parse int value for bytes size", err)
 		}
-		value = &ast.ValueInt{
-			Token:   peekTok,
-			Value:   integer * mul,
-			Defined: true,
+		value = &ast.ValueByteSize{
+			Token: peekTok,
+			Value: integer,
+			Scale: scale,
 		}
 	case token.ConstDuration:
-		num, mul := parseDurationNumber(peekTok.Val)
+		literal := strings.ReplaceAll(peekTok.Literal, "_", "")
+		num, scale := parseDurationNumber(literal)
 		integer, err := strconv.ParseInt(num, 10, 64)
 		if err != nil {
 			return nil, p.WithError(peekTok, "failed to parse int value for duration size", err)
 		}
-		value = &ast.ValueInt{
-			Token:   peekTok,
-			Value:   integer * mul,
-			Defined: true,
+		value = &ast.ValueDuration{
+			Token: peekTok,
+			Value: integer,
+			Scale: scale,
 		}
 	case token.ConstFloat:
-		float, err := strconv.ParseFloat(peekTok.Val, 64)
+		literal := strings.ReplaceAll(peekTok.Literal, "_", "")
+		float, err := strconv.ParseFloat(literal, 64)
 		if err != nil {
 			return nil, p.WithError(peekTok, "failed to parse float value", err)
 		}
@@ -89,7 +92,8 @@ func ParseValue(p *Parser) (value ast.Value, err error) {
 			Value: float,
 		}
 	case token.ConstInt:
-		integer, err := strconv.ParseInt(peekTok.Val, 10, 64)
+		literal := strings.ReplaceAll(peekTok.Literal, "_", "")
+		integer, err := strconv.ParseInt(literal, 10, 64)
 		if err != nil {
 			return nil, p.WithError(peekTok, "failed to parse int value", err)
 		}
@@ -99,7 +103,7 @@ func ParseValue(p *Parser) (value ast.Value, err error) {
 			Defined: true,
 		}
 	case token.ConstBool:
-		boolean, err := strconv.ParseBool(peekTok.Val)
+		boolean, err := strconv.ParseBool(peekTok.Literal)
 		if err != nil {
 			return nil, p.WithError(peekTok, "failed to parse bool value", err)
 		}
@@ -115,7 +119,7 @@ func ParseValue(p *Parser) (value ast.Value, err error) {
 	case token.ConstStringSingleQuote, token.ConstStringDoubleQuote, token.ConstStringBacktickQoute:
 		value = &ast.ValueString{
 			Token: peekTok,
-			Value: peekTok.Val,
+			Value: peekTok.Literal,
 		}
 	case token.Identifier:
 		value = &ast.ValueVariable{

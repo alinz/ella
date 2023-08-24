@@ -3,10 +3,11 @@ package token
 type Type int
 
 type Token struct {
-	Val   string
-	Type  Type
-	Start int
-	End   int
+	Filename string
+	Literal  string
+	Type     Type
+	Start    int
+	End      int
 }
 
 type Emitter interface {

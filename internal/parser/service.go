@@ -19,7 +19,7 @@ func ParseService(p *Parser) (service *ast.Service, err error) {
 
 	nameTok := p.Next()
 
-	if !strcase.IsPascal(nameTok.Val) {
+	if !strcase.IsPascal(nameTok.Literal) {
 		return nil, p.WithError(nameTok, "service name must be in PascalCase format")
 	}
 
@@ -46,18 +46,25 @@ func ParseService(p *Parser) (service *ast.Service, err error) {
 }
 
 func ParseServiceMethod(p *Parser) (method *ast.Method, err error) {
+	var methodType ast.MethodType
+
 	switch p.Peek().Type {
-	case token.Http, token.Rpc:
+	case token.Http:
+		methodType = ast.MethodHTTP
+	case token.Rpc:
+		methodType = ast.MethodRPC
 	default:
 		return nil, p.WithError(p.Peek(), "expected 'http' or 'rpc' keyword")
 	}
 
 	method = &ast.Method{
-		Type:    p.Next(),
+		Type:    methodType,
 		Args:    make([]*ast.Arg, 0),
 		Returns: make([]*ast.Return, 0),
-		Options: make([]*ast.Const, 0),
+		Options: make([]*ast.Option, 0),
 	}
+
+	p.Next() // skip rpc, http
 
 	if p.Peek().Type != token.Identifier {
 		return nil, p.WithError(p.Peek(), "expected identifier for defining a service method")
@@ -65,7 +72,7 @@ func ParseServiceMethod(p *Parser) (method *ast.Method, err error) {
 
 	nameTok := p.Next()
 
-	if !strcase.IsPascal(nameTok.Val) {
+	if !strcase.IsPascal(nameTok.Literal) {
 		return nil, p.WithError(nameTok, "service method name must be in PascalCase format")
 	}
 
@@ -138,7 +145,7 @@ func ParseServiceMethodArgument(p *Parser) (arg *ast.Arg, err error) {
 
 	nameTok := p.Next()
 
-	if !strcase.IsCamel(nameTok.Val) {
+	if !strcase.IsCamel(nameTok.Literal) {
 		return nil, p.WithError(nameTok, "service method argument name must be in camelCase format")
 	}
 
@@ -169,7 +176,7 @@ func ParseServiceMethodReturnArg(p *Parser) (ret *ast.Return, err error) {
 
 	nameTok := p.Next()
 
-	if !strcase.IsCamel(nameTok.Val) {
+	if !strcase.IsCamel(nameTok.Literal) {
 		return nil, p.WithError(nameTok, "service method argument name must be in camelCase format")
 	}
 
@@ -201,37 +208,37 @@ func ParseServiceMethodReturnArg(p *Parser) (ret *ast.Return, err error) {
 	return ret, nil
 }
 
-func ParseServiceMethodOption(p *Parser) (constant *ast.Const, err error) {
+func ParseServiceMethodOption(p *Parser) (option *ast.Option, err error) {
 	if p.Peek().Type != token.Identifier {
-		return nil, p.WithError(p.Peek(), "expected identifier for defining a message field constant")
+		return nil, p.WithError(p.Peek(), "expected identifier for defining a message field option")
 	}
 
 	nameTok := p.Next()
 
-	if !strcase.IsPascal(nameTok.Val) {
+	if !strcase.IsPascal(nameTok.Literal) {
 		return nil, p.WithError(nameTok, "service method option name must be in PascalCase format")
 	}
 
-	constant = &ast.Const{
+	option = &ast.Option{
 		Name: &ast.Identifier{Token: nameTok},
 	}
 
 	if p.Peek().Type != token.Assign {
-		constant.Value = &ast.ValueBool{
+		option.Value = &ast.ValueBool{
 			Token:   nil,
 			Value:   true,
 			Defined: false,
 		}
 
-		return constant, nil
+		return option, nil
 	}
 
 	p.Next() // skip ':'
 
-	constant.Value, err = ParseValue(p)
+	option.Value, err = ParseValue(p)
 	if err != nil {
 		return nil, err
 	}
 
-	return constant, nil
+	return option, nil
 }

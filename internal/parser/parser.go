@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"ella.to/internal/scanner"
@@ -47,12 +48,20 @@ func (p *Parser) WithError(token *token.Token, args ...any) error {
 		}
 	}
 
-	return fmt.Errorf("%s: ->%s<-\n%s", sb.String(), token.Val, p.showContext(token, 5))
+	return fmt.Errorf("%s: ->%s<-\n%s", sb.String(), token.Literal, p.showContext(token, 5))
 }
 
 func (p *Parser) showContext(token *token.Token, lines int) string {
 	start := token.Start
 	end := token.End
+
+	if p.input == "" {
+		content, err := os.ReadFile(token.Filename)
+		if err != nil {
+			return err.Error()
+		}
+		p.input = string(content)
+	}
 
 	for i := 0; i < lines; i++ {
 		if start > 0 {
@@ -76,6 +85,12 @@ func (p *Parser) showContext(token *token.Token, lines int) string {
 
 func New(input string) *Parser {
 	tokenEmitter := token.NewEmitterIterator()
-	go scanner.Start(input, tokenEmitter, scanner.Lex)
+	go scanner.Start(tokenEmitter, scanner.Lex, input)
 	return &Parser{input: input, tokens: tokenEmitter}
+}
+
+func NewFilenames(filenames ...string) *Parser {
+	tokenEmitter := token.NewEmitterIterator()
+	go scanner.StartWithFilenames(tokenEmitter, scanner.Lex, filenames...)
+	return &Parser{tokens: tokenEmitter}
 }
