@@ -3,7 +3,9 @@
 // Helper functions
 //
 
-// RPC
+//
+// RPC helper interfaces
+//
 
 type rpcMsg interface {
     Topic() string
@@ -16,16 +18,18 @@ type rpcAdaptor interface {
     Send(ctx context.Context, topic string, data []byte) ([]byte, error)
 }
 
+//
 // Context
+//
 
-type CtxKey string
+type ctxKey string
 
 const (
-	CtxKeyRequest CtxKey = "http_request"
-	CtxKeyResponse CtxKey = "http_response"
+	ctxKeyRequest ctxKey = "http_request"
+	ctxKeyResponse ctxKey = "http_response"
 )
 
-func GetCtxValue[T any](ctx context.Context, key CtxKey) (result T, ok bool) {
+func getCtxValue[T any](ctx context.Context, key ctxKey) (result T, ok bool) {
 	value := ctx.Value(key)
 	if value == nil {
 		return result, false
@@ -35,16 +39,16 @@ func GetCtxValue[T any](ctx context.Context, key CtxKey) (result T, ok bool) {
 }
 
 func GetCtxHttpRequest(ctx context.Context) (result *http.Request, ok bool) {
-	return GetCtxValue[*http.Request](ctx, CtxKeyRequest)
+	return getCtxValue[*http.Request](ctx, ctxKeyRequest)
 }
 
 func GetCtxHttpResponse(ctx context.Context) (result http.ResponseWriter, ok bool) {
-	return GetCtxValue[http.ResponseWriter](ctx, CtxKeyResponse)
+	return getCtxValue[http.ResponseWriter](ctx, ctxKeyResponse)
 }
 
 func injectCommonVars(ctx context.Context, w http.ResponseWriter, r *http.Request) context.Context {
-	ctx = context.WithValue(ctx, CtxKeyRequest, r)
-	ctx = context.WithValue(ctx, CtxKeyResponse, w)
+	ctx = context.WithValue(ctx, ctxKeyRequest, r)
+	ctx = context.WithValue(ctx, ctxKeyResponse, w)
 	return ctx
 }
 
@@ -355,7 +359,9 @@ type fileUpload struct {
 	Body     io.ReadCloser
 }
 
+//
 // Utility functions
+//
 
 func structToValues(ptr any) url.Values {
 	values := url.Values{}
@@ -528,7 +534,9 @@ func jsonEncodeReader(value any) (io.Reader, error) {
 	return r, nil
 }
 
+//
 // Error
+//
 
 func writeResponse(w http.ResponseWriter, code int, body any) {
 	w.Header().Set("Content-Type", "application/json")

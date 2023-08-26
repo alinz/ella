@@ -80,8 +80,8 @@ func (p *Program) UnmarshalText(text []byte) error {
 		switch result.Type {
 		case "const":
 			stmt = &Const{}
-		case "define":
-			stmt = &Define{}
+		case "alias":
+			stmt = &Alias{}
 		case "message":
 			stmt = &Message{}
 		case "service":

@@ -12,6 +12,10 @@ func TestParseConst(t *testing.T) {
 		return parser.ParseConst(p)
 	}, TestCases{
 		{
+			Input:  `const Integer = 1`,
+			Output: `const Integer = 1`,
+		},
+		{
 			Input:  `const Ella = "1.0.0-b01"`,
 			Output: `const Ella = "1.0.0-b01"`,
 		},

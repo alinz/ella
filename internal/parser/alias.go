@@ -5,9 +5,9 @@ import (
 	"ella.to/internal/token"
 )
 
-func ParseDefine(p *Parser) (*ast.Define, error) {
-	if p.Peek().Type != token.Const {
-		return nil, p.WithError(p.Peek(), "expected 'define' keyword")
+func ParseAlias(p *Parser) (*ast.Alias, error) {
+	if p.Peek().Type != token.Alias {
+		return nil, p.WithError(p.Peek(), "expected 'alias' keyword")
 	}
 
 	tok := p.Next()
@@ -27,7 +27,7 @@ func ParseDefine(p *Parser) (*ast.Define, error) {
 	}
 
 	if p.Peek().Type != token.OpenCurly {
-		return &ast.Define{
+		return &ast.Alias{
 			Token:   tok,
 			Name:    name,
 			Type:    typ,
@@ -40,7 +40,7 @@ func ParseDefine(p *Parser) (*ast.Define, error) {
 		return nil, err
 	}
 
-	return &ast.Define{
+	return &ast.Alias{
 		Token:   tok,
 		Name:    name,
 		Type:    typ,

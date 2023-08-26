@@ -63,6 +63,15 @@ func (p *Parser) showContext(token *token.Token, lines int) string {
 		p.input = string(content)
 	}
 
+	// going backwards n lines
+	for i := 0; i < lines; i++ {
+		if start == 0 {
+			break
+		}
+
+		start = strings.LastIndex(p.input[:start], "\n")
+	}
+
 	for i := 0; i < lines; i++ {
 		if start > 0 {
 			start = strings.LastIndex(p.input[:start], "\n")

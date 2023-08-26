@@ -6,22 +6,22 @@ import (
 	"ella.to/internal/token"
 )
 
-type Define struct {
+type Alias struct {
 	Token   *token.Token `json:"token"`
 	Name    *Identifier  `json:"name"`
 	Type    Type         `json:"type"`
 	Options Options      `json:"options"`
 }
 
-var _ Statement = (*Define)(nil)
+var _ Statement = (*Alias)(nil)
 
-func (d *Define) statementLiteral() {}
+func (d *Alias) statementLiteral() {}
 
-func (d *Define) TokenLiteral() string {
+func (d *Alias) TokenLiteral() string {
 	return d.Token.Literal
 }
 
-func (d *Define) String() string {
+func (d *Alias) String() string {
 	var sb strings.Builder
 
 	sb.WriteString(d.TokenLiteral())

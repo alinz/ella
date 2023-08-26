@@ -98,13 +98,16 @@ func parseEnumSet(p *Parser) (*ast.EnumSet, error) {
 
 	nameTok := p.Next()
 
-	if !strcase.IsPascal(nameTok.Literal) {
+	if nameTok.Literal != "_" && !strcase.IsPascal(nameTok.Literal) {
 		return nil, p.WithError(nameTok, "enum's set name must be in Pascal Case format")
 	}
 
 	if p.Peek().Type != token.Assign {
 		return &ast.EnumSet{
 			Name: &ast.Identifier{Token: nameTok},
+			Value: &ast.ValueInt{
+				Value: 0,
+			},
 		}, nil
 	}
 

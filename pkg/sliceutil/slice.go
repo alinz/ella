@@ -1,4 +1,4 @@
-package code
+package sliceutil
 
 func Mapper[I, O any](list []I, f func(I) O) []O {
 	var results []O

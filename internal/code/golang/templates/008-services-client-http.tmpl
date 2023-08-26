@@ -1,0 +1,47 @@
+//
+// Client Handlers
+//
+{{ range $service := .HttpServices }}
+
+type http{{ $service.Name }}ServiceClient struct {
+	client *http.Client
+	host   string
+}
+
+var _ Http{{ $service.Name }}Service = (* http{{ $service.Name }}ServiceClient)(nil)
+
+func CreateHttp{{ $service.Name }}ServiceClient(host string, client *http.Client) Http{{ $service.Name }}Service {
+	return &http{{ $service.Name }}ServiceClient{
+		host:   host,
+		client: client,
+	}
+}
+
+{{- range $method := $service.Methods }}
+
+func (s * http{{ $service.Name }}ServiceClient) {{ $method.Name }}(ctx context.Context {{ $method.Args.Definitions }}) ({{ $method.Returns.Definitions }}) { 
+	url, err := urlPathJoin(s.host, {{ $method.PathName }})
+	if err != nil {
+		return
+	}
+
+	in := struct {
+        {{ $method.ArgsStructDefinitions }}
+    }{
+        {{ $method.ArgsNamesValues }}
+    }
+
+	out := struct {
+        {{ $method.ReturnsStructDefinitions }}
+    }{}
+
+	err = callServiceMethod(ctx, {{ $method.Options.HttpMethod }}, s.client, url, &in, &out)
+	if err != nil {
+		return
+	}
+
+	return {{ $method.ReturnsNames "out."}} nil
+}
+
+{{- end }}
+{{- end }}

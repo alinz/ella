@@ -255,8 +255,8 @@ func isDurationTypeNum(l *Lexer) bool {
 
 func reservedKeywrod(l *Lexer) bool {
 	switch l.Current() {
-	case "define":
-		l.Emit(token.Define)
+	case "alias":
+		l.Emit(token.Alias)
 		return true
 	case "const":
 		l.Emit(token.Const)

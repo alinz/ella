@@ -7,8 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
-
-	"ella.to/internal/ast"
 )
 
 func getAllFilenames(fs embed.FS, folder string) ([]string, error) {
@@ -59,40 +57,4 @@ func LoadTemplate(fs embed.FS, folder, name string) (*template.Template, error) 
 	}
 
 	return template.New(name).Funcs(DefaultFuncsMap).Parse(content)
-}
-
-func getContent[T any](node ast.Node) []T {
-	var results []T
-
-	prog, ok := node.(*ast.Program)
-	if !ok {
-		return results
-	}
-
-	for _, node := range prog.Nodes {
-		result, ok := node.(T)
-		if !ok {
-			continue
-		}
-
-		results = append(results, result)
-	}
-
-	return results
-}
-
-func GetConstants(node ast.Node) []*ast.Const {
-	return getContent[*ast.Const](node)
-}
-
-func GetEnums(node ast.Node) []*ast.Enum {
-	return getContent[*ast.Enum](node)
-}
-
-func GetMessages(node ast.Node) []*ast.Message {
-	return getContent[*ast.Message](node)
-}
-
-func GetServices(node ast.Node) []*ast.Service {
-	return getContent[*ast.Service](node)
 }
