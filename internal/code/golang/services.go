@@ -209,7 +209,7 @@ func (s *HttpServices) Parse(prog *ast.Program) error {
 						if isMessageType(ret.Type.String()) {
 							typ = fmt.Sprintf("*%s", typ)
 						}
-						if ret.Stream && ret.Type.String() != "[]byte" {
+						if ret.Stream && isArrayOf[*ast.Byte](ret.Type) {
 							typ = "io.Reader"
 						} else if ret.Stream {
 							typ = "<-chan " + typ

@@ -102,3 +102,13 @@ func createIsMessageTypeFunc(messages []*ast.Message) func(value string) bool {
 		return ok
 	}
 }
+
+func isArrayOf[T ast.Type](typ ast.Type) bool {
+	arr, ok := typ.(*ast.Array)
+	if !ok {
+		return false
+	}
+
+	_, ok = arr.Type.(T)
+	return ok
+}
