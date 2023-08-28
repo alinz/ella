@@ -37,7 +37,7 @@ func (b *Bases) Parse(prog *ast.Program) error {
 				return Option{
 					Name:  opt.Name.String(),
 					Type:  parseValueType(opt.Value),
-					Value: opt.Value.String(),
+					Value: getValue(opt.Value),
 				}
 			}),
 		}

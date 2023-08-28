@@ -212,6 +212,22 @@ func mergeOptionValue(target, base *ast.Option, constantsMap map[string]*ast.Con
 	return nil
 }
 
+// getValueRef returns the reference of the value, but it does check whether the value
+// refer to the right constants
+func getValueRef(value ast.Value, constantsMap map[string]*ast.Const) (ast.Value, error) {
+	switch v := value.(type) {
+	case *ast.ValueVariable:
+		_, err := getConstValue(v.TokenLiteral(), constantsMap)
+		if err != nil {
+			return nil, err
+		}
+		return v, nil
+	default:
+		return value, nil
+	}
+}
+
+// getValue evaluate the value and return the value
 func getValue(value ast.Value, constantsMap map[string]*ast.Const) (ast.Value, error) {
 	switch v := value.(type) {
 	case *ast.ValueVariable:

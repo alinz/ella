@@ -10,6 +10,7 @@ func Validate(prog *ast.Program) error {
 	return runValidators(
 		prog,
 		validateUniqueNames,
+		validateBases,
 		validateMessages,
 	)
 }
