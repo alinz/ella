@@ -103,18 +103,6 @@ func isArrayOf[T ast.Type](typ ast.Type) bool {
 	return ok
 }
 
-func createIsMessageTypeFunc(messages []*ast.Message) func(value string) bool {
-	messagesMap := make(map[string]struct{})
-	for _, message := range messages {
-		messagesMap[message.Name.String()] = struct{}{}
-	}
-
-	return func(value string) bool {
-		_, ok := messagesMap[value]
-		return ok
-	}
-}
-
 func parseValueType(value ast.Value) string {
 	switch v := value.(type) {
 	case *ast.ValueByteSize:

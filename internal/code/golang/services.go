@@ -197,7 +197,7 @@ func (s HttpService) PathValue() string {
 type HttpServices []HttpService
 
 func (s *HttpServices) Parse(prog *ast.Program) error {
-	isMessageType := createIsMessageTypeFunc(astutil.GetMessages(prog))
+	isMessageType := astutil.CreateIsMessageTypeFunc(astutil.GetMessages(prog))
 
 	*s = sliceutil.Mapper(astutil.GetServices(prog), func(service *ast.Service) HttpService {
 		methods := sliceutil.Filter(service.Methods, func(method *ast.Method) bool {
@@ -266,7 +266,7 @@ type RpcServices []RpcService
 
 func (s *RpcServices) Parse(prog *ast.Program) error {
 	*s = sliceutil.Mapper(astutil.GetServices(prog), func(service *ast.Service) RpcService {
-		isMessageType := createIsMessageTypeFunc(astutil.GetMessages(prog))
+		isMessageType := astutil.CreateIsMessageTypeFunc(astutil.GetMessages(prog))
 
 		methods := sliceutil.Filter(service.Methods, func(method *ast.Method) bool {
 			return method.Type == ast.MethodRPC

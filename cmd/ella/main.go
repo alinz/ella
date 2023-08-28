@@ -11,6 +11,7 @@ import (
 	"ella.to/internal/code/golang"
 	"ella.to/internal/code/typescript"
 	"ella.to/internal/parser"
+	"ella.to/internal/validator"
 )
 
 const usage = `Usage: ella [command]
@@ -104,6 +105,11 @@ func gen(pkg, search, out string) (err error) {
 	}
 
 	prog, err := parser.ParseProgram(parser.New(content))
+	if err != nil {
+		return err
+	}
+
+	err = validator.Validate(prog)
 	if err != nil {
 		return err
 	}
