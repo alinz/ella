@@ -5,8 +5,8 @@ import (
 	"ella.to/internal/token"
 )
 
-func ParseAlias(p *Parser) (*ast.Alias, error) {
-	if p.Peek().Type != token.Alias {
+func ParseBase(p *Parser) (*ast.Base, error) {
+	if p.Peek().Type != token.Base {
 		return nil, p.WithError(p.Peek(), "expected 'alias' keyword")
 	}
 
@@ -27,7 +27,7 @@ func ParseAlias(p *Parser) (*ast.Alias, error) {
 	}
 
 	if p.Peek().Type != token.OpenCurly {
-		return &ast.Alias{
+		return &ast.Base{
 			Token:   tok,
 			Name:    name,
 			Type:    typ,
@@ -40,7 +40,7 @@ func ParseAlias(p *Parser) (*ast.Alias, error) {
 		return nil, err
 	}
 
-	return &ast.Alias{
+	return &ast.Base{
 		Token:   tok,
 		Name:    name,
 		Type:    typ,

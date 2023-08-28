@@ -81,7 +81,7 @@ func (p *Program) UnmarshalText(text []byte) error {
 		case "const":
 			stmt = &Const{}
 		case "alias":
-			stmt = &Alias{}
+			stmt = &Base{}
 		case "message":
 			stmt = &Message{}
 		case "service":

@@ -91,18 +91,6 @@ func castValue[T any](value any, defaultValue T) T {
 	return defaultValue
 }
 
-func createIsMessageTypeFunc(messages []*ast.Message) func(value string) bool {
-	messagesMap := make(map[string]struct{})
-	for _, message := range messages {
-		messagesMap[message.Name.String()] = struct{}{}
-	}
-
-	return func(value string) bool {
-		_, ok := messagesMap[value]
-		return ok
-	}
-}
-
 func isArrayOf[T ast.Type](typ ast.Type) bool {
 	arr, ok := typ.(*ast.Array)
 	if !ok {

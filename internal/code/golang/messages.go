@@ -1,7 +1,6 @@
 package golang
 
 import (
-	"fmt"
 	"strings"
 
 	"ella.to/internal/ast"
@@ -18,13 +17,9 @@ type MessageField struct {
 
 type MessageFields []MessageField
 
-func (m *MessageFields) Parse(message *ast.Message, isMessageType func(value string) bool) error {
+func (m *MessageFields) Parse(message *ast.Message) error {
 	*m = sliceutil.Mapper(message.Fields, func(field *ast.Field) MessageField {
 		typ := parseType(field.Type)
-		if isMessageType(field.Type.String()) {
-			typ = fmt.Sprintf("*%s", typ)
-		}
-
 		return MessageField{
 			Name: field.Name.String(),
 			Type: typ,
@@ -42,15 +37,12 @@ type Message struct {
 type Messages []Message
 
 func (m *Messages) Parse(prog *ast.Program) error {
-	messages := astutil.GetMessages(prog)
-	isMessageType := createIsMessageTypeFunc(messages)
-
-	*m = sliceutil.Mapper(messages, func(message *ast.Message) Message {
+	*m = sliceutil.Mapper(astutil.GetMessages(prog), func(message *ast.Message) Message {
 		msg := Message{
 			Name: message.Name.String(),
 		}
 
-		msg.Fields.Parse(message, isMessageType)
+		msg.Fields.Parse(message)
 
 		return msg
 	})

@@ -173,8 +173,6 @@ func (s HttpService) PathValue() string {
 type HttpServices []HttpService
 
 func (s *HttpServices) Parse(prog *ast.Program) error {
-	isMessageType := createIsMessageTypeFunc(astutil.GetMessages(prog))
-
 	*s = sliceutil.Mapper(astutil.GetServices(prog), func(service *ast.Service) HttpService {
 		methods := sliceutil.Filter(service.Methods, func(method *ast.Method) bool {
 			return method.Type == ast.MethodHTTP
@@ -194,9 +192,6 @@ func (s *HttpServices) Parse(prog *ast.Program) error {
 							typ = "<-chan *fileUpload"
 						} else {
 							typ = arg.Type.String()
-							if isMessageType(arg.Type.String()) {
-								typ = fmt.Sprintf("*%s", typ)
-							}
 						}
 
 						return MethodArg{
@@ -206,9 +201,6 @@ func (s *HttpServices) Parse(prog *ast.Program) error {
 					}),
 					Returns: sliceutil.Mapper(method.Returns, func(ret *ast.Return) MethodReturn {
 						typ := ret.Type.String()
-						if isMessageType(ret.Type.String()) {
-							typ = fmt.Sprintf("*%s", typ)
-						}
 						if ret.Stream && isArrayOf[*ast.Byte](ret.Type) {
 							typ = "io.Reader"
 						} else if ret.Stream {
@@ -245,8 +237,6 @@ func (s RpcService) TopicValue() string {
 type RpcServices []RpcService
 
 func (s *RpcServices) Parse(prog *ast.Program) error {
-	isMessageType := createIsMessageTypeFunc(astutil.GetMessages(prog))
-
 	*s = sliceutil.Mapper(astutil.GetServices(prog), func(service *ast.Service) RpcService {
 		methods := sliceutil.Filter(service.Methods, func(method *ast.Method) bool {
 			return method.Type == ast.MethodRPC
@@ -260,9 +250,6 @@ func (s *RpcServices) Parse(prog *ast.Program) error {
 					Service: service.Name.String(),
 					Args: sliceutil.Mapper(method.Args, func(arg *ast.Arg) MethodArg {
 						typ := arg.Type.String()
-						if isMessageType(arg.Type.String()) {
-							typ = fmt.Sprintf("*%s", typ)
-						}
 
 						return MethodArg{
 							Name: arg.Name.String(),
@@ -271,9 +258,6 @@ func (s *RpcServices) Parse(prog *ast.Program) error {
 					}),
 					Returns: sliceutil.Mapper(method.Returns, func(ret *ast.Return) MethodReturn {
 						typ := ret.Type.String()
-						if isMessageType(ret.Type.String()) {
-							typ = fmt.Sprintf("*%s", typ)
-						}
 
 						return MethodReturn{
 							Name: ret.Name.String(),

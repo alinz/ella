@@ -1,0 +1,24 @@
+- [ ] Rpc
+  - [ ] Server
+    - [ ] JSON in and out
+    - [ ] Validate based on Alias
+  - [ ] Client
+    - [ ] JSON in and out
+- [ ] Http
+  - [ ] Server
+    - [ ] JSON in and out
+    - [ ] JSON in and SSE stream
+    - [ ] JSON in and io.Reader out
+    - [ ] Validate based on Alias
+  - [ ] Client
+    - [ ] JSON in and out
+    - [ ] JSON in and SSE stream
+    - [ ] JSON in and io.Reader out
+- [ ] Cleanup
+  - [ ] Reorganizing helper functions
+- [ ] Validator
+  - [ ] copy all extends values from extended field ( only messages type )
+  - [ ] override options of each field
+- [ ] Etc
+  - [ ] change pointer to conceret type
+  - [ ] change http map path with switch
