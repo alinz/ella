@@ -85,6 +85,7 @@ func mergeExtendFields(prog *ast.Program) error {
 	messages := astutil.GetMessages(prog)
 	messagesMap := astutil.CreateMessageTypeMap(messages)
 	isValidType := astutil.CreateIsValidType(prog)
+	constantsMap := astutil.CreateConstsMap(prog)
 
 	for _, message := range messages {
 		// check if all the extends are uniques
@@ -101,7 +102,7 @@ func mergeExtendFields(prog *ast.Program) error {
 				return fmt.Errorf("message %s is extending unknown message %s", message.Name, extend)
 			}
 
-			if err := mergeFields(message, baseMessage, isValidType); err != nil {
+			if err := mergeFields(message, baseMessage, isValidType, constantsMap); err != nil {
 				return err
 			}
 		}
@@ -110,7 +111,7 @@ func mergeExtendFields(prog *ast.Program) error {
 	return nil
 }
 
-func mergeFields(target *ast.Message, base *ast.Message, isValidType func(typ ast.Type) bool) error {
+func mergeFields(target *ast.Message, base *ast.Message, isValidType func(typ ast.Type) bool, constantsMap map[string]*ast.Const) error {
 	// append all the base fields at the beginning of the target fields
 	target.Fields = append(base.Fields, target.Fields...)
 
@@ -125,6 +126,10 @@ func mergeFields(target *ast.Message, base *ast.Message, isValidType func(typ as
 	for _, field := range target.Fields {
 		baseFiled, ok := fieldsMap[field.Name.String()]
 		if !ok {
+			err := prepareFieldOptions(field, constantsMap)
+			if err != nil {
+				return err
+			}
 			fieldsMap[field.Name.String()] = field
 			continue
 		}
@@ -133,7 +138,7 @@ func mergeFields(target *ast.Message, base *ast.Message, isValidType func(typ as
 			return fmt.Errorf("message %s has a field %s with a different type %s", target.Name, field.Name, field.Type)
 		}
 
-		err := mergeFieldOptions(baseFiled, field)
+		err := mergeFieldOptions(baseFiled, field, constantsMap)
 		if err != nil {
 			return err
 		}
@@ -155,7 +160,20 @@ func mergeFields(target *ast.Message, base *ast.Message, isValidType func(typ as
 	return nil
 }
 
-func mergeFieldOptions(target, base *ast.Field) error {
+func prepareFieldOptions(field *ast.Field, constantsMap map[string]*ast.Const) error {
+	for _, option := range field.Options {
+		value, err := getValue(option.Value, constantsMap)
+		if err != nil {
+			return err
+		}
+
+		option.Value = value
+	}
+
+	return nil
+}
+
+func mergeFieldOptions(target, base *ast.Field, constantsMap map[string]*ast.Const) error {
 	target.Options = append(base.Options, target.Options...)
 
 	optionsMap := make(map[string]*ast.Option)
@@ -166,7 +184,7 @@ func mergeFieldOptions(target, base *ast.Field) error {
 			continue
 		}
 
-		err := mergeOptionValue(baseOpt, option)
+		err := mergeOptionValue(baseOpt, option, constantsMap)
 		if err != nil {
 			return err
 		}
@@ -175,11 +193,44 @@ func mergeFieldOptions(target, base *ast.Field) error {
 	return nil
 }
 
-func mergeOptionValue(target, base *ast.Option) error {
-	targetType := astutil.GetValueType(target.Value)
-	baseType := astutil.GetValueType(base.Value)
+func mergeOptionValue(target, base *ast.Option, constantsMap map[string]*ast.Const) error {
+	targetValue, err := getValue(target.Value, constantsMap)
+	if err != nil {
+		return err
+	}
+	baseValue, err := getValue(base.Value, constantsMap)
+	if err != nil {
+		return err
+	}
+
+	targetType := astutil.GetValueType(targetValue)
+	baseType := astutil.GetValueType(baseValue)
 	if targetType != baseType {
 		return fmt.Errorf("option %s has a different type %s", target.Name, targetType)
 	}
+
 	return nil
+}
+
+func getValue(value ast.Value, constantsMap map[string]*ast.Const) (ast.Value, error) {
+	switch v := value.(type) {
+	case *ast.ValueVariable:
+		return getConstValue(v.TokenLiteral(), constantsMap)
+	default:
+		return value, nil
+	}
+}
+
+func getConstValue(name string, constantsMap map[string]*ast.Const) (ast.Value, error) {
+	constant, ok := constantsMap[name]
+	if !ok {
+		return nil, fmt.Errorf("unknown constant %s", name)
+	}
+
+	point, ok := constant.Value.(*ast.ValueVariable)
+	if ok {
+		return getConstValue(point.TokenLiteral(), constantsMap)
+	}
+
+	return constant.Value, nil
 }

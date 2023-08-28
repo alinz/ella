@@ -70,6 +70,15 @@ func CreateIsValidType(prog *ast.Program) func(typ ast.Type) bool {
 	return isValidType
 }
 
+func CreateConstsMap(prog *ast.Program) map[string]*ast.Const {
+	constantsMap := make(map[string]*ast.Const)
+	for _, constant := range GetConstants(prog) {
+		constantsMap[constant.Name.String()] = constant
+	}
+
+	return constantsMap
+}
+
 func IsTypeComparable(typ ast.Type) bool {
 	switch typ.(type) {
 	case *ast.Byte, *ast.Uint, *ast.Int, *ast.Float, *ast.String, *ast.Bool, *ast.Timestamp:
