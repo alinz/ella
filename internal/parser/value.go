@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"math"
 	"strconv"
 	"strings"
 
@@ -90,6 +91,7 @@ func ParseValue(p *Parser) (value ast.Value, err error) {
 		value = &ast.ValueFloat{
 			Token: peekTok,
 			Value: float,
+			Size:  getFloatSize(float),
 		}
 	case token.ConstInt:
 		literal := strings.ReplaceAll(peekTok.Literal, "_", "")
@@ -101,6 +103,7 @@ func ParseValue(p *Parser) (value ast.Value, err error) {
 			Token:   peekTok,
 			Value:   integer,
 			Defined: true,
+			Size:    getIntSize(integer, integer),
 		}
 	case token.ConstBool:
 		boolean, err := strconv.ParseBool(peekTok.Literal)
@@ -132,4 +135,28 @@ func ParseValue(p *Parser) (value ast.Value, err error) {
 	p.Next() // skip value if no error
 
 	return value, nil
+}
+
+// find out about the min size for integer based on min and max values
+// 8, –128, 127
+// 16, –32768, 32767
+// 32, -2147483648, 2147483647
+// 64, -9223372036854775808, 9223372036854775807
+func getIntSize(min, max int64) int {
+	if min >= -128 && max <= 127 {
+		return 8
+	} else if min >= -32768 && max <= 32767 {
+		return 16
+	} else if min >= -2147483648 && max <= 2147483647 {
+		return 32
+	} else {
+		return 64
+	}
+}
+
+func getFloatSize(value float64) int {
+	if value >= math.SmallestNonzeroFloat32 && value <= math.MaxFloat32 {
+		return 32
+	}
+	return 64
 }

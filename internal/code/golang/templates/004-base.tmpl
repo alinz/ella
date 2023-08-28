@@ -1,0 +1,17 @@
+//
+// Bases
+//
+{{range $base := .Bases }}
+type {{ $base.Name }} struct {
+    {{- range $opt := $base.Options }}
+    {{ $opt.Name }} {{ $opt.Type }}
+    {{- end}}
+}
+
+var {{ $base.Name }}Values = {{ $base.Name }}{
+    {{- range $opt := $base.Options }}
+    {{ $opt.Name }}: {{ $opt.Value }},
+    {{- end}}
+}
+
+{{ end }}

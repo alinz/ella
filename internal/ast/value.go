@@ -231,6 +231,7 @@ func (v *ValueUint) String() string {
 type ValueFloat struct {
 	Token *token.Token `json:"token"`
 	Value float64      `json:"value"`
+	Size  int          `json:"size"` // 32, 64
 }
 
 var _ Value = (*ValueFloat)(nil)

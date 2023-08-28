@@ -20,5 +20,6 @@
   - [ ] copy all extends values from extended field ( only messages type )
   - [ ] override options of each field
 - [ ] Etc
-  - [ ] change pointer to conceret type
+  - [x] change pointer to conceret type
   - [ ] change http map path with switch
+  - [ ] const value can be assigned to another value, or options, need to use it inside validator, so the value variable can be looked up and copied over. This has to be recursive as variable can have another variable. Make sure to detect circular loop

@@ -18,6 +18,7 @@ type Golang struct {
 	PkgName      string
 	Constants    Constants
 	Enums        Enums
+	Bases        Bases
 	Messages     Messages
 	HttpServices HttpServices
 	RpcServices  RpcServices
@@ -28,6 +29,7 @@ func (g *Golang) Parse(prog *ast.Program) error {
 		prog,
 		g.Constants.Parse,
 		g.Enums.Parse,
+		g.Bases.Parse,
 		g.Messages.Parse,
 		g.HttpServices.Parse,
 		g.RpcServices.Parse,
@@ -110,5 +112,30 @@ func createIsMessageTypeFunc(messages []*ast.Message) func(value string) bool {
 	return func(value string) bool {
 		_, ok := messagesMap[value]
 		return ok
+	}
+}
+
+func parseValueType(value ast.Value) string {
+	switch v := value.(type) {
+	case *ast.ValueByteSize:
+		return "int64"
+	case *ast.ValueDuration:
+		return "int64"
+	case *ast.ValueInt:
+		return fmt.Sprintf("int%d", v.Size)
+	case *ast.ValueUint:
+		return fmt.Sprintf("uint%d", v.Size)
+	case *ast.ValueFloat:
+		return fmt.Sprintf("float%d", v.Size)
+	case *ast.ValueString:
+		return "string"
+	case *ast.ValueBool:
+		return "bool"
+	case *ast.ValueNull:
+		return "any"
+	case *ast.ValueVariable:
+		return "any" // TODO: find a way to get the type in recersive mode, be aware of cycles
+	default:
+		panic(fmt.Errorf("unknown type for value: %T", value))
 	}
 }

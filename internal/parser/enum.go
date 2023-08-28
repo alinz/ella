@@ -69,20 +69,7 @@ func ParseEnum(p *Parser) (enum *ast.Enum, err error) {
 		next++
 	}
 
-	// find out about the min size for integer based on min and max values
-	// 8, –128, 127
-	// 16, –32768, 32767
-	// 32, -2147483648, 2147483647
-	// 64, -9223372036854775808, 9223372036854775807
-	if minV >= -128 && maxV <= 127 {
-		enum.Size = 8
-	} else if minV >= -32768 && maxV <= 32767 {
-		enum.Size = 16
-	} else if minV >= -2147483648 && maxV <= 2147483647 {
-		enum.Size = 32
-	} else {
-		enum.Size = 64
-	}
+	enum.Size = getIntSize(minV, maxV)
 
 	for _, set := range enum.Sets {
 		set.Value.Size = enum.Size
