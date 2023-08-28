@@ -8,7 +8,7 @@ type {{ $base.Name }} struct {
     {{- end}}
 }
 
-var {{ $base.Name }}Values = {{ $base.Name }}{
+var {{ $base.NameValue }} = {{ $base.Name }}{
     {{- range $opt := $base.Options }}
     {{ $opt.Name }}: {{ $opt.Value }},
     {{- end}}

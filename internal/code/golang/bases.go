@@ -16,18 +16,23 @@ type Option struct {
 }
 
 type Base struct {
-	Name    string
-	Type    string
-	Options []Option
+	Name      string
+	NameValue string
+	Type      string
+	Options   []Option
 }
 
 type Bases []Base
 
 func (b *Bases) Parse(prog *ast.Program) error {
 	*b = sliceutil.Mapper(astutil.GetBases(prog), func(base *ast.Base) Base {
+		name := fmt.Sprintf("%sBaseOptions", strcase.ToCamel(base.Name.String()))
+		nameValue := fmt.Sprintf("%sValues", name)
+
 		return Base{
-			Name: fmt.Sprintf("%sBaseOptions", strcase.ToCamel(base.Name.String())),
-			Type: parseType(base.Type),
+			Name:      name,
+			NameValue: nameValue,
+			Type:      parseType(base.Type),
 			Options: sliceutil.Mapper(base.Options, func(opt *ast.Option) Option {
 				return Option{
 					Name:  opt.Name.String(),
