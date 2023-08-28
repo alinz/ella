@@ -26,7 +26,7 @@ func (s * http{{ $service.Name }}ServiceClient) {{ $method.Name }}(ctx context.C
 	}
 
 	in := struct {
-        {{ $method.ArgsStructDefinitions }}
+        {{ $method.ArgsStructDefinitions true }}
     }{
         {{ $method.ArgsNamesValues }}
     }

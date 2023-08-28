@@ -20,7 +20,7 @@ func CreateRpc{{ $service.Name }}ServiceClient(adaptor rpcAdaptor) Rpc{{ $servic
 
 func (s *rpc{{ $service.Name }}ServiceClient) {{ $method.Name }}(ctx context.Context {{ $method.Args.Definitions }}) ({{ $method.Returns.Definitions }}) { 
     out, err := rpcSend(ctx, s.adaptor, {{ $method.TopicName }}, &struct {
-        {{ $method.ArgsStructDefinitions }}
+        {{ $method.ArgsStructDefinitions true }}
     }{
         {{ $method.ArgsNamesValues }}
     }, &struct {
