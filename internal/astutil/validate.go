@@ -23,18 +23,6 @@ func CreateIsMessageTypeFunc(messages []*ast.Message) func(value string) bool {
 	}
 }
 
-func CreateIsBaseTypeFunc(bases []*ast.Base) func(value string) bool {
-	basesMap := make(map[string]struct{})
-	for _, base := range bases {
-		basesMap[base.Name.String()] = struct{}{}
-	}
-
-	return func(value string) bool {
-		_, ok := basesMap[value]
-		return ok
-	}
-}
-
 func CreateIsEnumTypeFunc(enums []*ast.Enum) func(value string) bool {
 	enumsMap := make(map[string]struct{})
 	for _, enum := range enums {
@@ -48,7 +36,6 @@ func CreateIsEnumTypeFunc(enums []*ast.Enum) func(value string) bool {
 }
 
 func CreateIsValidType(prog *ast.Program) func(typ ast.Type) bool {
-	isBaseType := CreateIsBaseTypeFunc(GetBases(prog))
 	isEnumType := CreateIsEnumTypeFunc(GetEnums(prog))
 	isMessageType := CreateIsMessageTypeFunc(GetMessages(prog))
 
@@ -59,7 +46,7 @@ func CreateIsValidType(prog *ast.Program) func(typ ast.Type) bool {
 		case *ast.Map:
 			return IsTypeComparable(v.Key) && isValidType(v.Value)
 		case *ast.CustomType:
-			return isBaseType(v.TokenLiteral()) || isEnumType(v.TokenLiteral()) || isMessageType(v.TokenLiteral())
+			return isEnumType(v.TokenLiteral()) || isMessageType(v.TokenLiteral())
 		case *ast.Array:
 			return isValidType(v.Type)
 		default:

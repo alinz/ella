@@ -24,8 +24,6 @@ func ParseProgram(p *Parser) (prog *ast.Program, err error) {
 			stmt, err = ParseMessage(p)
 		case token.Service:
 			stmt, err = ParseService(p)
-		case token.Base:
-			stmt, err = ParseBase(p)
 		default:
 			return nil, p.WithError(p.Peek(), "unexpected token")
 		}

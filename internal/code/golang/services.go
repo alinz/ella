@@ -14,6 +14,11 @@ type MethodArg struct {
 	Name         string
 	Type         string
 	IsCustomType bool
+	BaseType     string
+}
+
+func (m MethodArg) IsBaseType() bool {
+	return m.BaseType != ""
 }
 
 type MethodArgs []MethodArg

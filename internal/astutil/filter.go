@@ -22,10 +22,6 @@ func getContent[T any](node ast.Node) []T {
 	return results
 }
 
-func GetBases(node ast.Node) []*ast.Base {
-	return getContent[*ast.Base](node)
-}
-
 func GetConstants(node ast.Node) []*ast.Const {
 	return getContent[*ast.Const](node)
 }
