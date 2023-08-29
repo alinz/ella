@@ -20,8 +20,8 @@ func ParseProgram(p *Parser) (prog *ast.Program, err error) {
 			stmt, err = ParseConst(p)
 		case token.Enum:
 			stmt, err = ParseEnum(p)
-		case token.Message:
-			stmt, err = ParseMessage(p)
+		case token.Model:
+			stmt, err = ParseModel(p)
 		case token.Service:
 			stmt, err = ParseService(p)
 		default:

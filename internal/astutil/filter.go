@@ -30,8 +30,8 @@ func GetEnums(node ast.Node) []*ast.Enum {
 	return getContent[*ast.Enum](node)
 }
 
-func GetMessages(node ast.Node) []*ast.Message {
-	return getContent[*ast.Message](node)
+func GetModels(node ast.Node) []*ast.Model {
+	return getContent[*ast.Model](node)
 }
 
 func GetServices(node ast.Node) []*ast.Service {

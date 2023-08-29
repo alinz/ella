@@ -261,8 +261,8 @@ func reservedKeywrod(l *Lexer) bool {
 	case "enum":
 		l.Emit(token.Enum)
 		return true
-	case "message":
-		l.Emit(token.Message)
+	case "model":
+		l.Emit(token.Model)
 		return true
 	case "http":
 		l.Emit(token.Http)

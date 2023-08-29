@@ -9,36 +9,36 @@ import (
 	"ella.to/pkg/strcase"
 )
 
-type MessageField struct {
+type ModelField struct {
 	Name string
 	Type string
 	Tags string
 }
 
-type MessageFields []MessageField
+type ModelFields []ModelField
 
-func (m *MessageFields) Parse(message *ast.Message) error {
-	*m = sliceutil.Mapper(message.Fields, func(field *ast.Field) MessageField {
+func (m *ModelFields) Parse(message *ast.Model) error {
+	*m = sliceutil.Mapper(message.Fields, func(field *ast.Field) ModelField {
 		typ := parseType(field.Type)
-		return MessageField{
+		return ModelField{
 			Name: field.Name.String(),
 			Type: typ,
-			Tags: parseMessageFieldOptions(field),
+			Tags: parseModelFieldOptions(field),
 		}
 	})
 	return nil
 }
 
-type Message struct {
+type Model struct {
 	Name   string
-	Fields MessageFields
+	Fields ModelFields
 }
 
-type Messages []Message
+type Models []Model
 
-func (m *Messages) Parse(prog *ast.Program) error {
-	*m = sliceutil.Mapper(astutil.GetMessages(prog), func(message *ast.Message) Message {
-		msg := Message{
+func (m *Models) Parse(prog *ast.Program) error {
+	*m = sliceutil.Mapper(astutil.GetModels(prog), func(message *ast.Model) Model {
+		msg := Model{
 			Name: message.Name.String(),
 		}
 
@@ -50,7 +50,7 @@ func (m *Messages) Parse(prog *ast.Program) error {
 	return nil
 }
 
-func parseMessageFieldOptions(field *ast.Field) string {
+func parseModelFieldOptions(field *ast.Field) string {
 	var sb strings.Builder
 
 	mapper := make(map[string]ast.Value)

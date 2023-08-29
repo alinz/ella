@@ -6,7 +6,7 @@ const (
 	Identifier                           // identifier
 	Const                                // const
 	Enum                                 // enum
-	Message                              // message
+	Model                                // model
 	Http                                 // http
 	Rpc                                  // rpc
 	Service                              // service
@@ -65,8 +65,8 @@ func (t Type) String() string {
 		return "Const"
 	case Enum:
 		return "Enum"
-	case Message:
-		return "Message"
+	case Model:
+		return "Model"
 	case Http:
 		return "Http"
 	case Rpc:

@@ -10,26 +10,26 @@ import (
 func TestParseMessage(t *testing.T) {
 	testCases := TestCases{
 		{
-			Input: `message Foo {
+			Input: `model Foo {
 				...Hello
 			}`,
 			Output: `
-message Foo {
+model Foo {
 	...Hello
 }`,
 		},
 		{
-			Input:  `message Foo {}`,
-			Output: `message Foo {}`,
+			Input:  `model Foo {}`,
+			Output: `model Foo {}`,
 		},
 		{
-			Input: `message Foo {
+			Input: `model Foo {
 				FirstName: string {
 					Required
 				}
 			}`,
 			Output: `
-message Foo {
+model Foo {
 	FirstName: string {
 		Required
 	}
@@ -37,13 +37,13 @@ message Foo {
 `,
 		},
 		{
-			Input: `message Foo {
+			Input: `model Foo {
 				FirstName: string {
 					Required = true
 				}
 			}`,
 			Output: `
-message Foo {
+model Foo {
 	FirstName: string {
 		Required = true
 	}
@@ -53,6 +53,6 @@ message Foo {
 	}
 
 	runTests(t, func(p *parser.Parser) (ast.Node, error) {
-		return parser.ParseMessage(p)
+		return parser.ParseModel(p)
 	}, testCases)
 }

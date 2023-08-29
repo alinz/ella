@@ -76,7 +76,7 @@ func TestLex(t *testing.T) {
 				{Type: token.ConstInt, Start: 68, End: 69, Literal: "1"},
 				{Type: token.RightComment, Start: 71, End: 91, Literal: " this is a comment 3"},
 				{Type: token.TopComment, Start: 96, End: 122, Literal: " this is another comment 4"},
-				{Type: token.Message, Start: 127, End: 134, Literal: "message"},
+				{Type: token.Identifier, Start: 127, End: 134, Literal: "message"},
 				{Type: token.Identifier, Start: 135, End: 136, Literal: "A"},
 				{Type: token.OpenCurly, Start: 137, End: 138, Literal: "{"},
 				{Type: token.TopComment, Start: 144, End: 164, Literal: " this is a comment 5"},
@@ -124,7 +124,7 @@ func TestLex(t *testing.T) {
 				first: int64
 			}`,
 			output: Tokens{
-				{Type: token.Message, Start: 0, End: 7, Literal: "message"},
+				{Type: token.Identifier, Start: 0, End: 7, Literal: "message"},
 				{Type: token.Identifier, Start: 8, End: 9, Literal: "A"},
 				{Type: token.OpenCurly, Start: 10, End: 11, Literal: "{"},
 				{Type: token.Extend, Start: 16, End: 19, Literal: "..."},
@@ -227,7 +227,7 @@ func TestLex(t *testing.T) {
 				{Type: token.Identifier, Start: 8, End: 9, Literal: "a"},
 				{Type: token.Assign, Start: 10, End: 11, Literal: "="},
 				{Type: token.ConstFloat, Start: 12, End: 15, Literal: "1.0"},
-				{Type: token.Message, Start: 20, End: 27, Literal: "message"},
+				{Type: token.Identifier, Start: 20, End: 27, Literal: "message"},
 				{Type: token.Identifier, Start: 28, End: 29, Literal: "A"},
 				{Type: token.OpenCurly, Start: 30, End: 31, Literal: "{"},
 				{Type: token.Identifier, Start: 36, End: 45, Literal: "firstname"},

@@ -19,16 +19,16 @@ import (
 // - name of the fields has to be PascalCase
 // - name of the fields has to be unique per message
 //   - if true, type must be the same and this indicates options needs to be overwritten
-func validateMessages(prog *ast.Program) error {
+func validateModels(prog *ast.Program) error {
 	return runValidators(
 		prog,
-		checkMessageCycles,
+		checkModelCycles,
 		mergeExtendFields,
 	)
 }
 
-func checkMessageCycles(prog *ast.Program) error {
-	messages := astutil.GetMessages(prog)
+func checkModelCycles(prog *ast.Program) error {
+	messages := astutil.GetModels(prog)
 	dependencyGraph := make(map[string][]string)
 
 	for _, message := range messages {
@@ -82,8 +82,8 @@ func checkMessageCycles(prog *ast.Program) error {
 }
 
 func mergeExtendFields(prog *ast.Program) error {
-	messages := astutil.GetMessages(prog)
-	messagesMap := astutil.CreateMessageTypeMap(messages)
+	messages := astutil.GetModels(prog)
+	messagesMap := astutil.CreateModelTypeMap(messages)
 	isValidType := astutil.CreateIsValidType(prog)
 	constantsMap := astutil.CreateConstsMap(prog)
 
@@ -97,12 +97,12 @@ func mergeExtendFields(prog *ast.Program) error {
 			}
 			extends[extend.String()] = struct{}{}
 
-			baseMessage, ok := messagesMap[extend.String()]
+			baseModel, ok := messagesMap[extend.String()]
 			if !ok {
 				return fmt.Errorf("message %s is extending unknown message %s", message.Name, extend)
 			}
 
-			if err := mergeFields(message, baseMessage, isValidType, constantsMap); err != nil {
+			if err := mergeFields(message, baseModel, isValidType, constantsMap); err != nil {
 				return err
 			}
 		}
@@ -111,7 +111,7 @@ func mergeExtendFields(prog *ast.Program) error {
 	return nil
 }
 
-func mergeFields(target *ast.Message, base *ast.Message, isValidType func(typ ast.Type) bool, constantsMap map[string]*ast.Const) error {
+func mergeFields(target *ast.Model, base *ast.Model, isValidType func(typ ast.Type) bool, constantsMap map[string]*ast.Const) error {
 	// append all the base fields at the beginning of the target fields
 	target.Fields = append(base.Fields, target.Fields...)
 

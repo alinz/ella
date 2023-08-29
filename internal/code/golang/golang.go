@@ -18,7 +18,7 @@ type Golang struct {
 	PkgName      string
 	Constants    Constants
 	Enums        Enums
-	Messages     Messages
+	Models       Models
 	HttpServices HttpServices
 	RpcServices  RpcServices
 }
@@ -28,7 +28,7 @@ func (g *Golang) Parse(prog *ast.Program) error {
 		prog,
 		g.Constants.Parse,
 		g.Enums.Parse,
-		g.Messages.Parse,
+		g.Models.Parse,
 		g.HttpServices.Parse,
 		g.RpcServices.Parse,
 	)

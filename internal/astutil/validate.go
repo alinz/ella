@@ -2,8 +2,8 @@ package astutil
 
 import "ella.to/internal/ast"
 
-func CreateMessageTypeMap(messages []*ast.Message) map[string]*ast.Message {
-	messagesMap := make(map[string]*ast.Message)
+func CreateModelTypeMap(messages []*ast.Model) map[string]*ast.Model {
+	messagesMap := make(map[string]*ast.Model)
 	for _, message := range messages {
 		messagesMap[message.Name.String()] = message
 	}
@@ -11,7 +11,7 @@ func CreateMessageTypeMap(messages []*ast.Message) map[string]*ast.Message {
 	return messagesMap
 }
 
-func CreateIsMessageTypeFunc(messages []*ast.Message) func(value string) bool {
+func CreateIsModelTypeFunc(messages []*ast.Model) func(value string) bool {
 	messagesMap := make(map[string]struct{})
 	for _, message := range messages {
 		messagesMap[message.Name.String()] = struct{}{}
@@ -37,7 +37,7 @@ func CreateIsEnumTypeFunc(enums []*ast.Enum) func(value string) bool {
 
 func CreateIsValidType(prog *ast.Program) func(typ ast.Type) bool {
 	isEnumType := CreateIsEnumTypeFunc(GetEnums(prog))
-	isMessageType := CreateIsMessageTypeFunc(GetMessages(prog))
+	isModelType := CreateIsModelTypeFunc(GetModels(prog))
 
 	var isValidType func(typ ast.Type) bool
 
@@ -46,7 +46,7 @@ func CreateIsValidType(prog *ast.Program) func(typ ast.Type) bool {
 		case *ast.Map:
 			return IsTypeComparable(v.Key) && isValidType(v.Value)
 		case *ast.CustomType:
-			return isEnumType(v.TokenLiteral()) || isMessageType(v.TokenLiteral())
+			return isEnumType(v.TokenLiteral()) || isModelType(v.TokenLiteral())
 		case *ast.Array:
 			return isValidType(v.Type)
 		default:

@@ -202,7 +202,7 @@ func (s HttpService) PathValue() string {
 type HttpServices []HttpService
 
 func (s *HttpServices) Parse(prog *ast.Program) error {
-	isMessageType := astutil.CreateIsMessageTypeFunc(astutil.GetMessages(prog))
+	isModelType := astutil.CreateIsModelTypeFunc(astutil.GetModels(prog))
 
 	*s = sliceutil.Mapper(astutil.GetServices(prog), func(service *ast.Service) HttpService {
 		methods := sliceutil.Filter(service.Methods, func(method *ast.Method) bool {
@@ -228,7 +228,7 @@ func (s *HttpServices) Parse(prog *ast.Program) error {
 						return MethodArg{
 							Name:         arg.Name.String(),
 							Type:         typ,
-							IsCustomType: isMessageType(typ),
+							IsCustomType: isModelType(typ),
 						}
 					}),
 					Returns: sliceutil.Mapper(method.Returns, func(ret *ast.Return) MethodReturn {
@@ -243,7 +243,7 @@ func (s *HttpServices) Parse(prog *ast.Program) error {
 							Name:         ret.Name.String(),
 							Type:         typ,
 							Stream:       ret.Stream,
-							IsCustomType: isMessageType(typ),
+							IsCustomType: isModelType(typ),
 						}
 					}),
 				}
@@ -271,7 +271,7 @@ type RpcServices []RpcService
 
 func (s *RpcServices) Parse(prog *ast.Program) error {
 	*s = sliceutil.Mapper(astutil.GetServices(prog), func(service *ast.Service) RpcService {
-		isMessageType := astutil.CreateIsMessageTypeFunc(astutil.GetMessages(prog))
+		isModelType := astutil.CreateIsModelTypeFunc(astutil.GetModels(prog))
 
 		methods := sliceutil.Filter(service.Methods, func(method *ast.Method) bool {
 			return method.Type == ast.MethodRPC
@@ -289,7 +289,7 @@ func (s *RpcServices) Parse(prog *ast.Program) error {
 						return MethodArg{
 							Name:         arg.Name.String(),
 							Type:         typ,
-							IsCustomType: isMessageType(typ),
+							IsCustomType: isModelType(typ),
 						}
 					}),
 					Returns: sliceutil.Mapper(method.Returns, func(ret *ast.Return) MethodReturn {
@@ -298,7 +298,7 @@ func (s *RpcServices) Parse(prog *ast.Program) error {
 						return MethodReturn{
 							Name:         ret.Name.String(),
 							Type:         typ,
-							IsCustomType: isMessageType(typ),
+							IsCustomType: isModelType(typ),
 						}
 					}),
 				}

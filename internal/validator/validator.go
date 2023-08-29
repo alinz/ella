@@ -10,7 +10,7 @@ func Validate(prog *ast.Program) error {
 	return runValidators(
 		prog,
 		validateUniqueNames,
-		validateMessages,
+		validateModels,
 	)
 }
 
@@ -29,7 +29,7 @@ func validateUniqueNames(prog *ast.Program) error {
 			if _, ok := names[name]; ok {
 				return fmt.Errorf("enum %s is defined multiple times", stmt.Name)
 			}
-		case *ast.Message:
+		case *ast.Model:
 			name = stmt.Name.String()
 			if _, ok := names[name]; ok {
 				return fmt.Errorf("message %s is defined multiple times", stmt.Name)

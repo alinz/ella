@@ -89,25 +89,26 @@ func (f Fields) String() string {
 	return sb.String()
 }
 
-type Message struct {
+type Model struct {
 	Token   *token.Token  `json:"token"`
 	Name    *Identifier   `json:"name"`
 	Extends []*Identifier `json:"extends"`
 	Fields  Fields        `json:"fields"`
 }
 
-var _ Statement = (*Message)(nil)
+var _ Statement = (*Model)(nil)
 
-func (m *Message) statementLiteral() {}
+func (m *Model) statementLiteral() {}
 
-func (m *Message) TokenLiteral() string {
+func (m *Model) TokenLiteral() string {
 	return m.Token.Literal
 }
 
-func (m *Message) String() string {
+func (m *Model) String() string {
 	var sb strings.Builder
 
-	sb.WriteString("message ")
+	sb.WriteString(m.TokenLiteral())
+	sb.WriteString(" ")
 	sb.WriteString(m.Name.String())
 	sb.WriteString(" {")
 

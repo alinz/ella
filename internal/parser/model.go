@@ -6,12 +6,12 @@ import (
 	"ella.to/pkg/strcase"
 )
 
-func ParseMessage(p *Parser) (*ast.Message, error) {
-	if p.Peek().Type != token.Message {
+func ParseModel(p *Parser) (*ast.Model, error) {
+	if p.Peek().Type != token.Model {
 		return nil, p.WithError(p.Peek(), "expected 'message' keyword")
 	}
 
-	message := &ast.Message{Token: p.Next()}
+	message := &ast.Model{Token: p.Next()}
 
 	if p.Peek().Type != token.Identifier {
 		return nil, p.WithError(p.Peek(), "expected identifier for defining a message")
@@ -39,7 +39,7 @@ func ParseMessage(p *Parser) (*ast.Message, error) {
 			}
 			message.Extends = append(message.Extends, extend)
 		} else {
-			field, err := ParseMessageField(p)
+			field, err := ParseModelField(p)
 			if err != nil {
 				return nil, err
 			}
@@ -72,7 +72,7 @@ func ParseExtend(p *Parser) (*ast.Identifier, error) {
 	return &ast.Identifier{Token: nameTok}, nil
 }
 
-func ParseMessageField(p *Parser) (field *ast.Field, err error) {
+func ParseModelField(p *Parser) (field *ast.Field, err error) {
 	if p.Peek().Type != token.Identifier {
 		return nil, p.WithError(p.Peek(), "expected identifier for defining a message field")
 	}
