@@ -7,10 +7,12 @@ package {{ .PkgName }}
 import (
     "bytes"
     "context"
+    "crypto/rand"
     "encoding/json"
     "errors"
     "fmt"
     "io"
+    "mime/multipart"
     "net/http"
     "net/url"
     "path"

@@ -25,22 +25,26 @@ func (s * http{{ $service.Name }}ServiceClient) {{ $method.Name }}(ctx context.C
 		return
 	}
 
-	in := struct {
+	_in_ := struct {
         {{ $method.ArgsStructDefinitions true }}
     }{
         {{ $method.ArgsNamesValues }}
     }
 
-	out := struct {
+	_out_ := struct {
         {{ $method.ReturnsStructDefinitions }}
     }{}
 
-	err = callServiceMethod(ctx, {{ $method.Options.HttpMethod }}, s.client, url, &in, &out)
+{{- if $method.IsFileUpload }}
+	err = sendFilesUpload(ctx, url, &_in_, files, &_out_)
+{{- else }}
+	err = callServiceMethod(ctx, {{ $method.Options.HttpMethod }}, s.client, url, &_in_, &_out_)
+{{- end }}
 	if err != nil {
 		return
 	}
 
-	return {{ $method.ReturnsNames "out."}} nil
+	return {{ $method.ReturnsNames "_out_."}} nil
 }
 
 {{- end }}

@@ -1,33 +1,61 @@
 
-//
-// Helper functions
-//
-
-//
-// RPC helper interfaces
-//
+// RPC UTILITIES
+// Helper utilities for dealing with RPC's adapters
 
 type rpcMsg interface {
-    Topic() string
-    Data() []byte
-    Reply(reply []byte) error
+	Topic() string
+	Data() []byte
+	Reply(data []byte) error
 }
+
+type recvFunc func(msg rpcMsg)
 
 type rpcAdaptor interface {
-    Register(topic string, recv func(msg rpcMsg)) (drain func(), err error)
-    Send(ctx context.Context, topic string, data []byte) ([]byte, error)
+	Register(topic string, recv recvFunc) (drain func(), err error)
+	Send(ctx context.Context, topic string, data []byte) ([]byte, error)
 }
 
-//
-// Context
-//
+func rpcSend[T any](ctx context.Context, adaptor rpcAdaptor, topic string, in any, out *T) (*T, error) {
+	data, err := json.Marshal(in)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err = adaptor.Send(ctx, topic, data)
+	if err != nil {
+		return nil, err
+	}
+
+	if data[0] != '{' {
+		err = errors.New(string(data))
+		return nil, err
+	}
+
+	err = json.Unmarshal(data, out)
+	if err != nil {
+		return nil, err
+	}
+
+	return out, nil
+}
+
+// CONTEXT UTILITIES
+// Injecting/extracting values from context usually used for http handlers
 
 type ctxKey string
 
 const (
-	ctxKeyRequest ctxKey = "http_request"
+	ctxKeyRequest  ctxKey = "http_request"
 	ctxKeyResponse ctxKey = "http_response"
 )
+
+func GetCtxHttpRequest(ctx context.Context) (result *http.Request, ok bool) {
+	return getCtxValue[*http.Request](ctx, ctxKeyRequest)
+}
+
+func GetCtxHttpResponse(ctx context.Context) (result http.ResponseWriter, ok bool) {
+	return getCtxValue[http.ResponseWriter](ctx, ctxKeyResponse)
+}
 
 func getCtxValue[T any](ctx context.Context, key ctxKey) (result T, ok bool) {
 	value := ctx.Value(key)
@@ -38,67 +66,21 @@ func getCtxValue[T any](ctx context.Context, key ctxKey) (result T, ok bool) {
 	return result, ok
 }
 
-func GetCtxHttpRequest(ctx context.Context) (result *http.Request, ok bool) {
-	return getCtxValue[*http.Request](ctx, ctxKeyRequest)
-}
-
-func GetCtxHttpResponse(ctx context.Context) (result http.ResponseWriter, ok bool) {
-	return getCtxValue[http.ResponseWriter](ctx, ctxKeyResponse)
-}
-
 func injectCommonVars(ctx context.Context, w http.ResponseWriter, r *http.Request) context.Context {
 	ctx = context.WithValue(ctx, ctxKeyRequest, r)
 	ctx = context.WithValue(ctx, ctxKeyResponse, w)
 	return ctx
 }
 
-func callServiceMethod[ReqMsg, RespMsg any](ctx context.Context, method string, client *http.Client, url string, in *ReqMsg, out *RespMsg) (err error) {
-	var reqBody io.Reader
-
-	if !isStructEmpty(in) {
-		if method == http.MethodGet {
-			url, err = structToURL(url, in)
-			if err != nil {
-				return err
-			}
-		} else {
-			reqBody, err = jsonEncodeReader(in)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	req, err := http.NewRequestWithContext(ctx, method, url, reqBody)
-	if err != nil {
-		return err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 300 {
-		return parseError(resp.Body)
-	}
-
-	if isStructEmpty(out) {
-		return nil
-	}
-
-	return json.NewDecoder(resp.Body).Decode(out)
-}
+// HTTP SERVER UTILITIES
+// Helper utilities for creating http servers
 
 type httpServiceMethodHandler func(context.Context, http.ResponseWriter, *http.Request)
 
 func createServiceMethodHandler[ReqMsg, RespMsg any](method string, hasFields bool, fn func(ctx context.Context, req *ReqMsg) (*RespMsg, error)) httpServiceMethodHandler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
-			ResponseError(w, Errorf(http.StatusMethodNotAllowed, "method %q not allowed", r.Method))
+			httpResponseError(w, Errorf(http.StatusMethodNotAllowed, nil, "method %q not allowed", r.Method))
 			return
 		}
 
@@ -110,22 +92,20 @@ func createServiceMethodHandler[ReqMsg, RespMsg any](method string, hasFields bo
 			}
 		}()
 
-		if method != http.MethodGet {
+		var reqMsg ReqMsg
+
+		if method == http.MethodGet {
+			if err := valuesToStruct(r.URL.Query(), &reqMsg); err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		} else if hasFields {
 			if err := checkContentType(r, "application/json"); err != nil {
 				w.WriteHeader(http.StatusUnsupportedMediaType)
 				return
 			}
-		}
 
-		var reqMsg ReqMsg
-
-		if hasFields && method == http.MethodPost {
 			if err := json.NewDecoder(r.Body).Decode(&reqMsg); err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-		} else if method == http.MethodGet {
-			if err := valuesToStruct(r.URL.Query(), &reqMsg); err != nil {
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
@@ -133,154 +113,31 @@ func createServiceMethodHandler[ReqMsg, RespMsg any](method string, hasFields bo
 
 		respMsg, err := fn(ctx, &reqMsg)
 		if err != nil {
-			ResponseError(w, err)
+			httpResponseError(w, err)
 			return
 		}
 
-		var buffer bytes.Buffer
-
-		if err := json.NewEncoder(&buffer).Encode(respMsg); err != nil {
-			ResponseError(w, err)
-			return
-		}
-
-		io.Copy(w, &buffer)
 		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(respMsg)
 	}
 }
 
-func createRawControlServiceMethodHandler[ReqMsg any](method string, hasFields bool, fn func(ctx context.Context, req *ReqMsg)) httpServiceMethodHandler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		if r.Method != method {
-			ResponseError(w, Errorf(http.StatusMethodNotAllowed, "method %q not allowed", r.Method))
-			return
-		}
-
-		if method != http.MethodGet {
-			if err := checkContentType(r, "application/json"); err != nil {
-				w.WriteHeader(http.StatusUnsupportedMediaType)
-				return
-			}
-		}
-
-		var reqMsg ReqMsg
-
-		if hasFields && method == http.MethodPost {
-			if err := json.NewDecoder(r.Body).Decode(&reqMsg); err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-		} else if method == http.MethodGet {
-			if err := valuesToStruct(r.URL.Query(), &reqMsg); err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-		}
-
-		fn(ctx, &reqMsg)
-	}
-}
-
-func createServiceMethodUploadHandler[ReqMsg, RespMsg any](
-	totalMaxSize int64,
-	fn func(ctx context.Context, files <-chan *fileUpload, req *ReqMsg) (*RespMsg, error),
-) httpServiceMethodHandler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			ResponseError(w, Errorf(http.StatusMethodNotAllowed, "method %q not allowed", r.Method))
-			return
-		}
-
-		r.Body = http.MaxBytesReader(w, r.Body, totalMaxSize)
-
-		reader, err := r.MultipartReader()
-		if err != nil {
-			ResponseError(w, err)
-			return
-		}
-
-		files := make(chan *fileUpload, 1)
-		defer close(files)
-
-		part, err := reader.NextPart()
-		if err != nil {
-			ResponseError(w, err)
-			return
-		}
-		defer part.Close()
-
-		if part.FormName() != "payload" {
-			ResponseError(w, Errorf(http.StatusBadRequest, "missing payload name"))
-			return
-		}
-
-		var req ReqMsg
-		err = json.NewDecoder(part).Decode(&req)
-		if err != nil {
-			ResponseError(w, err)
-			return
-		}
-
-		errChan := make(chan error, 1)
-
-		go func() {
-			defer close(files)
-			defer close(errChan)
-
-			for {
-				part, err := reader.NextPart()
-				if errors.Is(err, io.EOF) {
-					return
-				} else if err != nil {
-					errChan <- err
-					return
-				}
-
-				if part.FormName() == "files" {
-					errChan <- Errorf(http.StatusBadRequest, "missing files field")
-					return
-				}
-
-				files <- &fileUpload{
-					Filename: part.FileName(),
-					Body:     part,
-				}
-			}
-		}()
-
-		resp, err := fn(ctx, files, &req)
-		if err != nil {
-			ResponseError(w, err)
-			return
-		}
-
-		err, ok := <-errChan
-		if ok {
-			ResponseError(w, err)
-			return
-		}
-
-		var buffer bytes.Buffer
-		if err := json.NewEncoder(&buffer).Encode(resp); err != nil {
-			ResponseError(w, err)
-			return
-		}
-
-		io.Copy(w, &buffer)
-		w.WriteHeader(http.StatusOK)
-	}
+type stremEvent struct {
+	id    int64
+	event string
+	data  string
 }
 
 func createStreamServiceMethod[ReqMsg any](method string, hasFields bool, fn func(ctx context.Context, req *ReqMsg) (<-chan *stremEvent, error)) httpServiceMethodHandler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
-			ResponseError(w, Errorf(http.StatusMethodNotAllowed, "method %q not allowed", r.Method))
+			httpResponseError(w, Errorf(http.StatusMethodNotAllowed, nil, "method %q not allowed", r.Method))
 			return
 		}
 
 		fluser, ok := w.(http.Flusher)
 		if !ok {
-			ResponseError(w, Errorf(http.StatusInternalServerError, "response writer does not support flushing"))
+			httpResponseError(w, Errorf(http.StatusInternalServerError, nil, "response writer does not support flushing"))
 			return
 		}
 
@@ -292,22 +149,20 @@ func createStreamServiceMethod[ReqMsg any](method string, hasFields bool, fn fun
 			}
 		}()
 
-		if method != http.MethodGet {
+		var reqMsg ReqMsg
+
+		if method == http.MethodGet {
+			if err := valuesToStruct(r.URL.Query(), &reqMsg); err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		} else if hasFields {
 			if err := checkContentType(r, "application/json"); err != nil {
 				w.WriteHeader(http.StatusUnsupportedMediaType)
 				return
 			}
-		}
 
-		var reqMsg ReqMsg
-
-		if hasFields && method == http.MethodPost {
 			if err := json.NewDecoder(r.Body).Decode(&reqMsg); err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-		} else if method == http.MethodGet {
-			if err := valuesToStruct(r.URL.Query(), &reqMsg); err != nil {
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
@@ -318,7 +173,7 @@ func createStreamServiceMethod[ReqMsg any](method string, hasFields bool, fn fun
 
 		events, err := fn(ctx, &reqMsg)
 		if err != nil {
-			ResponseError(w, err)
+			httpResponseError(w, err)
 			return
 		}
 
@@ -354,15 +209,356 @@ func createStreamServiceMethod[ReqMsg any](method string, hasFields bool, fn fun
 	}
 }
 
-type fileUpload struct {
-	Filename string
-	Body     io.ReadCloser
+func createStreamBinaryServiceMethod[ReqMsg any](method string, contentType string, hasFields bool, fn func(ctx context.Context, req *ReqMsg) (io.Reader, error)) httpServiceMethodHandler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		if r.Method != method {
+			httpResponseError(w, Errorf(http.StatusMethodNotAllowed, nil, "method %q not allowed", r.Method))
+			return
+		}
+
+		defer func() {
+			if err := recover(); err != nil {
+				// In case of a panic, serve a 500 error and then panic.
+				w.WriteHeader(http.StatusInternalServerError)
+				panic(err)
+			}
+		}()
+
+		var reqMsg ReqMsg
+
+		if method == http.MethodGet {
+			if err := valuesToStruct(r.URL.Query(), &reqMsg); err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		} else if hasFields {
+			if err := checkContentType(r, "application/json"); err != nil {
+				w.WriteHeader(http.StatusUnsupportedMediaType)
+				return
+			}
+
+			if err := json.NewDecoder(r.Body).Decode(&reqMsg); err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		}
+
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
+		streamReader, err := fn(ctx, &reqMsg)
+		if err != nil {
+			httpResponseError(w, err)
+			return
+		}
+		if closer, ok := streamReader.(io.Closer); ok {
+			defer closer.Close()
+		}
+
+		if contentType == "" {
+			contentType = "application/octet-stream"
+		}
+
+		w.Header().Set("Content-Type", contentType)
+
+		io.Copy(w, streamReader)
+	}
 }
 
-//
-// Utility functions
-//
+func createServiceMethodUploadHandler[ReqMsg, RespMsg any](
+	totalMaxSize int64,
+	fn func(ctx context.Context, files <-chan *fileUpload, req *ReqMsg) (*RespMsg, error),
+) httpServiceMethodHandler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			httpResponseError(w, Errorf(http.StatusMethodNotAllowed, nil, "method %q not allowed", r.Method))
+			return
+		}
 
+		r.Body = http.MaxBytesReader(w, r.Body, totalMaxSize)
+
+		reader, err := r.MultipartReader()
+		if err != nil {
+			httpResponseError(w, err)
+			return
+		}
+
+		files := make(chan *fileUpload, 1)
+		defer close(files)
+
+		part, err := reader.NextPart()
+		if err != nil {
+			httpResponseError(w, err)
+			return
+		}
+		defer part.Close()
+
+		if part.FormName() != "payload" {
+			httpResponseError(w, Errorf(http.StatusBadRequest, nil, "missing payload name"))
+			return
+		}
+
+		var req ReqMsg
+		err = json.NewDecoder(part).Decode(&req)
+		if err != nil {
+			httpResponseError(w, err)
+			return
+		}
+
+		errChan := make(chan error, 1)
+
+		go func() {
+			defer close(files)
+			defer close(errChan)
+
+			for {
+				part, err := reader.NextPart()
+				if errors.Is(err, io.EOF) {
+					return
+				} else if err != nil {
+					errChan <- err
+					return
+				}
+
+				if part.FormName() == "files" {
+					errChan <- Errorf(http.StatusBadRequest, nil, "missing files field")
+					return
+				}
+
+				files <- &fileUpload{
+					FileName: part.FileName(),
+					Reader:   part,
+				}
+			}
+		}()
+
+		resp, err := fn(ctx, files, &req)
+		if err != nil {
+			httpResponseError(w, err)
+			return
+		}
+
+		err, ok := <-errChan
+		if ok {
+			httpResponseError(w, err)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(resp)
+	}
+}
+
+// HTTP CLIENT UTILITIES
+// Helper utilities for creating http clients
+
+func urlPathJoin(host string, paths ...string) (string, error) {
+	u, err := url.Parse(host)
+	if err != nil {
+		return "", err
+	}
+
+	u.Path = path.Join(u.Path, path.Join(paths...))
+	return u.String(), nil
+}
+
+func callServiceMethod[ReqMsg, RespMsg any](ctx context.Context, method string, client *http.Client, url string, in *ReqMsg, out *RespMsg) (err error) {
+	var reqBody io.Reader
+
+	if !isStructEmpty(in) {
+		if method == http.MethodGet {
+			url, err = structToURL(url, in)
+			if err != nil {
+				return err
+			}
+		} else {
+			reqBody = jsonEncodeReader(in)
+		}
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, url, reqBody)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		err := &Error{}
+		if err := json.NewDecoder(resp.Body).Decode(err); err != nil {
+			return err
+		}
+		return err
+	}
+
+	if isStructEmpty(out) {
+		return nil
+	}
+
+	return json.NewDecoder(resp.Body).Decode(out)
+}
+
+func sendFilesUpload(ctx context.Context, url string, payload any, files <-chan *fileUpload, respBody any) error {
+	pr, pw := io.Pipe()
+
+	boundary := getRandomBoundary()
+
+	go func() {
+		var err error
+		var part io.Writer
+
+		mw := multipart.NewWriter(pw)
+
+		defer func() {
+			mw.Close()
+			pw.CloseWithError(err)
+		}()
+
+		err = mw.SetBoundary(boundary)
+		if err != nil {
+			return
+		}
+
+		part, err = mw.CreateFormField("payload")
+		if err != nil {
+			return
+		}
+
+		_, err = io.Copy(part, jsonEncodeReader(payload))
+		if err != nil {
+			return
+		}
+
+		for file := range files {
+			part, err = mw.CreateFormFile("files", file.FileName)
+			if err != nil {
+				return
+			}
+
+			_, err = io.Copy(part, file.Reader)
+			if err != nil {
+				return
+			}
+		}
+	}()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, pr)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "multipart/form-data; boundary="+boundary)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		err := &Error{}
+		if err := json.NewDecoder(resp.Body).Decode(err); err != nil {
+			return err
+		}
+		return err
+	}
+
+	return json.NewDecoder(resp.Body).Decode(respBody)
+}
+
+func getRandomBoundary() string {
+	var buf [30]byte
+	_, err := io.ReadFull(rand.Reader, buf[:])
+	if err != nil {
+		panic(err)
+	}
+	return fmt.Sprintf("%x", buf[:])
+}
+
+// HTTP UTILITIES
+// Helper utilities for dealing with http response and request
+
+type fileUpload struct {
+	FileName string
+	Reader   io.Reader
+}
+
+type emptyStruct struct{}
+
+func isStructEmpty(value any) bool {
+	_, ok := value.(*emptyStruct)
+	return ok
+}
+
+func jsonEncodeReader(value any) io.Reader {
+	r, w := io.Pipe()
+	go func() {
+		err := json.NewEncoder(w).Encode(value)
+		if err != nil {
+			w.CloseWithError(err)
+			return
+		}
+		w.Close()
+	}()
+	return r
+}
+
+func httpResponse(w http.ResponseWriter, code int, body any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+
+	switch body := body.(type) {
+	case nil:
+		return
+	case io.Reader:
+		io.Copy(w, body)
+	default:
+		json.NewEncoder(w).Encode(body)
+	}
+}
+
+func isContentType(r *http.Request, contentType string) bool {
+	header := r.Header.Get("Content-Type")
+	i := strings.Index(header, ";")
+	if i == -1 {
+		i = len(header)
+	}
+
+	return strings.TrimSpace(header[:i]) == contentType
+}
+
+func checkContentType(r *http.Request, contentType string) error {
+	if !isContentType(r, contentType) {
+		return Errorf(http.StatusUnsupportedMediaType, nil, "content type %q not supported", r.Header.Get("Content-Type"))
+	}
+	return nil
+}
+
+// QUERY URL UTILITIES
+// Helper utilities for dealing with query url
+
+func structToURL(host string, ptr any) (string, error) {
+	u, err := url.Parse(host)
+	if err != nil {
+		return "", err
+	}
+
+	u.RawQuery = structToValues(ptr).Encode()
+
+	return u.String(), nil
+}
+
+// structToValues converts a struct to url.Values
+// supports only basic types, string, int, float, bool
+// and ignores other complex types
 func structToValues(ptr any) url.Values {
 	values := url.Values{}
 	v := reflect.Indirect(reflect.ValueOf(ptr))
@@ -399,6 +595,9 @@ func structToValues(ptr any) url.Values {
 	return values
 }
 
+// valuesToStruct converts url.Values to a struct
+// supports only basic types, string, int, float, bool
+// returns an error if the struct contains unsupported types
 func valuesToStruct(values url.Values, ptr any) error {
 	dType := reflect.TypeOf(ptr)
 	dhVal := reflect.ValueOf(ptr)
@@ -444,113 +643,8 @@ func valuesToStruct(values url.Values, ptr any) error {
 	return nil
 }
 
-func structToURL(host string, ptr any) (string, error) {
-	u, err := url.Parse(host)
-	if err != nil {
-		return "", err
-	}
-
-	u.RawQuery = structToValues(ptr).Encode()
-
-	return u.String(), nil
-}
-
-type stremEvent struct {
-	id    int64
-	event string
-	data  string
-}
-
-func createEventStream[T any](ctx context.Context, name string, stream <-chan T) <-chan *stremEvent {
-	out := make(chan *stremEvent)
-
-	go func() {
-		defer close(out)
-		var id int64 = 1
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case item, ok := <-stream:
-				if !ok {
-					return
-				}
-				b, _ := json.Marshal(item)
-				out <- &stremEvent{
-					id:    id,
-					event: name,
-					data:  string(b),
-				}
-				id++
-			}
-		}
-	}()
-
-	return out
-}
-
-func checkContentType(r *http.Request, value string) error {
-	header := r.Header.Get("Content-Type")
-	i := strings.Index(header, ";")
-	if i == -1 {
-		i = len(header)
-	}
-
-	switch strings.TrimSpace(strings.ToLower(header[:i])) {
-	case value:
-		return nil
-	default:
-		return Errorf(http.StatusBadRequest, "unexpected Content-Type: %q", r.Header.Get("Content-Type"))
-	}
-}
-
-func urlPathJoin(host string, paths ...string) (string, error) {
-	u, err := url.Parse(host)
-	if err != nil {
-		return "", err
-	}
-
-	u.Path = path.Join(u.Path, path.Join(paths...))
-	return u.String(), nil
-}
-
-type emptyStruct struct{}
-
-func isStructEmpty(value any) bool {
-	_, ok := value.(*emptyStruct)
-	return ok
-}
-
-func jsonEncodeReader(value any) (io.Reader, error) {
-	r, w := io.Pipe()
-	go func() {
-		err := json.NewEncoder(w).Encode(value)
-		if err != nil {
-			w.CloseWithError(err)
-			return
-		}
-		w.Close()
-	}()
-	return r, nil
-}
-
-//
-// Error
-//
-
-func writeResponse(w http.ResponseWriter, code int, body any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-
-	switch body := body.(type) {
-	case nil:
-		return
-	case io.Reader:
-		io.Copy(w, body)
-	default:
-		json.NewEncoder(w).Encode(body)
-	}
-}
+// ERROR UTILITIES
+// Helper utilities for creating uniform error responses
 
 type Error struct {
 	code  int
@@ -558,35 +652,46 @@ type Error struct {
 	msg   string
 }
 
-func parseError(r io.Reader) *Error {
-	msg := struct {
+func (e *Error) UnmarshalText(text []byte) error {
+	temp := struct {
 		Code  int    `json:"code"`
+		Casue string `json:"cause,omitempty"`
 		Error string `json:"error"`
 	}{}
 
-	json.NewDecoder(r).Decode(&msg)
-
-	return &Error{
-		code: msg.Code,
-		msg:  msg.Error,
+	if err := json.Unmarshal(text, &temp); err != nil {
+		return err
 	}
+
+	e.code = temp.Code
+	e.msg = temp.Error
+	e.cause = errors.New(temp.Casue)
+
+	return nil
 }
 
-func (e Error) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
+func (e Error) MarshalText() ([]byte, error) {
+	temp := struct {
 		Code  int    `json:"code"`
+		Casue string `json:"cause,omitempty"`
 		Error string `json:"error"`
 	}{
 		Code:  e.code,
 		Error: e.Error(),
-	})
+	}
+
+	if e.cause != nil {
+		temp.Casue = e.cause.Error()
+	}
+
+	return json.Marshal(temp)
 }
 
 func (e *Error) Error() string {
 	var sb strings.Builder
 
-	sb.WriteString(e.msg)
 	if e.msg != "" && e.cause != nil {
+		sb.WriteString(e.msg)
 		sb.WriteString(": ")
 		sb.WriteString(e.cause.Error())
 	} else if e.cause != nil {
@@ -604,43 +709,49 @@ func (e *Error) Unwrap() error {
 	return e.cause
 }
 
-func Errorf(code int, format string, args ...interface{}) error {
-	return &Error{code: code, msg: fmt.Sprintf(format, args...)}
+// Errorf is a way to create an error with a message and a cause
+// cause can be nil if there is no cause, code can be any int, if it is
+// a valid http status code, it will be used as http status code
+func Errorf(code int, cause error, format string, args ...interface{}) error {
+	return &Error{code: code, cause: cause, msg: fmt.Sprintf(format, args...)}
 }
 
-func WrapErr(code int, cause error, msg string) error {
-	return &Error{code: code, cause: cause, msg: msg}
+// IsError is an extension of errors.Is that also checks the error message
+// in string format. This enables us to check errors during serlization/deserilization
+// process
+func IsError(err, target error) bool {
+	if err == nil {
+		return false
+	}
+
+	if err == target {
+		return true
+	}
+
+	if err.Error() == target.Error() {
+		return true
+	}
+
+	if err, ok := err.(*Error); ok {
+		return IsError(err.cause, target)
+	}
+
+	return errors.Is(err, target)
 }
 
-func ResponseError(w http.ResponseWriter, err error) {
+// httpResponseError is a helper function that writes an error to the http response
+// if the error is of type *Error, it will write the error code and message
+// and if code is valid http status code, it will write the http status code
+// otherwise it will write 500
+func httpResponseError(w http.ResponseWriter, err error) {
 	switch err := err.(type) {
 	case *Error:
-		writeResponse(w, err.code, err)
+		if err.code < 100 || err.code > 599 {
+			httpResponse(w, http.StatusInternalServerError, err)
+			return
+		}
+		httpResponse(w, err.code, err)
 	default:
-		writeResponse(w, http.StatusInternalServerError, WrapErr(http.StatusInternalServerError, err, ""))
+		httpResponse(w, http.StatusInternalServerError, Errorf(http.StatusInternalServerError, err, ""))
 	}
-}
-
-func rpcSend[T any](ctx context.Context, adaptor rpcAdaptor, topic string, in any, out *T) (*T, error) {
-	data, err := json.Marshal(in)
-	if err != nil {
-		return nil, err
-	}
-
-	data, err = adaptor.Send(ctx, topic, data)
-	if err != nil {
-		return nil, err
-	}
-
-	if data[0] != '{' {
-		err = errors.New(string(data))
-		return nil, err
-	}
-
-	err = json.Unmarshal(data, out)
-	if err != nil {
-		return nil, err
-	}
-
-	return out, nil
 }

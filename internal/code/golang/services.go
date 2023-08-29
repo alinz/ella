@@ -14,11 +14,6 @@ type MethodArg struct {
 	Name         string
 	Type         string
 	IsCustomType bool
-	BaseType     string
-}
-
-func (m MethodArg) IsBaseType() bool {
-	return m.BaseType != ""
 }
 
 type MethodArgs []MethodArg
@@ -60,6 +55,7 @@ func (m MethodReturns) Definitions() string {
 
 type MethodOptions struct {
 	HttpMethod    string
+	ContentType   string // only used for Download methods or stream []byte
 	MaxUploadSize int64
 	RawControl    bool
 }
@@ -114,12 +110,7 @@ func (m Method) ArgsNames(prefix string) string {
 	return strings.Join(sliceutil.Mapper(sliceutil.Filter(m.Args, func(arg MethodArg) bool {
 		return arg.Type != "<-chan *fileUpload"
 	}), func(arg MethodArg) string {
-		argName := prefix + strcase.ToPascal(arg.Name) + ","
-		if arg.IsCustomType {
-			argName = "&" + argName
-		}
-
-		return argName
+		return prefix + strcase.ToPascal(arg.Name) + ","
 	}), "\n")
 }
 
@@ -136,7 +127,9 @@ func (m Method) ArgsStructDefinitions(pointer bool) string {
 }
 
 func (m Method) ArgsNamesValues() string {
-	return strings.Join(sliceutil.Mapper(m.Args, func(arg MethodArg) string {
+	return strings.Join(sliceutil.Mapper(sliceutil.Filter(m.Args, func(arg MethodArg) bool {
+		return arg.Type != "<-chan *fileUpload"
+	}), func(arg MethodArg) string {
 		return strcase.ToPascal(arg.Name) + ":" + arg.Name + ","
 	}), "\n")
 }
@@ -160,6 +153,16 @@ func (m Method) ReturnsStructDefinitions() string {
 func (m Method) IsStream() bool {
 	for _, ret := range m.Returns {
 		if ret.Stream {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (m Method) IsBinary() bool {
+	for _, ret := range m.Returns {
+		if ret.Type == "io.Reader" {
 			return true
 		}
 	}
@@ -328,6 +331,7 @@ func parseMethodOptions(method *ast.Method) MethodOptions {
 
 	return MethodOptions{
 		HttpMethod:    "http." + strcase.ToPascal("Method"+castString(mapper["HttpMethod"], "POST")),
+		ContentType:   castString(mapper["ContentType"], "application/octet-stream"),
 		MaxUploadSize: castInt64(mapper["MaxUploadSize"], 1*1024*1024),
 		RawControl:    castBool(mapper["RawControl"], false),
 	}

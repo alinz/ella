@@ -23,7 +23,7 @@ var _ http.Handler = (*{{ $service.NameImpl }})(nil)
 func (s *{{ $service.NameImpl }}) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	handler, ok := s.routes[r.URL.Path]
 	if !ok {
-		ResponseError(w, Errorf(http.StatusNotFound, "method %q not found", r.URL.Path))
+		httpResponseError(w, Errorf(http.StatusNotFound, nil, "method %q not found", r.URL.Path))
 		return
 	}
 
@@ -49,14 +49,25 @@ func Create{{ $service.Name }}ServiceServer(service Http{{ $service.Name }}Servi
 {{- range $method := $service.Methods }}
 
 func (s *{{ $service.NameImpl }}) create{{ $method.Name }}() httpServiceMethodHandler {
-{{- if $method.IsStream }}
+{{- if and $method.IsStream $method.IsBinary }}
+	return createStreamBinaryServiceMethod(
+		{{ $method.Options.HttpMethod }},
+		"{{ $method.Options.ContentType }}",
+		{{ $method.HasArgs }},
+		func (ctx context.Context, args *struct { 
+			{{ $method.ArgsStructDefinitions false }}
+		}) (io.Reader, error) {
+			return s.service.{{ $method.Name }}(ctx, {{ $method.ArgsNames "args." }})
+		},
+	)
+{{- else if $method.IsStream }}
 	return createStreamServiceMethod(
 		{{ $method.Options.HttpMethod }},
 		{{ $method.HasArgs }},
 		func (ctx context.Context, args *struct { 
 			{{ $method.ArgsStructDefinitions false }}
 		}) (<-chan *stremEvent, error) {
-			{{ $method.GetReturnStreamName }}, err := s.service.GetEvents(ctx, {{ $method.ArgsNames "args." }})
+			{{ $method.GetReturnStreamName }}, err := s.service.{{ $method.Name }}(ctx, {{ $method.ArgsNames "args." }})
 			if err != nil {
 				return nil, err
 			}
@@ -86,12 +97,6 @@ func (s *{{ $service.NameImpl }}) create{{ $method.Name }}() httpServiceMethodHa
 			return out, nil
 		},
 	)
-{{- else if $method.Options.RawControl }}
-	return createRawControlServiceMethodHandler(http.MethodPost, {{ $method.HasArgs }}, func(ctx context.Context, args *struct {
-		{{ $method.ArgsStructDefinitions false }}
-	}) {
-		s.service.{{ $method.Name }}(ctx, {{ $method.ArgsNames "args." }})
-	})
 {{- else if $method.IsFileUpload }}
 	return createServiceMethodUploadHandler(
 		{{ $method.Options.MaxUploadSize }},
@@ -113,7 +118,7 @@ func (s *{{ $service.NameImpl }}) create{{ $method.Name }}() httpServiceMethodHa
 	)
 {{- else }}
 	return createServiceMethodHandler({{ $method.Options.HttpMethod }}, {{ $method.HasArgs }}, func(ctx context.Context, args *struct {
-		{{ $method.ArgsStructDefinitions false }}
+		{{ $method.ArgsStructDefinitions true }}
 	}) (ret *struct {
 		{{ $method.ReturnsStructDefinitions }}
 	}, err error) {
