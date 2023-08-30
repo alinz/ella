@@ -66,20 +66,20 @@ func (s *{{ $service.NameImpl }}) create{{ $method.Name }}() httpServiceMethodHa
 		{{ $method.HasArgs }},
 		func (ctx context.Context, args *struct { 
 			{{ $method.ArgsStructDefinitions false }}
-		}) (<-chan *stremEvent, error) {
+		}) (<-chan *streamEvent, error) {
 			{{ $method.GetReturnStreamName }}, err := s.service.{{ $method.Name }}(ctx, {{ $method.ArgsNames "args." }})
 			if err != nil {
 				return nil, err
 			}
 
-			out := make(chan *stremEvent, 1)
+			out := make(chan *streamEvent, 1)
 			go func() {
 				defer close(out)
 				var id int64
 				for event := range {{ $method.GetReturnStreamName }} {
 					data, err := json.Marshal(event)
 					if err != nil {
-						out <- &stremEvent{
+						out <- &streamEvent{
 							id: id,
 							event: "error",
 							data: err.Error(),
@@ -87,7 +87,7 @@ func (s *{{ $service.NameImpl }}) create{{ $method.Name }}() httpServiceMethodHa
 						return
 					}
 
-					out <- &stremEvent{
+					out <- &streamEvent{
 						id: id,
 						event: "{{ $method.GetReturnStreamName }}",
 						data: string(data),

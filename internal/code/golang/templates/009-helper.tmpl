@@ -122,13 +122,13 @@ func createServiceMethodHandler[ReqMsg, RespMsg any](method string, hasFields bo
 	}
 }
 
-type stremEvent struct {
+type streamEvent struct {
 	id    int64
 	event string
 	data  string
 }
 
-func createStreamServiceMethod[ReqMsg any](method string, hasFields bool, fn func(ctx context.Context, req *ReqMsg) (<-chan *stremEvent, error)) httpServiceMethodHandler {
+func createStreamServiceMethod[ReqMsg any](method string, hasFields bool, fn func(ctx context.Context, req *ReqMsg) (<-chan *streamEvent, error)) httpServiceMethodHandler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
 			httpResponseError(w, Errorf(http.StatusMethodNotAllowed, nil, "method %q not allowed", r.Method))
@@ -472,6 +472,187 @@ func sendFilesUpload(ctx context.Context, url string, payload any, files <-chan 
 	}
 
 	return json.NewDecoder(resp.Body).Decode(respBody)
+}
+
+func callServiceStreamBinaryMethod(ctx context.Context, url string, method string, in any) (io.Reader, error) {
+	var err error
+	var reqBody io.Reader
+
+	if !isStructEmpty(in) {
+		if method == http.MethodGet {
+			url, err = structToURL(url, in)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			reqBody = jsonEncodeReader(in)
+		}
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, url, reqBody)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode >= 300 {
+		err := &Error{}
+		if err := json.NewDecoder(resp.Body).Decode(err); err != nil {
+			return nil, err
+		}
+		return nil, err
+	}
+
+	return resp.Body, nil
+}
+
+func callServiceStreamMethod[Resp any](ctx context.Context, url string, method string, isPointer bool, in any) (<-chan Resp, error) {
+	var err error
+	var reqBody io.Reader
+
+	if !isStructEmpty(in) {
+		if method == http.MethodGet {
+			url, err = structToURL(url, in)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			reqBody = jsonEncodeReader(in)
+		}
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, url, reqBody)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode >= 300 {
+		err := &Error{}
+		if err := json.NewDecoder(resp.Body).Decode(err); err != nil {
+			return nil, err
+		}
+		return nil, err
+	}
+
+	return parseStreamEvents[Resp](resp.Body, isPointer), nil
+}
+
+func parseStreamEvents[T any](r io.Reader, isPointer bool) <-chan T {
+	out := make(chan T, 1)
+
+	scanner := bufio.NewScanner(r)
+
+	// Set the scanner's split function to split on "\n\n"
+	scanner.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		// Return nothing if at end of file and no data passed
+		if atEOF && len(data) == 0 {
+			return 0, nil, nil
+		}
+
+		idx := bytes.Index(data, []byte("\n\n"))
+		if idx >= 0 {
+			return idx + 2, data[:idx], nil
+		}
+
+		if atEOF {
+			return len(data), data, nil
+		}
+
+		// We need more data
+		return 0, nil, nil
+	})
+
+	secondPart := func(value string) (string, bool) {
+		segments := strings.Split(value, ":")
+		if len(segments) != 2 {
+			return "", false
+		}
+		return strings.TrimSpace(segments[1]), true
+	}
+
+	go func() {
+		defer close(out)
+		defer func() {
+			if r, ok := r.(io.Closer); ok {
+				r.Close()
+			}
+		}()
+		for scanner.Scan() {
+			item := scanner.Text()
+			lines := strings.Split(item, "\n")
+
+			if len(lines) != 3 {
+				continue
+			}
+
+			identifier, ok := secondPart(lines[0])
+			if !ok {
+				continue
+			}
+
+			// ignore id for now
+			_, err := strconv.ParseInt(identifier, 10, 64)
+			if err != nil {
+				continue
+			}
+
+			// ignore event for now
+			_, ok = secondPart(lines[1])
+			if !ok {
+				continue
+			}
+
+			data, ok := secondPart(lines[2])
+			if !ok {
+				continue
+			}
+
+			var msg T
+
+			if isPointer {
+				msg = initalizePointer[T]()
+				err = json.Unmarshal([]byte(data), msg)
+			} else {
+				err = json.Unmarshal([]byte(data), &msg)
+			}
+			if err != nil {
+				continue
+			}
+
+			out <- msg
+		}
+	}()
+
+	return out
+}
+
+func initalizePointer[T any]() T {
+	var result T
+
+	if reflect.ValueOf(result).Kind() != reflect.Ptr {
+		return result
+	}
+
+	va := reflect.ValueOf(&result).Elem()
+	v := reflect.New(va.Type().Elem())
+	va.Set(v)
+
+	return result
 }
 
 func getRandomBoundary() string {

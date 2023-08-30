@@ -37,6 +37,10 @@ func (s * http{{ $service.Name }}ServiceClient) {{ $method.Name }}(ctx context.C
 
 {{- if $method.IsFileUpload }}
 	err = sendFilesUpload(ctx, url, &_in_, files, &_out_)
+{{- else if and $method.IsStream $method.IsBinary }}
+	{{ $method.ReturnsNames "_out_."}} err = callServiceStreamBinaryMethod(ctx, url, {{ $method.Options.HttpMethod }}, &_in_)
+{{- else if $method.IsStream }}
+	{{ $method.ReturnsNames "_out_."}} err = callServiceStreamMethod[{{ $method.ReturnStreamType }}](ctx, url, {{$method.Options.HttpMethod }}, {{ $method.IsReturnCustomTypeStream }} , &_in_)
 {{- else }}
 	err = callServiceMethod(ctx, {{ $method.Options.HttpMethod }}, s.client, url, &_in_, &_out_)
 {{- end }}

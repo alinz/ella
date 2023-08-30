@@ -114,6 +114,26 @@ func (m Method) ArgsNames(prefix string) string {
 	}), "\n")
 }
 
+func (m Method) IsReturnCustomTypeStream() bool {
+	for _, ret := range m.Returns {
+		if ret.Stream && ret.IsCustomType {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (m Method) ReturnStreamType() string {
+	for _, ret := range m.Returns {
+		if ret.Stream {
+			return strings.Replace(ret.Type, "<-chan ", "", 1)
+		}
+	}
+
+	return ""
+}
+
 func (m Method) ArgsStructDefinitions(pointer bool) string {
 	return strings.Join(sliceutil.Mapper(sliceutil.Filter(m.Args, func(arg MethodArg) bool {
 		return arg.Type != "<-chan *fileUpload"
