@@ -362,49 +362,57 @@ func urlPathJoin(host string, paths ...string) (string, error) {
 	return u.String(), nil
 }
 
-func callServiceMethod[ReqMsg, RespMsg any](ctx context.Context, method string, client *http.Client, url string, in *ReqMsg, out *RespMsg) (err error) {
-	var reqBody io.Reader
-
+func callHttpEndpoint(ctx context.Context, client *http.Client, url string, method string, in any) (r io.ReadCloser, err error) {
 	if !isStructEmpty(in) {
 		if method == http.MethodGet {
 			url, err = structToURL(url, in)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		} else {
-			reqBody = jsonEncodeReader(in)
+			r = jsonEncodeReader(in)
 		}
 	}
 
-	req, err := http.NewRequestWithContext(ctx, method, url, reqBody)
+	req, err := http.NewRequestWithContext(ctx, method, url, r)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode >= 300 {
+		defer resp.Body.Close()
 		err := &Error{}
 		if err := json.NewDecoder(resp.Body).Decode(err); err != nil {
-			return err
+			return nil, err
 		}
+		return nil, err
+	}
+
+	return resp.Body, nil
+}
+
+func callHttpServiceMethod(ctx context.Context, client *http.Client, url string, method string, in any, out any) (err error) {
+	r, err := callHttpEndpoint(ctx, client, url, method, in)
+	if err != nil {
 		return err
 	}
+	defer r.Close()
 
 	if isStructEmpty(out) {
 		return nil
 	}
 
-	return json.NewDecoder(resp.Body).Decode(out)
+	return json.NewDecoder(r).Decode(out)
 }
 
-func sendFilesUpload(ctx context.Context, url string, payload any, files <-chan *fileUpload, respBody any) error {
+func sendHttpFilesUpload(ctx context.Context, client *http.Client, url string, method string, payload any, files <-chan *fileUpload, respBody any) error {
 	pr, pw := io.Pipe()
 
 	boundary := getRandomBoundary()
@@ -448,14 +456,13 @@ func sendFilesUpload(ctx context.Context, url string, payload any, files <-chan 
 		}
 	}()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, pr)
+	req, err := http.NewRequestWithContext(ctx, method, url, pr)
 	if err != nil {
 		return err
 	}
 
 	req.Header.Set("Content-Type", "multipart/form-data; boundary="+boundary)
 
-	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
@@ -474,82 +481,13 @@ func sendFilesUpload(ctx context.Context, url string, payload any, files <-chan 
 	return json.NewDecoder(resp.Body).Decode(respBody)
 }
 
-func callServiceStreamBinaryMethod(ctx context.Context, url string, method string, in any) (io.Reader, error) {
-	var err error
-	var reqBody io.Reader
-
-	if !isStructEmpty(in) {
-		if method == http.MethodGet {
-			url, err = structToURL(url, in)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			reqBody = jsonEncodeReader(in)
-		}
-	}
-
-	req, err := http.NewRequestWithContext(ctx, method, url, reqBody)
+func callHttpServiceStreamMethod[Resp any](ctx context.Context, client *http.Client, url string, method string, isPointer bool, in any) (<-chan Resp, error) {
+	r, err := callHttpEndpoint(ctx, client, url, method, in)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode >= 300 {
-		err := &Error{}
-		if err := json.NewDecoder(resp.Body).Decode(err); err != nil {
-			return nil, err
-		}
-		return nil, err
-	}
-
-	return resp.Body, nil
-}
-
-func callServiceStreamMethod[Resp any](ctx context.Context, url string, method string, isPointer bool, in any) (<-chan Resp, error) {
-	var err error
-	var reqBody io.Reader
-
-	if !isStructEmpty(in) {
-		if method == http.MethodGet {
-			url, err = structToURL(url, in)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			reqBody = jsonEncodeReader(in)
-		}
-	}
-
-	req, err := http.NewRequestWithContext(ctx, method, url, reqBody)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode >= 300 {
-		err := &Error{}
-		if err := json.NewDecoder(resp.Body).Decode(err); err != nil {
-			return nil, err
-		}
-		return nil, err
-	}
-
-	return parseStreamEvents[Resp](resp.Body, isPointer), nil
+	return parseStreamEvents[Resp](r, isPointer), nil
 }
 
 func parseStreamEvents[T any](r io.Reader, isPointer bool) <-chan T {
@@ -679,7 +617,7 @@ func isStructEmpty(value any) bool {
 	return ok
 }
 
-func jsonEncodeReader(value any) io.Reader {
+func jsonEncodeReader(value any) io.ReadCloser {
 	r, w := io.Pipe()
 	go func() {
 		err := json.NewEncoder(w).Encode(value)
