@@ -14,7 +14,14 @@ import (
 	"ella.to/internal/validator"
 )
 
-const usage = `Usage: ella [command]
+const Version = "0.0.2"
+
+const usage = `
+┌─┐┬  ┬  ┌─┐
+├┤ │  │  ├─┤
+└─┘┴─┘┴─┘┴ ┴ v` + Version + `
+
+Usage: ella [command]
 
 Commands:
   - fmt Format one or many files in place using glob pattern
@@ -53,6 +60,8 @@ func main() {
 			os.Exit(0)
 		}
 		err = gen(os.Args[2], os.Args[3], os.Args[4])
+	case "ver":
+		fmt.Println(Version)
 	default:
 		fmt.Print(usage)
 		os.Exit(0)
