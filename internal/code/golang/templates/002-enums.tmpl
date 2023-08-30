@@ -16,7 +16,7 @@ func (e *{{ $enum.Name }}) UnmarshalText(text []byte) error {
 	switch strings.ToLower(string(text)) {
 	{{- range $key := $enum.Keys }}
 	{{- if ne $key.Name "_" }}
-	case "{{ $key.Name | ToLower }}":
+	case "{{ $key.Name | ToSnakeCase }}":
 		*e = {{ $enum.Name }}_{{ $key.Name }}
 	{{- end }}	
 	{{- end }}
@@ -40,7 +40,7 @@ func (e {{ $enum.Name }}) String() string {
 	{{- range $key := $enum.Keys }}
 	{{- if ne $key.Name "_" }}
 	case {{ $enum.Name }}_{{ $key.Name }}:
-		name = "{{ $key.Name | ToLower }}"
+		name = "{{ $key.Name | ToSnakeCase }}"
 	{{- end }}
 	{{- end }}
 	default:

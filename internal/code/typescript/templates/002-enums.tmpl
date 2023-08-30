@@ -1,0 +1,10 @@
+//
+// ENUMS
+//
+{{ range $enum := .Enums }}
+export enum {{ $enum.Name }} {
+{{- range $key := $enum.Keys }}
+    {{ $key.Name }} = "{{ $key.Value }}",
+{{- end }}
+}
+{{ end }}

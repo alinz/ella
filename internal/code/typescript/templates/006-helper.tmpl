@@ -1,0 +1,405 @@
+//
+// HELPER FUNCTIONS
+//
+
+interface Subscription<Event> {
+  recv(fn: (event: Event) => void);
+  close()
+}
+
+async function callServiceStreamMethod<Req, Event>(
+  host: string,
+  path: string,
+  method: "GET",
+  body?: Req,
+  headers?: Record<string, string>
+): Promise<Subscription<Event>> {
+  if (method !== "GET") {
+    throw new Error("only GET method is supported for streaming");
+  }
+
+  const url = createURL(host, path, prepareForQs(body));
+  const sse = new _EventSource(new URL(url), { withCredentials: true, headers } as any);
+
+  return new Promise((resolve, reject) => {
+    sse.addEventListener("error", (event: any) => {
+      if (event.type === "error") {
+        reject(event.message);
+      } else if (event.type === "exception") {
+        reject(event.error);
+      }
+    });
+
+    sse.addEventListener("open", () => {
+      resolve({
+        recv(fn: (event: Event) => void) {
+          sse.addEventListener("message", (msg: any) => {
+            fn(JSON.parse(msg.data) as Event);
+          });
+        },
+        close() {
+          sse.close();
+        },
+      });
+    })
+  });
+}
+
+async function callServiceMethod<Req, Resp>(
+  host: string,
+  path: string,
+  method: "GET" | "POST",
+  body?: Req,
+  headers?: Record<string, string>
+) {
+  const url =
+    method === "GET"
+      ? createURL(host, path, prepareForQs(body))
+      : createURL(host, path);
+
+  if (method === "GET") {
+    body = undefined;
+  }
+
+  if (!headers) {
+    headers = {
+      "Content-Type": "application/json",
+    };
+  }
+
+  const resp = await fetch(url, {
+    method: method,
+    body: body ? JSON.stringify(body) : undefined,
+    headers: headers,
+    credentials: "include",
+  });
+
+  const value = await resp.text();
+
+  if (resp.status > 300) {
+    try {
+      const msg = JSON.parse(value);
+      throw new Error(msg.error);
+    } catch (e) {
+      throw new Error(value);
+    }
+  }
+
+  return JSON.parse(value) as Resp;
+}
+
+function prepareForQs(obj?: any): Record<string, string> | undefined {
+  if (!obj) {
+    return undefined;
+  }
+
+  const record: Record<string, string> = {};
+  for (const key in obj) {
+    const value = obj[key];
+    if (
+      typeof value !== "string" &&
+      typeof value !== "number" &&
+      typeof value !== "boolean"
+    ) {
+      throw new Error("Invalid value type for key: " + key);
+    }
+    record[key] = encodeURIComponent(obj[key] + "");
+  }
+  return record;
+}
+
+function createURL(
+  host: string,
+  path: string,
+  qs?: Record<string, string>
+): string {
+  const url = new URL(host);
+  url.pathname = (url.pathname + path).replace(/\/\//g, "/");
+  if (qs) {
+    for (const key in qs) {
+      url.searchParams.append(key, qs[key]);
+    }
+  }
+  return url.href;
+}
+
+// SSE IMPLEMENTATION
+// copied from https://github.com/binaryminds/react-native-sse
+// this is required because SSE by default doesn't work in react-native and also
+// header can't be modified. This implementation is based on XMLHttpRequest
+// added some basic types to make typescript happy
+
+class _EventSource {
+  ERROR = -1;
+  CONNECTING = 0;
+  OPEN = 1;
+  CLOSED = 2;
+
+  private interval: any
+  private lastEventId: any
+  private lastIndexProcessed: any
+  private eventType: any
+  private status: any
+  private eventHandlers: any
+  private method: any
+  private timeout: any
+  private headers: any
+  private body: any
+  private debug: any
+  private timeoutBeforeConnection: any
+  private _xhr: any
+  private _pollTimer: any
+  private url: any
+  private withCredentials: boolean
+
+  constructor(url: URL, options: any = {}) {
+    this.interval = options.pollingInterval || 5000;
+    this.lastEventId = null;
+    this.lastIndexProcessed = 0;
+    this.eventType = undefined;
+    this.status = this.CONNECTING;
+    this.withCredentials = options.withCredentials || false;
+
+    this.eventHandlers = {
+      open: [],
+      message: [],
+      error: [],
+      close: [],
+    };
+
+    this.method = options.method || 'GET';
+    this.timeout = options.timeout || 0;
+    this.headers = options.headers || {};
+    this.body = options.body || undefined;
+    this.debug = options.debug || false;
+    this.timeoutBeforeConnection = options.timeoutBeforeConnection ?? 500;
+
+    this._xhr = null;
+    this._pollTimer = null;
+
+    if (!url || (typeof url !== 'string' && typeof url.toString !== 'function')) {
+      throw new SyntaxError('[EventSource] Invalid URL argument.');
+    }
+
+    if (typeof url.toString === 'function') {
+      this.url = url.toString();
+    } else {
+      this.url = url;
+    }
+
+    this._pollAgain(this.timeoutBeforeConnection);
+  }
+
+  _pollAgain(time) {
+    this._pollTimer = setTimeout(() => {
+      this.open();
+    }, time);
+  }
+
+  open() {
+    try {
+      this.lastIndexProcessed = 0;
+      this.status = this.CONNECTING;
+
+      this._xhr = new XMLHttpRequest();
+      this._xhr.withCredentials = this.withCredentials;
+      this._xhr.open(this.method, this.url, true);
+
+      if (this.headers) {
+        for (const [key, value] of Object.entries(this.headers)) {
+          this._xhr.setRequestHeader(key, value);
+        }
+      }
+
+      this._xhr.setRequestHeader('Accept', 'text/event-stream');
+      this._xhr.setRequestHeader('Cache-Control', 'no-cache');
+      this._xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+      if (this.lastEventId !== null) {
+        this._xhr.setRequestHeader('Last-Event-ID', this.lastEventId);
+      }
+
+      this._xhr.timeout = this.timeout;
+
+      this._xhr.onreadystatechange = () => {
+        const xhr = this._xhr;
+
+        if (this.debug) {
+          console.debug(
+            `[EventSource][onreadystatechange] ReadyState: ${xhr.readyState}, status: ${xhr.status}`
+          );
+        }
+
+        if (![XMLHttpRequest.DONE, XMLHttpRequest.LOADING].includes(xhr.readyState)) {
+          return;
+        }
+
+        if (xhr.status >= 200 && xhr.status < 400) {
+          if (this.status === this.CONNECTING) {
+            this.status = this.OPEN;
+            this.dispatch('open', { type: 'open' });
+          }
+
+          this._handleEvent(xhr.responseText || '');
+
+          if (xhr.readyState === XMLHttpRequest.DONE) {
+            if (this.debug) {
+              console.debug(
+                '[EventSource][onreadystatechange][DONE] Operation done. Reconnecting...'
+              );
+            }
+            this._pollAgain(this.interval);
+          }
+        } else if (this.status !== this.CLOSED) {
+          if (this._xhr.status !== 0) {
+            this.dispatch('error', {
+              type: 'error',
+              message: xhr.responseText,
+              xhrStatus: xhr.status,
+              xhrState: xhr.readyState,
+            });
+          }
+
+          if ([XMLHttpRequest.DONE, XMLHttpRequest.UNSENT].includes(xhr.readyState)) {
+            if (this.debug) {
+              console.debug(
+                '[EventSource][onreadystatechange][ERROR] Response status error. Reconnecting...'
+              );
+            }
+
+            this._pollAgain(this.interval);
+          }
+        }
+      };
+
+      this._xhr.onerror = (e) => {
+        this.status === this.ERROR;
+
+        this.dispatch('error', {
+          type: 'error',
+          message: this._xhr.responseText,
+          xhrStatus: this._xhr.status,
+          xhrState: this._xhr.readyState,
+        });
+      };
+
+      if (this.body) {
+        this._xhr.send(this.body);
+      } else {
+        this._xhr.send();
+      }
+
+      if (this.timeout > 0) {
+        setTimeout(() => {
+          if (this._xhr.readyState === XMLHttpRequest.LOADING) {
+            this.dispatch('error', {
+              type: 'timeout',
+            });
+
+            this.close();
+          }
+        }, this.timeout);
+      }
+    } catch (e) {
+      this.status = this.ERROR;
+      this.dispatch('error', {
+        type: 'exception',
+        message: e.message,
+        error: e,
+      });
+    }
+  }
+
+  _handleEvent(response) {
+    const parts = response.substr(this.lastIndexProcessed).split('\n');
+    this.lastIndexProcessed = response.lastIndexOf('\n\n') + 2;
+    let data: any[] = [];
+    let retry = 0;
+    let line = '';
+
+    for (let i = 0; i < parts.length; i++) {
+      line = parts[i].replace(/^(\s|\u00A0)+|(\s|\u00A0)+$/g, '');
+      if (line.indexOf('event') === 0) {
+        this.eventType = line.replace(/event:?\s*/, '');
+      } else if (line.indexOf('retry') === 0) {
+        retry = parseInt(line.replace(/retry:?\s*/, ''), 10);
+        if (!isNaN(retry)) {
+          this.interval = retry;
+        }
+      } else if (line.indexOf('data') === 0) {
+        data.push(line.replace(/data:?\s*/, ''));
+      } else if (line.indexOf('id:') === 0) {
+        this.lastEventId = line.replace(/id:?\s*/, '');
+      } else if (line.indexOf('id') === 0) {
+        this.lastEventId = null;
+      } else if (line === '') {
+        if (data.length > 0) {
+          const eventType = this.eventType || 'message'
+          const event = {
+            type: eventType,
+            data: data.join("\n"),
+            url: this.url,
+            lastEventId: this.lastEventId,
+          };
+
+          this.dispatch(eventType, event);
+
+          data = [];
+          this.eventType = undefined;
+        }
+      }
+    }
+  }
+
+  addEventListener(type, listener) {
+    if (this.eventHandlers[type] === undefined) {
+      this.eventHandlers[type] = [];
+    }
+    
+    this.eventHandlers[type].push(listener);
+  }
+
+  removeEventListener(type, listener) {
+    if (this.eventHandlers[type] !== undefined) {
+      this.eventHandlers[type] = this.eventHandlers[type].filter((handler) => handler !== listener);
+    }
+  }
+
+  removeAllEventListeners(type) {
+    const availableTypes = Object.keys(this.eventHandlers);
+
+    if (type === undefined) {
+      for (const eventType of availableTypes) {
+        this.eventHandlers[eventType] = [];
+      }
+    } else {
+      if (!availableTypes.includes(type)) {
+        throw Error(`[EventSource] '${type}' type is not supported event type.`);
+      }
+
+      this.eventHandlers[type] = [];
+    }
+  }
+
+  dispatch(type, data) {
+    const availableTypes = Object.keys(this.eventHandlers);
+
+    if (!availableTypes.includes(type)) {
+      return;
+    }
+
+    for (const handler of Object.values(this.eventHandlers[type])) {
+      (handler as any)(data);
+    }
+  }
+
+  close() {
+    this.status = this.CLOSED;
+    clearTimeout(this._pollTimer);
+    if (this._xhr) {
+      this._xhr.abort();
+    }
+
+    this.dispatch('close', { type: 'close' });
+  }
+}

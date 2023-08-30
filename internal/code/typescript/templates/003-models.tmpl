@@ -1,0 +1,11 @@
+//
+// MODELS
+//
+
+{{ range $model := .Models }}
+export interface {{ $model.Name }} {
+	{{- range $field := $model.Fields }}
+	{{ $field.Name }}: {{ $field.Type }};
+	{{- end }}
+}
+{{ end }}
