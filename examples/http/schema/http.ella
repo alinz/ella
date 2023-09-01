@@ -1,0 +1,3 @@
+service Greeting {
+    http Hello(name: string) => (greet: string)
+}
