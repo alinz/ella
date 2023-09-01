@@ -27,16 +27,16 @@ Commands:
   - fmt Format one or many files in place using glob pattern
         ella fmt <glob path>
 
-  - gen Generate code from a folder to a file and
-        currently supports .go and .ts 
-        ella gen <pkg> <search glob path> <output path to file>
+  - gen Generate code from a folder to a file and currently
+        supports .go and .ts extensions
+        ella gen <pkg> <output path to file> <search glob paths...>
 
   - ver Print the version of ella
 
 example:
   ella fmt ./path/to/*.ella
-  ella gen rpc ./path/to/*.ella ./path/to/output.go
-  ella gen rpc ./path/to/*.ella ./path/to/output.ts
+  ella gen rpc ./path/to/output.go ./path/to/*.ella
+  ella gen rpc ./path/to/output.ts ./path/to/*.ella ./path/to/other/*.ella
 `
 
 func main() {
@@ -55,11 +55,11 @@ func main() {
 		}
 		err = format(os.Args[2])
 	case "gen":
-		if len(os.Args) != 5 {
+		if len(os.Args) < 5 {
 			fmt.Print(usage)
 			os.Exit(0)
 		}
-		err = gen(os.Args[2], os.Args[3], os.Args[4])
+		err = gen(os.Args[2], os.Args[3], os.Args[4:]...)
 	case "ver":
 		fmt.Println(Version)
 	default:
@@ -94,16 +94,16 @@ func format(path string) error {
 	return nil
 }
 
-func gen(pkg, search, out string) (err error) {
+func gen(pkg, out string, searchPaths ...string) (err error) {
 	var code code.Generator
 
 	defer func() {
 		if err != nil {
-			//os.Remove(out)
+			os.Remove(out)
 		}
 	}()
 
-	filenames, err := filepath.Glob(search)
+	filenames, err := mergeAllFiles(searchPaths...)
 	if err != nil {
 		return err
 	}
@@ -149,6 +149,28 @@ func parse(filename string) (*ast.Program, error) {
 	return parser.ParseProgram(
 		parser.New(string(content)),
 	)
+}
+
+func mergeAllFiles(paths ...string) ([]string, error) {
+	filenamesMap := make(map[string]struct{})
+
+	for _, path := range paths {
+		filenames, err := filepath.Glob(path)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, filename := range filenames {
+			filenamesMap[filename] = struct{}{}
+		}
+	}
+
+	filenames := make([]string, 0, len(filenamesMap))
+	for filename := range filenamesMap {
+		filenames = append(filenames, filename)
+	}
+
+	return filenames, nil
 }
 
 // combine is a helper function to concatenate multiple files into a single string
