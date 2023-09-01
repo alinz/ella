@@ -91,8 +91,6 @@ func (s *HttpServices) Parse(prog *ast.Program) error {
 				m.Args = sliceutil.Mapper(sliceutil.Filter(
 					method.Args,
 					func(arg *ast.Arg) bool {
-						fmt.Println(arg.Type.String())
-
 						if m.Type != "fileupload" && arg.Type.String() == "file" {
 							m.Type = "fileupload"
 							return false
