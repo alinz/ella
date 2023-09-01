@@ -1,0 +1,39 @@
+
+//
+// SERVICES
+//
+
+{{- range $service := .HttpServices }}
+{{ range $method := $service.Methods }}
+interface {{ $method.ArgsName }} {
+{{- range $arg := $method.Args }}
+    {{ $arg.Name }}: {{ $arg.Type }};
+{{- end }}
+}
+
+{{- if $method.NeedReturnInterface }}
+interface {{ $method.ReturnsName }} {
+{{- range $arg := $method.Returns }}
+    {{ $arg.Name }}: {{ $arg.Type }};
+{{- end }}
+}
+{{- end }}
+{{- end }}
+
+export interface {{ $service.Name }} {
+{{- range $method := $service.Methods }}
+{{- if $method.IsFileUpload }} 
+  {{ $method.Name }}: (
+      files: {name: string, data: Blob}[],
+      args: {{ $method.ArgsName }},
+      headers?: Record<string, string>
+    ) => Promise<{{ $method.ReturnsName }}>;
+{{- else }}
+  {{ $method.Name }}: (
+		args: {{ $method.ArgsName }},
+		headers?: Record<string, string>
+	) => Promise<{{ $method.ReturnsName }}>;
+{{- end }}
+{{- end }}
+}
+{{- end }}

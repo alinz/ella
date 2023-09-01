@@ -12,10 +12,10 @@ import (
 var files embed.FS
 
 type Typescript struct {
-	Constants Constants
-	Enums     Enums
-	Models    Models
-	// HttpServices HttpServices
+	Constants    Constants
+	Enums        Enums
+	Models       Models
+	HttpServices HttpServices
 }
 
 func (t *Typescript) Parse(prog *ast.Program) error {
@@ -24,8 +24,7 @@ func (t *Typescript) Parse(prog *ast.Program) error {
 		t.Constants.Parse,
 		t.Enums.Parse,
 		t.Models.Parse,
-		// t.HttpServices.Parse,
-		// t.RpcServices.Parse,
+		t.HttpServices.Parse,
 	)
 }
 

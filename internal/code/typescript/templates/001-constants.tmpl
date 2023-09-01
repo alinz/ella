@@ -2,7 +2,6 @@
 //
 // CONSTANTS
 //
-
-{{- range $constant := .Constants }}
+{{ range $constant := .Constants }}
 export const {{ $constant.Name }} = {{ $constant.Value }}
 {{- end }}

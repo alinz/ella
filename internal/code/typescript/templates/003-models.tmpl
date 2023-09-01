@@ -1,7 +1,6 @@
 //
 // MODELS
 //
-
 {{ range $model := .Models }}
 export interface {{ $model.Name }} {
 	{{- range $field := $model.Fields }}

@@ -1,10 +1,11 @@
+
 //
 // HELPER FUNCTIONS
 //
 
 interface Subscription<Event> {
-  recv(fn: (event: Event) => void);
-  close()
+  recv(fn: (event: Event) => void): void
+  close(): void
 }
 
 async function callServiceStreamMethod<Req, Event>(

@@ -31,6 +31,10 @@ func parseType(typ ast.Type) string {
 		return `{ [key: ` + key + `]: ` + value + ` }`
 	case *ast.CustomType:
 		return t.TokenLiteral()
+	case *ast.Byte:
+		return "byte"
+	case *ast.File:
+		return "fileupload"
 	default:
 		panic(fmt.Errorf("unknown type: %T", t))
 	}
