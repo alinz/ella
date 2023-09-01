@@ -1,6 +1,7 @@
 //
 // Services
 //
+{{- if .HasHttpServices }}
 {{ range $service := .HttpServices }}
 type Http{{ $service.Name }}Service interface {
 	{{- range $method := $service.Methods }}
@@ -12,6 +13,9 @@ type Http{{ $service.Name }}Service interface {
 	{{- end }}
 }
 {{- end }}
+{{- end }}
+
+{{- if .HasRpcServices }}
 
 {{ range $service := .RpcServices }}
 type Rpc{{ $service.Name }}Service interface {
@@ -19,4 +23,5 @@ type Rpc{{ $service.Name }}Service interface {
     {{ $method.Name }}(ctx context.Context{{ $method.Args.Definitions }}) ({{ $method.Returns.Definitions }})
     {{- end }}
 }
+{{- end }}
 {{- end }}

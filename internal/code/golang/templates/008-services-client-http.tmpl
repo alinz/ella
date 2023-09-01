@@ -1,3 +1,4 @@
+{{- if .HasHttpServices }}
 //
 // Client Handlers
 //
@@ -36,13 +37,13 @@ func (s * http{{ $service.Name }}ServiceClient) {{ $method.Name }}(ctx context.C
     }{}
 
 {{- if $method.IsFileUpload }}
-	err = sendHttpFilesUpload(ctx, s.client, url, {{ $method.Options.HttpMethod }}, &_in_, files, &_out_)
+	err = sendHttpFilesUpload(ctx, s.client, url, "{{ $method.Options.HttpMethod }}", &_in_, files, &_out_)
 {{- else if and $method.IsStream $method.IsBinary }}
-	{{ $method.ReturnsNames "_out_."}} err = callHttpEndpoint(ctx, s.client, url, {{ $method.Options.HttpMethod }}, &_in_)
+	{{ $method.ReturnsNames "_out_."}} err = callHttpEndpoint(ctx, s.client, url, "{{ $method.Options.HttpMethod }}", &_in_)
 {{- else if $method.IsStream }}
 	{{ $method.ReturnsNames "_out_."}} err = callHttpServiceStreamMethod[{{ $method.ReturnStreamType }}](ctx, s.client, url, {{$method.Options.HttpMethod }}, {{ $method.IsReturnCustomTypeStream }} , &_in_)
 {{- else }}
-	err = callHttpServiceMethod(ctx, s.client, url, {{ $method.Options.HttpMethod }}, &_in_, &_out_)
+	err = callHttpServiceMethod(ctx, s.client, url, "{{ $method.Options.HttpMethod }}", &_in_, &_out_)
 {{- end }}
 	if err != nil {
 		return
@@ -51,5 +52,6 @@ func (s * http{{ $service.Name }}ServiceClient) {{ $method.Name }}(ctx context.C
 	return {{ $method.ReturnsNames "_out_."}} nil
 }
 
+{{- end }}
 {{- end }}
 {{- end }}

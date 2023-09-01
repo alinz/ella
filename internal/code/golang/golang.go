@@ -23,6 +23,38 @@ type Golang struct {
 	RpcServices  RpcServices
 }
 
+func (g Golang) HasRpcServices() bool {
+	if len(g.RpcServices) == 0 {
+		return false
+	}
+
+	for _, service := range g.RpcServices {
+		if len(service.Methods) > 0 {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (g Golang) HasHttpServices() bool {
+	if len(g.HttpServices) == 0 {
+		return false
+	}
+
+	for _, service := range g.HttpServices {
+		if len(service.Methods) > 0 {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (g Golang) HasConstants() bool {
+	return len(g.Constants) > 0
+}
+
 func (g *Golang) Parse(prog *ast.Program) error {
 	return code.RunParsers(
 		prog,

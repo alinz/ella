@@ -1,3 +1,4 @@
+{{- if .HasRpcServices }}
 //
 // RPC Servers
 //
@@ -68,3 +69,4 @@ func StartRpc{{ $service.Name }}ServiceServer(service Rpc{{ $service.Name }}Serv
 }
 
 {{ end }}
+{{- end }}
