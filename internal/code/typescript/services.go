@@ -22,9 +22,14 @@ type Return struct {
 type Method struct {
 	Name        string
 	ServiceName string
+	Options     astutil.MethodOptions
 	Type        string // normal, binary, stream, fileupload
 	Args        []Arg
 	Returns     []Return
+}
+
+func (m Method) PathValue() string {
+	return fmt.Sprintf("/ella/http/%s/%s", strcase.ToPascal(m.ServiceName), strcase.ToPascal(m.Name))
 }
 
 func (m Method) ArgsName() string {
@@ -81,6 +86,7 @@ func (s *HttpServices) Parse(prog *ast.Program) error {
 
 				m.ServiceName = service.Name.String()
 				m.Name = strcase.ToCamel(method.Name.String())
+				m.Options = astutil.ParseMethodOptions(method.Options)
 
 				m.Args = sliceutil.Mapper(sliceutil.Filter(
 					method.Args,

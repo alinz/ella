@@ -70,27 +70,6 @@ func New(pkg string) code.Generator {
 	})
 }
 
-func castString(value any, defaultValue string) string {
-	return castValue[string](value, defaultValue)
-}
-
-func castInt64(value any, defaultValue int64) int64 {
-	return castValue[int64](value, defaultValue)
-}
-
-func castBool(value any, defaultValue bool) bool {
-	return castValue[bool](value, defaultValue)
-}
-
-func castValue[T any](value any, defaultValue T) T {
-	result, ok := value.(T)
-	if ok {
-		return result
-	}
-
-	return defaultValue
-}
-
 func isArrayOf[T ast.Type](typ ast.Type) bool {
 	arr, ok := typ.(*ast.Array)
 	if !ok {

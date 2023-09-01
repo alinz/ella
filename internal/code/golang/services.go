@@ -53,17 +53,10 @@ func (m MethodReturns) Definitions() string {
 	}), ", ")
 }
 
-type MethodOptions struct {
-	HttpMethod    string
-	ContentType   string // only used for Download methods or stream []byte
-	MaxUploadSize int64
-	RawControl    bool
-}
-
 type Method struct {
 	Name    string
 	Service string
-	Options MethodOptions
+	Options astutil.MethodOptions
 	Args    MethodArgs
 	Returns MethodReturns
 }
@@ -238,7 +231,7 @@ func (s *HttpServices) Parse(prog *ast.Program) error {
 				return Method{
 					Name:    method.Name.String(),
 					Service: service.Name.String(),
-					Options: parseMethodOptions(method),
+					Options: astutil.ParseMethodOptions(method.Options),
 					Args: sliceutil.Mapper(method.Args, func(arg *ast.Arg) MethodArg {
 						var typ string
 
@@ -330,29 +323,4 @@ func (s *RpcServices) Parse(prog *ast.Program) error {
 	})
 
 	return nil
-}
-
-func parseMethodOptions(method *ast.Method) MethodOptions {
-	mapper := make(map[string]any)
-	for _, opt := range method.Options {
-		var value any
-		switch opt.Value.(type) {
-		case *ast.ValueString:
-			value = opt.Value.(*ast.ValueString).Value
-		case *ast.ValueBool:
-			value = opt.Value.(*ast.ValueBool).Value
-		case *ast.ValueInt:
-			value = opt.Value.(*ast.ValueInt).Value
-		case *ast.ValueFloat:
-			value = opt.Value.(*ast.ValueFloat).Value
-		}
-		mapper[strcase.ToPascal(opt.Name.Token.Literal)] = value
-	}
-
-	return MethodOptions{
-		HttpMethod:    "http." + strcase.ToPascal("Method"+castString(mapper["HttpMethod"], "POST")),
-		ContentType:   castString(mapper["ContentType"], "application/octet-stream"),
-		MaxUploadSize: castInt64(mapper["MaxUploadSize"], 1*1024*1024),
-		RawControl:    castBool(mapper["RawControl"], false),
-	}
 }

@@ -1,0 +1,47 @@
+
+//
+// SERVICES IMPLEMENTATION
+//
+{{ range $service := .HttpServices }}
+export function create{{ $service.Name }}(host: string): {{ $service.Name }} {
+    return {
+{{- range $method := $service.Methods }}
+{{- if $method.IsFileUpload }} 
+        {{ $method.Name }}: (
+            files: {name: string, data: Blob}[],
+            args: {{ $method.ArgsName }},
+            headers?: Record<string, string>): Promise<{{ $method.ReturnsName }}> => {
+            return callServiceUploadMethod(
+                host,
+                "{{ $method.PathValue }}",
+                "{{ $method.Options.HttpMethod }}",
+                args,
+                files,
+                headers);
+        },
+{{- else }}
+        {{ $method.Name }}: (
+            args: {{ $method.ArgsName }},
+            headers?: Record<string, string>): Promise<{{ $method.ReturnsName }}> => {
+{{- if $method.IsStream }}
+            return callServiceStreamMethod(
+                host,
+                "{{ $method.PathValue }}",
+                "{{ $method.Options.HttpMethod }}",
+                args,
+                headers);
+{{- else }}
+            return callServiceMethod(
+                host,
+                "{{ $method.PathValue }}",
+                "{{ $method.Options.HttpMethod }}",
+                args,
+                headers,
+                {{ if $method.IsBinaryStream }}true{{- else }}false{{- end }});
+{{- end }}
+        },
+{{- end }}
+{{- end }}
+    };
+}
+{{- end }}
