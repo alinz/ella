@@ -2,7 +2,7 @@ package golang
 
 import (
 	"ella.to/internal/ast"
-	"ella.to/internal/astutil"
+	"ella.to/internal/ast/astutil"
 	"ella.to/pkg/sliceutil"
 )
 

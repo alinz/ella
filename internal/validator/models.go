@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"ella.to/internal/ast"
-	"ella.to/internal/astutil"
+	"ella.to/internal/ast/astutil"
 )
 
 // Validates the messages of the program from the following aspects:
