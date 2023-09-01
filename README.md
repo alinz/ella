@@ -8,7 +8,7 @@ Ella, is a yet another compiler to produce Go and Typescript code based on simpl
 
 Ella's schema went through number of iterations to make it easier for extention and backward compatibility in the future releases.
 
-> NOTE:
+> **NOTE:**
 >
 > Ella's code generated has been used in couple of production projects, it has some designs that might not fit your needs, but I think it might solve a large number of projects. Also Ella's only emit `Go`, as a server and client, and `Typescript` as only client. This is intentinal as it servers my needs. However it can be extetended to produce other languages code by traversing the AST code.
 
@@ -25,7 +25,7 @@ go install ella.to/cmd/ella
 Simplicity applies to the cli command as well, it basically looks for all files that needs to be compile and output the result to the designated file. The extension of the output file tells the compiler weather you want to produce the typescript or golang code. That's pretty much of it.
 
 ```bash
-ella gen api ./schema/*.ella /api/api.gen.go
+ella gen api /api/api.gen.go ./schema/*.ella
 ```
 
 Also we can format the schema as well to have a consitent look by running the following command
@@ -37,10 +37,6 @@ ella fmt ./schema/*.ella
 The full cli documention can be access by running ella command without any arguments
 
 ```
-┌─┐┬  ┬  ┌─┐
-├┤ │  │  ├─┤
-└─┘┴─┘┴─┘┴ ┴ v0.0.2
-
 Usage: ella [command]
 
 Commands:
@@ -92,3 +88,7 @@ There are two types of methods available in each service.
 #### http
 
 #### rpc
+
+# References
+
+- Logo was generated [here](https://patorjk.com/software/taag/#p=display&f=Calvin%20S&t=ella)
