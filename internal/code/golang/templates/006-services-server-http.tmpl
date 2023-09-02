@@ -2,7 +2,7 @@
 // Handler Servers
 //
 
-{{- range $service := .HttpServices }}
+{{ range $service := .HttpServices }}
 const {{ $service.PathName }} = "{{ $service.PathValue }}"
 	{{- range $method := $service.Methods }}
 const {{ $method.PathName }} = "{{ $method.PathValue }}"
