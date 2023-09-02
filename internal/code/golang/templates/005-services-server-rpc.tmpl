@@ -5,6 +5,7 @@
 
 const (
 {{- range $service := .RpcServices }}
+    {{- if not $service.HasAnyMethods }}{{ continue }}{{- end }}
 	{{ $service.TopicName }} = "{{ $service.TopicValue }}"
 {{- range $method := $service.Methods }}
     {{ $method.TopicName }} = "{{ $method.TopicValue }}"
@@ -13,7 +14,7 @@ const (
 )
 
 {{- range $service := .RpcServices }}
-
+    {{- if not $service.HasAnyMethods }}{{ continue }}{{- end }}
 func StartRpc{{ $service.Name }}ServiceServer(service Rpc{{ $service.Name }}Service, adaptor rpcAdaptor) (drain func (), err error) {
     var unsubscribe func()
     var unsubscribes []func()

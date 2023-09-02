@@ -49,7 +49,7 @@ func main() {
 
 	switch os.Args[1] {
 	case "fmt":
-		if len(os.Args) != 3 {
+		if len(os.Args) < 3 {
 			fmt.Print(usage)
 			os.Exit(0)
 		}
@@ -99,7 +99,7 @@ func gen(pkg, out string, searchPaths ...string) (err error) {
 
 	defer func() {
 		if err != nil {
-			os.Remove(out)
+			//os.Remove(out)
 		}
 	}()
 

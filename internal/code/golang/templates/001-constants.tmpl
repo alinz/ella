@@ -1,11 +1,7 @@
 //
 // Constants
 //
-{{- if .HasConstants }}
-const (
-{{- range $constant := .Constants }}
-  {{ $constant.Name }} = {{ $constant.Value }}
-{{- end }}
-)
-{{ end }}
 
+{{ range $constant := .Constants -}}
+const {{ $constant.Name }} = {{ $constant.Value }}
+{{ end }}

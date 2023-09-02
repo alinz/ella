@@ -1,16 +1,13 @@
-{{- if .HasHttpServices }}
 //
 // Handler Servers
 //
 
-const (
 {{- range $service := .HttpServices }}
-	{{ $service.PathName }} = "{{ $service.PathValue }}"
-{{- range $method := $service.Methods }}
-	{{ $method.PathName }} = "{{ $method.PathValue }}"
+const {{ $service.PathName }} = "{{ $service.PathValue }}"
+	{{- range $method := $service.Methods }}
+const {{ $method.PathName }} = "{{ $method.PathValue }}"
+	{{- end }}
 {{- end }}
-{{- end }}
-)
 
 {{- range $service := .HttpServices }}
 
@@ -135,6 +132,5 @@ func (s *{{ $service.NameImpl }}) create{{ $method.Name }}() httpServiceMethodHa
 {{- end }}
 }
 
-{{- end }}
 {{- end }}
 {{- end }}

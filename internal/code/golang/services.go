@@ -267,6 +267,11 @@ func (s *HttpServices) Parse(prog *ast.Program) error {
 		}
 	})
 
+	// we want to make sure that we don't generate services without methods
+	*s = sliceutil.Filter(*s, func(service HttpService) bool {
+		return len(service.Methods) != 0
+	})
+
 	return nil
 }
 
@@ -320,6 +325,11 @@ func (s *RpcServices) Parse(prog *ast.Program) error {
 				}
 			}),
 		}
+	})
+
+	// we want to make sure that we don't generate services without methods
+	*s = sliceutil.Filter(*s, func(service RpcService) bool {
+		return len(service.Methods) != 0
 	})
 
 	return nil
