@@ -19,4 +19,4 @@ type Rpc{{ $service.Name }}Service interface {
     {{ $method.Name }}(ctx context.Context{{ $method.Args.Definitions }}) ({{ $method.Returns.Definitions }})
     {{- end }}
 }
-{{- end }}
+{{ end }}

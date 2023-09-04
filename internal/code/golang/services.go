@@ -252,7 +252,11 @@ func (s *HttpServices) Parse(prog *ast.Program) error {
 						if ret.Stream && isArrayOf[*ast.Byte](ret.Type) {
 							typ = "io.Reader"
 						} else if ret.Stream {
-							typ = "<-chan " + typ
+							if isModelType(typ) {
+								typ = "<-chan *" + typ
+							} else {
+								typ = "<-chan " + typ
+							}
 						}
 
 						return MethodReturn{
