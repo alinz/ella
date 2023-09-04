@@ -101,7 +101,7 @@ func (m Method) PathValue() string {
 
 func (m Method) ArgsNames(prefix string) string {
 	return strings.Join(sliceutil.Mapper(sliceutil.Filter(m.Args, func(arg MethodArg) bool {
-		return arg.Type != "<-chan *fileUpload"
+		return arg.Type != "func() (string, io.Reader, error)"
 	}), func(arg MethodArg) string {
 		return prefix + strcase.ToPascal(arg.Name) + ","
 	}), "\n")
@@ -129,7 +129,7 @@ func (m Method) ReturnStreamType() string {
 
 func (m Method) ArgsStructDefinitions(pointer bool) string {
 	return strings.Join(sliceutil.Mapper(sliceutil.Filter(m.Args, func(arg MethodArg) bool {
-		return arg.Type != "<-chan *fileUpload"
+		return arg.Type != "func() (string, io.Reader, error)"
 	}), func(arg MethodArg) string {
 		typ := arg.Type
 		if arg.IsCustomType && pointer {
@@ -141,7 +141,7 @@ func (m Method) ArgsStructDefinitions(pointer bool) string {
 
 func (m Method) ArgsNamesValues() string {
 	return strings.Join(sliceutil.Mapper(sliceutil.Filter(m.Args, func(arg MethodArg) bool {
-		return arg.Type != "<-chan *fileUpload"
+		return arg.Type != "func() (string, io.Reader, error)"
 	}), func(arg MethodArg) string {
 		return strcase.ToPascal(arg.Name) + ":" + arg.Name + ","
 	}), "\n")
@@ -187,7 +187,7 @@ func (m Method) IsFileUpload() bool {
 	var result bool
 
 	for _, arg := range m.Args {
-		if arg.Type == "<-chan *fileUpload" {
+		if arg.Type == "func() (string, io.Reader, error)" {
 			result = true
 			break
 		}
@@ -236,7 +236,7 @@ func (s *HttpServices) Parse(prog *ast.Program) error {
 						var typ string
 
 						if _, ok := arg.Type.(*ast.File); ok {
-							typ = "<-chan *fileUpload"
+							typ = "func() (string, io.Reader, error)"
 						} else {
 							typ = arg.Type.String()
 						}

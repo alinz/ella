@@ -267,7 +267,7 @@ func createStreamBinaryServiceMethod[ReqMsg any](method string, contentType stri
 
 func createServiceMethodUploadHandler[ReqMsg, RespMsg any](
 	totalMaxSize int64,
-	fn func(ctx context.Context, files <-chan *fileUpload, req *ReqMsg) (*RespMsg, error),
+	fn func(ctx context.Context, nextFile func() (string, io.Reader, error), req *ReqMsg) (*RespMsg, error),
 ) httpServiceMethodHandler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -283,63 +283,41 @@ func createServiceMethodUploadHandler[ReqMsg, RespMsg any](
 			return
 		}
 
-		files := make(chan *fileUpload, 1)
-		defer close(files)
-
 		part, err := reader.NextPart()
 		if err != nil {
 			httpResponseError(w, err)
 			return
 		}
-		defer part.Close()
 
 		if part.FormName() != "payload" {
+			part.Close()
 			httpResponseError(w, Errorf(http.StatusBadRequest, nil, "missing payload name"))
 			return
 		}
 
 		var req ReqMsg
 		err = json.NewDecoder(part).Decode(&req)
+		part.Close()
 		if err != nil {
 			httpResponseError(w, err)
 			return
 		}
 
-		errChan := make(chan error, 1)
-
-		go func() {
-			defer close(files)
-			defer close(errChan)
-
-			for {
-				part, err := reader.NextPart()
-				if errors.Is(err, io.EOF) {
-					return
-				} else if err != nil {
-					errChan <- err
-					return
-				}
-
-				if part.FormName() == "files" {
-					errChan <- Errorf(http.StatusBadRequest, nil, "missing files field")
-					return
-				}
-
-				files <- &fileUpload{
-					FileName: part.FileName(),
-					Reader:   part,
-				}
+		nextFile := func() (string, io.Reader, error) {
+			part, err := reader.NextPart()
+			if err != nil {
+				return "", nil, err
 			}
-		}()
 
-		resp, err := fn(ctx, files, &req)
-		if err != nil {
-			httpResponseError(w, err)
-			return
+			if part.FormName() != "files" {
+				return "", nil, Errorf(http.StatusBadRequest, nil, "missing files field")
+			}
+
+			return part.FileName(), part, nil
 		}
 
-		err, ok := <-errChan
-		if ok {
+		resp, err := fn(ctx, nextFile, &req)
+		if err != nil {
 			httpResponseError(w, err)
 			return
 		}
@@ -412,7 +390,7 @@ func callHttpServiceMethod(ctx context.Context, client *http.Client, url string,
 	return json.NewDecoder(r).Decode(out)
 }
 
-func sendHttpFilesUpload(ctx context.Context, client *http.Client, url string, method string, payload any, files <-chan *fileUpload, respBody any) error {
+func sendHttpFilesUpload(ctx context.Context, client *http.Client, url string, method string, payload any, files func() (string, io.Reader, error), respBody any) error {
 	pr, pw := io.Pipe()
 
 	boundary := getRandomBoundary()
@@ -420,12 +398,18 @@ func sendHttpFilesUpload(ctx context.Context, client *http.Client, url string, m
 	go func() {
 		var err error
 		var part io.Writer
+		var filename string
+		var content io.Reader
 
 		mw := multipart.NewWriter(pw)
 
 		defer func() {
 			mw.Close()
-			pw.CloseWithError(err)
+			if err != nil {
+				pw.CloseWithError(err)
+			} else {
+				pw.Close()
+			}
 		}()
 
 		err = mw.SetBoundary(boundary)
@@ -443,13 +427,21 @@ func sendHttpFilesUpload(ctx context.Context, client *http.Client, url string, m
 			return
 		}
 
-		for file := range files {
-			part, err = mw.CreateFormFile("files", file.FileName)
+		for {
+			filename, content, err = files()
+			if errors.Is(err, io.EOF) {
+				err = nil
+				return
+			} else if err != nil {
+				return
+			}
+
+			part, err = mw.CreateFormFile("files", filename)
 			if err != nil {
 				return
 			}
 
-			_, err = io.Copy(part, file.Reader)
+			_, err = io.Copy(part, content)
 			if err != nil {
 				return
 			}
@@ -604,11 +596,6 @@ func getRandomBoundary() string {
 
 // HTTP UTILITIES
 // Helper utilities for dealing with http response and request
-
-type fileUpload struct {
-	FileName string
-	Reader   io.Reader
-}
 
 type emptyStruct struct{}
 

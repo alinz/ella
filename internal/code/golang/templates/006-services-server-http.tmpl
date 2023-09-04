@@ -98,7 +98,7 @@ func (s *{{ $service.NameImpl }}) create{{ $method.Name }}() httpServiceMethodHa
 {{- else if $method.IsFileUpload }}
 	return createServiceMethodUploadHandler(
 		{{ $method.Options.MaxUploadSize }},
-		func(ctx context.Context, files <-chan *fileUpload, args *struct{
+		func(ctx context.Context, files func() (string, io.Reader, error), args *struct{
 			{{ $method.ArgsStructDefinitions false }}
 		})(ret *struct {
 		{{ $method.ReturnsStructDefinitions }}
