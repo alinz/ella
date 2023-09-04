@@ -1,0 +1,18 @@
+const Version = "1.0.0"
+
+enum Emotion {
+    _ 
+    Sad
+    Happy
+    Excited
+}
+
+model Person {
+    Name: string
+    Age: int8
+    Emotion: Emotion
+}
+
+service People {
+    http GetRandom(age: int8) => (person: Person)
+}
