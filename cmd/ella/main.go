@@ -108,6 +108,10 @@ func gen(pkg, out string, searchPaths ...string) (err error) {
 		return err
 	}
 
+	if len(filenames) == 0 {
+		return fmt.Errorf("no ella's files found in the following paths: %s", strings.Join(searchPaths, ", "))
+	}
+
 	content, err := combine(filenames...)
 	if err != nil {
 		return err
