@@ -1,0 +1,3 @@
+service Greeting {
+    rpc SayHello(name: string) => (value: string)
+}
