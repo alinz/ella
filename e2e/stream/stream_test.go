@@ -12,6 +12,7 @@ func TestHttpStream(t *testing.T) {
 	server := httptest.NewServer(
 		CreateEventServiceServer(&HttpEventServiceImpl{}),
 	)
+	defer server.Close()
 
 	host := server.URL
 	httpClient := &http.Client{}
