@@ -33,14 +33,14 @@ func TestParseConst(t *testing.T) {
 			Error: `
 expected '=' after an identifier for defining a constant: -><-
 const Ella
-`,
+		`,
 		},
 		{
 			Input: `
-			const Ella = version`,
+					const Ella = version`,
 			Output: `
-const Ella = version
-			`,
+		const Ella = version
+					`,
 		},
 	})
 }

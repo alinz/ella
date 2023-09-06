@@ -65,7 +65,7 @@ func (p *Parser) showContext(token *token.Token, lines int) string {
 
 	// going backwards n lines
 	for i := 0; i < lines; i++ {
-		if start == 0 {
+		if start == -1 {
 			break
 		}
 
