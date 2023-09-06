@@ -507,12 +507,11 @@ func parseStreamEvents[T any](r io.Reader, isPointer bool) <-chan T {
 		return 0, nil, nil
 	})
 
-	secondPart := func(value string) (string, bool) {
-		segments := strings.Split(value, ":")
-		if len(segments) != 2 {
+	secondPart := func(prefix, value string) (string, bool) {
+		if !strings.HasPrefix(value, prefix) {
 			return "", false
 		}
-		return strings.TrimSpace(segments[1]), true
+		return strings.TrimSpace(value[len(prefix):]), true
 	}
 
 	go func() {
@@ -530,7 +529,7 @@ func parseStreamEvents[T any](r io.Reader, isPointer bool) <-chan T {
 				continue
 			}
 
-			identifier, ok := secondPart(lines[0])
+			identifier, ok := secondPart("id:", lines[0])
 			if !ok {
 				continue
 			}
@@ -542,12 +541,12 @@ func parseStreamEvents[T any](r io.Reader, isPointer bool) <-chan T {
 			}
 
 			// ignore event for now
-			_, ok = secondPart(lines[1])
+			_, ok = secondPart("event:", lines[1])
 			if !ok {
 				continue
 			}
 
-			data, ok := secondPart(lines[2])
+			data, ok := secondPart("data:", lines[2])
 			if !ok {
 				continue
 			}
