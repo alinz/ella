@@ -14,7 +14,9 @@ import (
 func TestStreamWithAsync(t *testing.T) {
 	server := httptest.NewServer(
 		CreateSignalServiceServer(
-			NewHttpSignalServiceImpl(),
+			NewHttpSignalServiceImpl(
+				NewMemoryBus[string](),
+			),
 		),
 	)
 	defer server.Close()
