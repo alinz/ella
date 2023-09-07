@@ -479,10 +479,10 @@ func callHttpServiceStreamMethod[Resp any](ctx context.Context, client *http.Cli
 		return nil, err
 	}
 
-	return parseStreamEvents[Resp](r, isPointer), nil
+	return parseStreamEvents[Resp](ctx, r, isPointer), nil
 }
 
-func parseStreamEvents[T any](r io.Reader, isPointer bool) <-chan T {
+func parseStreamEvents[T any](ctx context.Context, r io.ReadCloser, isPointer bool) <-chan T {
 	out := make(chan T, 1)
 
 	scanner := bufio.NewScanner(r)
@@ -514,13 +514,16 @@ func parseStreamEvents[T any](r io.Reader, isPointer bool) <-chan T {
 		return strings.TrimSpace(value[len(prefix):]), true
 	}
 
+	// Close the reader when the context is cancelled
+	// this is make sure the scanner.Scan() will return false 
+	// and the goroutine will exit
+	go func () {
+		<-ctx.Done()
+		r.Close()
+	}()
+
 	go func() {
 		defer close(out)
-		defer func() {
-			if r, ok := r.(io.Closer); ok {
-				r.Close()
-			}
-		}()
 		for scanner.Scan() {
 			item := scanner.Text()
 			lines := strings.Split(item, "\n")
