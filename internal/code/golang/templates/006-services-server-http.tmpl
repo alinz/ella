@@ -84,7 +84,7 @@ func (s *{{ $service.NameImpl }}) create{{ $method.Name }}() httpServiceMethodHa
 						}
 						return
 					}
-
+					id++
 					out <- &streamEvent{
 						id: id,
 						event: "{{ $method.GetReturnStreamName }}",
