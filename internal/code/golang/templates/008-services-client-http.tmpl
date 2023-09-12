@@ -5,15 +5,15 @@
 
 {{ range $service := .HttpServices }}
 
-type http{{ $service.Name }}ServiceClient struct {
+type http{{ $service.Name }}Client struct {
 	client *http.Client
 	host   string
 }
 
-var _ Http{{ $service.Name }}Service = (* http{{ $service.Name }}ServiceClient)(nil)
+var _ Http{{ $service.Name }} = (* http{{ $service.Name }}Client)(nil)
 
-func CreateHttp{{ $service.Name }}ServiceClient(host string, client *http.Client) Http{{ $service.Name }}Service {
-	return &http{{ $service.Name }}ServiceClient{
+func CreateHttp{{ $service.Name }}Client(host string, client *http.Client) Http{{ $service.Name }} {
+	return &http{{ $service.Name }}Client{
 		host:   host,
 		client: client,
 	}
@@ -21,7 +21,7 @@ func CreateHttp{{ $service.Name }}ServiceClient(host string, client *http.Client
 
 {{- range $method := $service.Methods }}
 
-func (s * http{{ $service.Name }}ServiceClient) {{ $method.Name }}(ctx context.Context {{ $method.Args.Definitions }}) ({{ $method.Returns.Definitions }}) { 
+func (s * http{{ $service.Name }}Client) {{ $method.Name }}(ctx context.Context {{ $method.Args.Definitions }}) ({{ $method.Returns.Definitions }}) { 
 	url, err := urlPathJoin(s.host, {{ $method.PathName }})
 	if err != nil {
 		return

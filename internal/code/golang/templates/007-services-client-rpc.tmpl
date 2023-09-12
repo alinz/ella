@@ -5,21 +5,21 @@
 
 {{- range $service := .RpcServices }}
 
-type rpc{{ $service.Name }}ServiceClient struct {
+type rpc{{ $service.Name }}Client struct {
     adaptor rpcAdaptor
 }
 
-var _ Rpc{{ $service.Name }}Service = (*rpc{{ $service.Name }}ServiceClient)(nil)
+var _ Rpc{{ $service.Name }} = (*rpc{{ $service.Name }}Client)(nil)
 
-func CreateRpc{{ $service.Name }}ServiceClient(adaptor rpcAdaptor) Rpc{{ $service.Name }}Service {
-    return &rpc{{ $service.Name }}ServiceClient{
+func CreateRpc{{ $service.Name }}Client(adaptor rpcAdaptor) Rpc{{ $service.Name }} {
+    return &rpc{{ $service.Name }}Client{
         adaptor: adaptor,
     }
 }
 
 {{- range $method := $service.Methods }}
 
-func (s *rpc{{ $service.Name }}ServiceClient) {{ $method.Name }}(ctx context.Context {{ $method.Args.Definitions }}) ({{ $method.Returns.Definitions }}) { 
+func (s *rpc{{ $service.Name }}Client) {{ $method.Name }}(ctx context.Context {{ $method.Args.Definitions }}) ({{ $method.Returns.Definitions }}) { 
     out, err := rpcSend(ctx, s.adaptor, {{ $method.TopicName }}, &struct {
         {{ $method.ArgsStructDefinitions true }}
     }{

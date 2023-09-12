@@ -1,5 +1,5 @@
 
 
-service Event {
+service EventService {
     http GetRandomValues() => (values: stream string)
 }

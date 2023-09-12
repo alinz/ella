@@ -3,6 +3,6 @@ model File {
     Size: int64
 }
 
-service Storage {
+service StorageService {
    http UploadFiles(files: file, id: string) => (results: []File)
 }

@@ -12,7 +12,7 @@ const {{ $method.PathName }} = "{{ $method.PathValue }}"
 {{- range $service := .HttpServices }}
 
 type {{ $service.NameImpl }} struct {
-	service Http{{ $service.Name }}Service
+	service Http{{ $service.Name }}
 	routes  map[string]httpServiceMethodHandler
 }
 
@@ -30,7 +30,7 @@ func (s *{{ $service.NameImpl }}) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	handler(ctx, w, r)
 }
 
-func Create{{ $service.Name }}ServiceServer(service Http{{ $service.Name }}Service) http.Handler {
+func Create{{ $service.Name }}Server(service Http{{ $service.Name }}) http.Handler {
 	server := {{ $service.NameImpl }}{
 		service: service,
 	}

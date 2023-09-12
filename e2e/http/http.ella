@@ -13,6 +13,6 @@ model Person {
     Emotion: Emotion
 }
 
-service People {
+service PeopleService {
     http GetRandom(age: int8) => (person: Person)
 }

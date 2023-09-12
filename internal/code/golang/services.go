@@ -84,7 +84,7 @@ func (m Method) HasReturns() bool {
 }
 
 func (m Method) TopicName() string {
-	return fmt.Sprintf("TopicRpc%sService%sMethod", strcase.ToPascal(m.Service), strcase.ToPascal(m.Name))
+	return fmt.Sprintf("TopicRpc%s%sMethod", strcase.ToPascal(m.Service), strcase.ToPascal(m.Name))
 }
 
 func (m Method) TopicValue() string {
@@ -92,7 +92,7 @@ func (m Method) TopicValue() string {
 }
 
 func (m Method) PathName() string {
-	return fmt.Sprintf("PathHttp%sService%sMethod", strcase.ToPascal(m.Service), strcase.ToPascal(m.Name))
+	return fmt.Sprintf("PathHttp%s%sMethod", strcase.ToPascal(m.Service), strcase.ToPascal(m.Name))
 }
 
 func (m Method) PathValue() string {
@@ -204,11 +204,11 @@ type HttpService struct {
 }
 
 func (s HttpService) NameImpl() string {
-	return "http" + strcase.ToPascal(s.Name) + "ServiceServer"
+	return "http" + strcase.ToPascal(s.Name) + "Server"
 }
 
 func (s HttpService) PathName() string {
-	return fmt.Sprintf("PathHttp%sServicePrefix", strcase.ToPascal(s.Name))
+	return fmt.Sprintf("PathHttp%sPrefix", strcase.ToPascal(s.Name))
 }
 
 func (s HttpService) PathValue() string {
@@ -285,7 +285,7 @@ type RpcService struct {
 }
 
 func (s RpcService) TopicName() string {
-	return fmt.Sprintf("TopicRpc%sService", strcase.ToPascal(s.Name))
+	return fmt.Sprintf("TopicRpc%s", strcase.ToPascal(s.Name))
 }
 
 func (s RpcService) TopicValue() string {

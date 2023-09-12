@@ -13,7 +13,7 @@ const (
 )
 
 {{- range $service := .RpcServices }}
-func StartRpc{{ $service.Name }}ServiceServer(service Rpc{{ $service.Name }}Service, adaptor rpcAdaptor) (drain func (), err error) {
+func StartRpc{{ $service.Name }}Server(service Rpc{{ $service.Name }}, adaptor rpcAdaptor) (drain func (), err error) {
     var unsubscribe func()
     var unsubscribes []func()
 
