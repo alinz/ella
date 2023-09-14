@@ -13,14 +13,22 @@ const {{ $method.PathName }} = "{{ $method.PathValue }}"
 
 type {{ $service.NameImpl }} struct {
 	service Http{{ $service.Name }}
-	routes  map[string]httpServiceMethodHandler
+	{{- range $i, $method := $service.Methods }}
+	route{{ $i }} httpServiceMethodHandler
+	{{- end }}
 }
 
 var _ http.Handler = (*{{ $service.NameImpl }})(nil)
 
 func (s *{{ $service.NameImpl }}) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	handler, ok := s.routes[r.URL.Path]
-	if !ok {
+	var handler httpServiceMethodHandler
+
+	switch r.URL.Path {
+	{{- range $i, $method := $service.Methods }}
+	case {{ $method.PathName }}:
+		handler = s.route{{ $i }}
+	{{- end }}
+	default:
 		httpResponseError(w, Errorf(http.StatusNotFound, nil, "method %q not found", r.URL.Path))
 		return
 	}
@@ -35,11 +43,9 @@ func Create{{ $service.Name }}Server(service Http{{ $service.Name }}) http.Handl
 		service: service,
 	}
 
-	server.routes = map[string]httpServiceMethodHandler{
-		{{- range $method := $service.Methods }}
-		{{ $method.PathName }}: server.create{{ $method.Name }}(),
-		{{- end }}
-	}
+	{{- range $i, $method := $service.Methods }}
+	server.route{{ $i }} = server.create{{ $method.Name }}()
+	{{- end }}
 
 	return &server
 }
