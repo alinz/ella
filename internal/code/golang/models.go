@@ -17,9 +17,9 @@ type ModelField struct {
 
 type ModelFields []ModelField
 
-func (m *ModelFields) Parse(message *ast.Model) error {
+func (m *ModelFields) Parse(message *ast.Model, isModelType func(value string) bool) error {
 	*m = sliceutil.Mapper(message.Fields, func(field *ast.Field) ModelField {
-		typ := parseType(field.Type)
+		typ := parseType(field.Type, isModelType)
 		return ModelField{
 			Name: field.Name.String(),
 			Type: typ,
@@ -37,12 +37,14 @@ type Model struct {
 type Models []Model
 
 func (m *Models) Parse(prog *ast.Program) error {
+	isModelType := astutil.CreateIsModelTypeFunc(astutil.GetModels(prog))
+
 	*m = sliceutil.Mapper(astutil.GetModels(prog), func(message *ast.Model) Model {
 		msg := Model{
 			Name: message.Name.String(),
 		}
 
-		msg.Fields.Parse(message)
+		msg.Fields.Parse(message, isModelType)
 
 		return msg
 	})

@@ -6,10 +6,14 @@ import (
 	"ella.to/internal/ast"
 )
 
-func parseType(typ ast.Type) string {
+func parseType(typ ast.Type, isModelType func(value string) bool) string {
 	switch typ := typ.(type) {
 	case *ast.CustomType:
-		return typ.String()
+		val := typ.String()
+		if isModelType(val) {
+			return "*" + val
+		}
+		return val
 	case *ast.Any:
 		return "any"
 	case *ast.Int:
@@ -27,9 +31,9 @@ func parseType(typ ast.Type) string {
 	case *ast.Timestamp:
 		return "time.Time"
 	case *ast.Map:
-		return fmt.Sprintf("map[%s]%s", parseType(typ.Key), parseType(typ.Value))
+		return fmt.Sprintf("map[%s]%s", parseType(typ.Key, isModelType), parseType(typ.Value, isModelType))
 	case *ast.Array:
-		return fmt.Sprintf("[]%s", parseType(typ.Type))
+		return fmt.Sprintf("[]%s", parseType(typ.Type, isModelType))
 	}
 
 	// This shouldn't happen as the validator should catch this any errors
