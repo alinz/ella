@@ -798,11 +798,15 @@ func (e Error) MarshalText() ([]byte, error) {
 func (e *Error) Error() string {
 	var sb strings.Builder
 
-	if e.msg != "" && e.cause != nil {
+	if e.msg != "" {
 		sb.WriteString(e.msg)
-		sb.WriteString(": ")
-		sb.WriteString(e.cause.Error())
-	} else if e.cause != nil {
+	}
+
+	if e.cause != nil {
+		if sb.Len() > 0 {
+			sb.WriteString(": ")
+		}
+
 		sb.WriteString(e.cause.Error())
 	}
 
