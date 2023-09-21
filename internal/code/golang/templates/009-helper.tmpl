@@ -473,16 +473,16 @@ func sendHttpFilesUpload(ctx context.Context, client *http.Client, url string, m
 	return json.NewDecoder(resp.Body).Decode(respBody)
 }
 
-func callHttpServiceStreamMethod[Resp any](ctx context.Context, client *http.Client, url string, method string, isPointer bool, in any) (<-chan Resp, error) {
+func callHttpServiceStreamMethod[Resp any](ctx context.Context, client *http.Client, url string, method string, in any) (<-chan Resp, error) {
 	r, err := callHttpEndpoint(ctx, client, url, method, in)
 	if err != nil {
 		return nil, err
 	}
 
-	return parseStreamEvents[Resp](ctx, r, isPointer), nil
+	return parseStreamEvents[Resp](ctx, r), nil
 }
 
-func parseStreamEvents[T any](ctx context.Context, r io.ReadCloser, isPointer bool) <-chan T {
+func parseStreamEvents[T any](ctx context.Context, r io.ReadCloser) <-chan T {
 	out := make(chan T, 1)
 
 	scanner := bufio.NewScanner(r)
@@ -554,10 +554,9 @@ func parseStreamEvents[T any](ctx context.Context, r io.ReadCloser, isPointer bo
 				continue
 			}
 
-			var msg T
+			msg, ok := initalizePointer[T]()
 
-			if isPointer {
-				msg = initalizePointer[T]()
+			if ok {
 				err = json.Unmarshal([]byte(data), msg)
 			} else {
 				err = json.Unmarshal([]byte(data), &msg)
@@ -573,18 +572,17 @@ func parseStreamEvents[T any](ctx context.Context, r io.ReadCloser, isPointer bo
 	return out
 }
 
-func initalizePointer[T any]() T {
-	var result T
-
+func initalizePointer[T any]() (result T, ok bool) {
 	if reflect.ValueOf(result).Kind() != reflect.Ptr {
-		return result
+		return
 	}
 
+	ok = true
 	va := reflect.ValueOf(&result).Elem()
 	v := reflect.New(va.Type().Elem())
 	va.Set(v)
 
-	return result
+	return
 }
 
 func getRandomBoundary() string {

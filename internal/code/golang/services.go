@@ -11,28 +11,22 @@ import (
 )
 
 type MethodArg struct {
-	Name         string
-	Type         string
-	IsCustomType bool
+	Name string
+	Type string
 }
 
 type MethodArgs []MethodArg
 
 func (m MethodArgs) Definitions() string {
 	return strings.Join(sliceutil.Mapper(m, func(arg MethodArg) string {
-		typ := arg.Type
-		if arg.IsCustomType {
-			typ = "*" + typ
-		}
-		return fmt.Sprintf(", %s %s", arg.Name, typ)
+		return fmt.Sprintf(", %s %s", arg.Name, arg.Type)
 	}), "")
 }
 
 type MethodReturn struct {
-	Name         string
-	Type         string
-	Stream       bool
-	IsCustomType bool
+	Name   string
+	Type   string
+	Stream bool
 }
 
 type MethodReturns []MethodReturn
@@ -44,12 +38,7 @@ func (m MethodReturns) Definitions() string {
 	})
 
 	return strings.Join(sliceutil.Mapper(m, func(arg MethodReturn) string {
-		typ := arg.Type
-		if arg.IsCustomType {
-			typ = "*" + typ
-		}
-
-		return fmt.Sprintf("%s %s", arg.Name, typ)
+		return fmt.Sprintf("%s %s", arg.Name, arg.Type)
 	}), ", ")
 }
 
@@ -107,16 +96,6 @@ func (m Method) ArgsNames(prefix string) string {
 	}), "\n")
 }
 
-func (m Method) IsReturnCustomTypeStream() bool {
-	for _, ret := range m.Returns {
-		if ret.Stream && ret.IsCustomType {
-			return true
-		}
-	}
-
-	return false
-}
-
 func (m Method) ReturnStreamType() string {
 	for _, ret := range m.Returns {
 		if ret.Stream {
@@ -131,11 +110,7 @@ func (m Method) ArgsStructDefinitions(pointer bool) string {
 	return strings.Join(sliceutil.Mapper(sliceutil.Filter(m.Args, func(arg MethodArg) bool {
 		return arg.Type != "func() (string, io.Reader, error)"
 	}), func(arg MethodArg) string {
-		typ := arg.Type
-		if arg.IsCustomType && pointer {
-			typ = "*" + typ
-		}
-		return fmt.Sprintf("%s %s", strcase.ToPascal(arg.Name), typ)
+		return fmt.Sprintf("%s %s", strcase.ToPascal(arg.Name), arg.Type)
 	}), "\n")
 }
 
@@ -148,18 +123,14 @@ func (m Method) ArgsNamesValues() string {
 }
 
 func (m Method) ReturnsNames(prefix string) string {
-	return strings.Join(sliceutil.Mapper(m.Returns, func(arg MethodReturn) string {
-		return prefix + strcase.ToPascal(arg.Name) + ", "
+	return strings.Join(sliceutil.Mapper(m.Returns, func(ret MethodReturn) string {
+		return prefix + strcase.ToPascal(ret.Name) + ", "
 	}), "")
 }
 
 func (m Method) ReturnsStructDefinitions() string {
-	return strings.Join(sliceutil.Mapper(m.Returns, func(arg MethodReturn) string {
-		typ := arg.Type
-		if arg.IsCustomType {
-			typ = "*" + typ
-		}
-		return fmt.Sprintf("%s %s", strcase.ToPascal(arg.Name), typ)
+	return strings.Join(sliceutil.Mapper(m.Returns, func(ret MethodReturn) string {
+		return fmt.Sprintf("%s %s", strcase.ToPascal(ret.Name), ret.Type)
 	}), "\n")
 }
 
@@ -238,32 +209,26 @@ func (s *HttpServices) Parse(prog *ast.Program) error {
 						if _, ok := arg.Type.(*ast.File); ok {
 							typ = "func() (string, io.Reader, error)"
 						} else {
-							typ = arg.Type.String()
+							typ = parseType(arg.Type, isModelType)
 						}
 
 						return MethodArg{
-							Name:         arg.Name.String(),
-							Type:         typ,
-							IsCustomType: isModelType(typ),
+							Name: arg.Name.String(),
+							Type: typ,
 						}
 					}),
 					Returns: sliceutil.Mapper(method.Returns, func(ret *ast.Return) MethodReturn {
-						typ := ret.Type.String()
+						typ := parseType(ret.Type, isModelType)
 						if ret.Stream && isArrayOf[*ast.Byte](ret.Type) {
 							typ = "io.Reader"
 						} else if ret.Stream {
-							if isModelType(typ) {
-								typ = "<-chan *" + typ
-							} else {
-								typ = "<-chan " + typ
-							}
+							typ = "<-chan " + typ
 						}
 
 						return MethodReturn{
-							Name:         ret.Name.String(),
-							Type:         typ,
-							Stream:       ret.Stream,
-							IsCustomType: isModelType(typ),
+							Name:   ret.Name.String(),
+							Type:   typ,
+							Stream: ret.Stream,
 						}
 					}),
 				}
@@ -309,21 +274,15 @@ func (s *RpcServices) Parse(prog *ast.Program) error {
 					Name:    method.Name.String(),
 					Service: service.Name.String(),
 					Args: sliceutil.Mapper(method.Args, func(arg *ast.Arg) MethodArg {
-						typ := arg.Type.String()
-
 						return MethodArg{
-							Name:         arg.Name.String(),
-							Type:         typ,
-							IsCustomType: isModelType(typ),
+							Name: arg.Name.String(),
+							Type: parseType(arg.Type, isModelType),
 						}
 					}),
 					Returns: sliceutil.Mapper(method.Returns, func(ret *ast.Return) MethodReturn {
-						typ := ret.Type.String()
-
 						return MethodReturn{
-							Name:         ret.Name.String(),
-							Type:         typ,
-							IsCustomType: isModelType(typ),
+							Name: ret.Name.String(),
+							Type: ret.Type.String(),
 						}
 					}),
 				}

@@ -46,7 +46,7 @@ func TestUpload(t *testing.T) {
 		return file.FileName, file.Content, nil
 	}, "test")
 	assert.NoError(t, err)
-	assert.Equal(t, []File{
+	assert.Equal(t, []*File{
 		{
 			Name: "test0.txt",
 			Size: 11,

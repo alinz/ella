@@ -60,7 +60,7 @@ func parseModelFieldOptions(field *ast.Field) string {
 		mapper[strings.ToLower(opt.Name.Token.Literal)] = opt.Value
 	}
 
-	jsonTagValue := strings.ToLower(strcase.ToCamel(field.Name.String()))
+	jsonTagValue := strings.ToLower(strcase.ToSnake(field.Name.String()))
 
 	jsonValue, ok := mapper["json"]
 	if ok {
@@ -78,7 +78,7 @@ func parseModelFieldOptions(field *ast.Field) string {
 	sb.WriteString(jsonTagValue)
 	sb.WriteString(`"`)
 
-	yamlTagValue := strings.ToLower(strcase.ToCamel(field.Name.String()))
+	yamlTagValue := strings.ToLower(strcase.ToSnake(field.Name.String()))
 
 	yamlValue, ok := mapper["yaml"]
 	if ok {

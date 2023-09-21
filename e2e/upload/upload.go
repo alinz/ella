@@ -11,8 +11,8 @@ type HttpStorageServiceImpl struct {
 
 var _ HttpStorageService = (*HttpStorageServiceImpl)(nil)
 
-func (s *HttpStorageServiceImpl) UploadFiles(ctx context.Context, files func() (string, io.Reader, error), id string) (results []File, err error) {
-	results = make([]File, 0)
+func (s *HttpStorageServiceImpl) UploadFiles(ctx context.Context, files func() (string, io.Reader, error), id string) (results []*File, err error) {
+	results = make([]*File, 0)
 
 	for {
 		filename, content, err := files()
@@ -24,7 +24,7 @@ func (s *HttpStorageServiceImpl) UploadFiles(ctx context.Context, files func() (
 
 		size, _ := io.Copy(io.Discard, content)
 
-		results = append(results, File{
+		results = append(results, &File{
 			Name: filename,
 			Size: size,
 		})
