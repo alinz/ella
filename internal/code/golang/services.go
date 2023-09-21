@@ -282,7 +282,7 @@ func (s *RpcServices) Parse(prog *ast.Program) error {
 					Returns: sliceutil.Mapper(method.Returns, func(ret *ast.Return) MethodReturn {
 						return MethodReturn{
 							Name: ret.Name.String(),
-							Type: ret.Type.String(),
+							Type: parseType(ret.Type, isModelType),
 						}
 					}),
 				}
