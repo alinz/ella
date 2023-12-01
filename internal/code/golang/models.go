@@ -74,6 +74,16 @@ func parseModelFieldOptions(field *ast.Field) string {
 		}
 	}
 
+	jsonOmitEmptyValue, ok := mapper["jsonomitempty"]
+	if ok && jsonTagValue != "-" {
+		switch value := jsonOmitEmptyValue.(type) {
+		case *ast.ValueBool:
+			if value.Value {
+				jsonTagValue += ",omitempty"
+			}
+		}
+	}
+
 	sb.WriteString(`json:"`)
 	sb.WriteString(jsonTagValue)
 	sb.WriteString(`"`)
