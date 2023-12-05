@@ -47,7 +47,25 @@ type ctxKey string
 const (
 	ctxKeyRequest  ctxKey = "http_request"
 	ctxKeyResponse ctxKey = "http_response"
+	ctxKeyClientMapper ctxKey = "ella_http_client_mapper"
 )
+
+type ctxClientMapper struct {
+	HttpResponse *http.Response
+}
+
+// CreateCtxClientMapper inject a special object into the context which
+// let's Ella's generated code to inject some values to the context
+// Please refer to GetCtxClientMapper for accessing the values
+// NOTE: use this function only in test functions, to get access to http.Response object
+// of the http client to extract cookies, headers, etc.
+func CreateCtxClientMapper(ctx context.Context) context.Context {
+	return context.WithValue(ctx, ctxKeyClientMapper, &ctxClientMapper{})
+}
+
+func GetCtxClientMapper(ctx context.Context) (*ctxClientMapper, bool) {
+	return getCtxValue[*ctxClientMapper](ctx, ctxKeyClientMapper)
+}
 
 func GetCtxHttpRequest(ctx context.Context) (result *http.Request, ok bool) {
 	return getCtxValue[*http.Request](ctx, ctxKeyRequest)
@@ -70,6 +88,15 @@ func injectCommonVars(ctx context.Context, w http.ResponseWriter, r *http.Reques
 	ctx = context.WithValue(ctx, ctxKeyRequest, r)
 	ctx = context.WithValue(ctx, ctxKeyResponse, w)
 	return ctx
+}
+
+func injectHttpClientResponse(ctx context.Context, resp *http.Response) {
+	clientMapper, ok := ctx.Value(ctxKeyClientMapper).(*ctxClientMapper)
+	if !ok {
+		return
+	}
+
+	clientMapper.HttpResponse = resp
 }
 
 // HTTP SERVER UTILITIES
@@ -364,6 +391,8 @@ func callHttpEndpoint(ctx context.Context, client *http.Client, url string, meth
 		return nil, err
 	}
 
+	injectHttpClientResponse(ctx, resp)
+
 	if resp.StatusCode >= 300 {
 		defer resp.Body.Close()
 		err := &Error{}
@@ -459,6 +488,8 @@ func sendHttpFilesUpload(ctx context.Context, client *http.Client, url string, m
 	if err != nil {
 		return err
 	}
+
+	injectHttpClientResponse(ctx, resp)
 
 	defer resp.Body.Close()
 
