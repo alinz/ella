@@ -32,12 +32,12 @@ func ParseService(p *Parser) (service *ast.Service, err error) {
 	p.Next() // skip '{'
 
 	for p.Peek().Type != token.CloseCurly {
-		method, err := ParseServiceMethod(p)
+		methods, err := ParseServiceMethod(p)
 		if err != nil {
 			return nil, err
 		}
 
-		service.Methods = append(service.Methods, method)
+		service.Methods = append(service.Methods, methods...)
 	}
 
 	p.Next() // skip '}'
@@ -45,26 +45,51 @@ func ParseService(p *Parser) (service *ast.Service, err error) {
 	return service, nil
 }
 
-func ParseServiceMethod(p *Parser) (method *ast.Method, err error) {
-	var methodType ast.MethodType
+func ParseMethodTypes(p *Parser) (methodTypes []ast.MethodType, err error) {
+	methodTypes = make([]ast.MethodType, 0)
+	done := false
+	for !done {
+		switch p.Peek().Type {
+		case token.Http:
+			methodTypes = append(methodTypes, ast.MethodHTTP)
+			p.Next() // skip http
+		case token.Rpc:
+			methodTypes = append(methodTypes, ast.MethodRPC)
+			p.Next() // skip rpc
+		case token.Comma:
+			if len(methodTypes) == 0 {
+				return nil, p.WithError(p.Peek(), "expected 'http' or 'rpc' keyword")
+			} else if len(methodTypes) == 2 {
+				return nil, p.WithError(p.Peek(), "there should be only two method types")
+			}
 
-	switch p.Peek().Type {
-	case token.Http:
-		methodType = ast.MethodHTTP
-	case token.Rpc:
-		methodType = ast.MethodRPC
-	default:
-		return nil, p.WithError(p.Peek(), "expected 'http' or 'rpc' keyword")
+			p.Next() // skip ','
+			continue
+		default:
+			if len(methodTypes) == 0 {
+				return nil, p.WithError(p.Peek(), "expected 'http' or 'rpc' keyword")
+			} else if len(methodTypes) > 0 {
+				done = true
+			}
+		}
 	}
 
-	method = &ast.Method{
-		Type:    methodType,
+	return methodTypes, nil
+}
+
+func ParseServiceMethod(p *Parser) (methods []*ast.Method, err error) {
+	methodTypes, err := ParseMethodTypes(p)
+	if err != nil {
+		return nil, err
+	}
+
+	methods = make([]*ast.Method, 0, len(methodTypes))
+
+	method := &ast.Method{
 		Args:    make([]*ast.Arg, 0),
 		Returns: make([]*ast.Return, 0),
 		Options: make([]*ast.Option, 0),
 	}
-
-	p.Next() // skip rpc, http
 
 	if p.Peek().Type != token.Identifier {
 		return nil, p.WithError(p.Peek(), "expected identifier for defining a service method")
@@ -118,16 +143,24 @@ func ParseServiceMethod(p *Parser) (method *ast.Method, err error) {
 
 	// we return early if there are no options
 	// as options are defined by curly braces
-	if p.Peek().Type != token.OpenCurly {
-		return method, nil
+	if p.Peek().Type == token.OpenCurly {
+		method.Options, err = ParseOptions(p)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	method.Options, err = ParseOptions(p)
-	if err != nil {
-		return nil, err
+	for _, methodType := range methodTypes {
+		methods = append(methods, &ast.Method{
+			Type:    methodType,
+			Name:    method.Name,
+			Args:    method.Args,
+			Returns: method.Returns,
+			Options: method.Options,
+		})
 	}
 
-	return method, nil
+	return methods, nil
 }
 
 func ParseServiceMethodArgument(p *Parser) (arg *ast.Arg, err error) {
