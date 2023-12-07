@@ -144,8 +144,7 @@ func createServiceMethodHandler[ReqMsg, RespMsg any](method string, hasFields bo
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(respMsg)
+		httpResponse(w, http.StatusOK, respMsg)
 	}
 }
 
@@ -349,8 +348,7 @@ func createServiceMethodUploadHandler[ReqMsg, RespMsg any](
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(resp)
+		httpResponse(w, http.StatusOK, resp)
 	}
 }
 
