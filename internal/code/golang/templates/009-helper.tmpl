@@ -789,7 +789,7 @@ type Error struct {
 	msg   string
 }
 
-func (e *Error) UnmarshalText(text []byte) error {
+func (e *Error) UnmarshalJSON(text []byte) error {
 	temp := struct {
 		Code  int    `json:"code"`
 		Casue string `json:"cause,omitempty"`
@@ -807,7 +807,7 @@ func (e *Error) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func (e Error) MarshalText() ([]byte, error) {
+func (e Error) MarshalJSON() ([]byte, error) {
 	temp := struct {
 		Code  int    `json:"code"`
 		Casue string `json:"cause,omitempty"`
