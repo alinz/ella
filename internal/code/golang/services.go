@@ -110,7 +110,7 @@ func (m Method) ArgsStructDefinitions(pointer bool) string {
 	return strings.Join(sliceutil.Mapper(sliceutil.Filter(m.Args, func(arg MethodArg) bool {
 		return arg.Type != "func() (string, io.Reader, error)"
 	}), func(arg MethodArg) string {
-		return fmt.Sprintf("%s %s", strcase.ToPascal(arg.Name), arg.Type)
+		return fmt.Sprintf("%s %s `json:\"%s\"`", strcase.ToPascal(arg.Name), arg.Type, strcase.ToSnake(arg.Name))
 	}), "\n")
 }
 
@@ -130,7 +130,7 @@ func (m Method) ReturnsNames(prefix string) string {
 
 func (m Method) ReturnsStructDefinitions() string {
 	return strings.Join(sliceutil.Mapper(m.Returns, func(ret MethodReturn) string {
-		return fmt.Sprintf("%s %s", strcase.ToPascal(ret.Name), ret.Type)
+		return fmt.Sprintf("%s %s `json:\"%s\"`", strcase.ToPascal(ret.Name), ret.Type, strcase.ToSnake(ret.Name))
 	}), "\n")
 }
 
