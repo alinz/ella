@@ -9,6 +9,14 @@ const {{ $method.PathName }} = "{{ $method.PathValue }}"
 	{{- end }}
 {{- end }}
 
+var AllHttpServiceMethodPaths = []string{
+{{- range $service := .HttpServices }}
+{{- range $method := $service.Methods }}
+	{{ $method.PathName }},
+{{- end }}
+{{- end }}
+}
+
 {{- range $service := .HttpServices }}
 
 type {{ $service.NameImpl }} struct {
