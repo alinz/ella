@@ -238,7 +238,7 @@ class _EventSource {
     this._pollAgain(this.timeoutBeforeConnection);
   }
 
-  _pollAgain(time) {
+  _pollAgain(time: any) {
     this._pollTimer = setTimeout(() => {
       this.open();
     }, time);
@@ -320,7 +320,7 @@ class _EventSource {
         }
       };
 
-      this._xhr.onerror = (e) => {
+      this._xhr.onerror = (e: any) => {
         this.status === this.ERROR;
 
         this.dispatch('error', {
@@ -348,7 +348,7 @@ class _EventSource {
           }
         }, this.timeout);
       }
-    } catch (e) {
+    } catch (e: any) {
       this.status = this.ERROR;
       this.dispatch('error', {
         type: 'exception',
@@ -358,7 +358,7 @@ class _EventSource {
     }
   }
 
-  _handleEvent(response) {
+  _handleEvent(response: any) {
     const parts = response.substr(this.lastIndexProcessed).split('\n');
     this.lastIndexProcessed = response.lastIndexOf('\n\n') + 2;
     let data: any[] = [];
@@ -399,7 +399,7 @@ class _EventSource {
     }
   }
 
-  addEventListener(type, listener) {
+  addEventListener(type: any, listener: any) {
     if (this.eventHandlers[type] === undefined) {
       this.eventHandlers[type] = [];
     }
@@ -407,13 +407,13 @@ class _EventSource {
     this.eventHandlers[type].push(listener);
   }
 
-  removeEventListener(type, listener) {
+  removeEventListener(type: any, listener: any) {
     if (this.eventHandlers[type] !== undefined) {
-      this.eventHandlers[type] = this.eventHandlers[type].filter((handler) => handler !== listener);
+      this.eventHandlers[type] = this.eventHandlers[type].filter((handler: any) => handler !== listener);
     }
   }
 
-  removeAllEventListeners(type) {
+  removeAllEventListeners(type: any) {
     const availableTypes = Object.keys(this.eventHandlers);
 
     if (type === undefined) {
@@ -429,7 +429,7 @@ class _EventSource {
     }
   }
 
-  dispatch(type, data) {
+  dispatch(type: any, data: any) {
     const availableTypes = Object.keys(this.eventHandlers);
 
     if (!availableTypes.includes(type)) {
