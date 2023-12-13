@@ -3,6 +3,11 @@
 // HELPER FUNCTIONS
 //
 
+export type Err = {
+  code: number
+  error: string
+}
+
 async function callServiceUploadMethod<Req, Resp>(
   host: string,
   path: string,
