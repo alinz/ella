@@ -32,12 +32,14 @@ async function callServiceUploadMethod<Req, Resp>(
   const value = await resp.text();
 
   if (resp.status > 300) {
+    const value = await resp.text()
+    let msg: any
     try {
-      const msg = JSON.parse(value);
-      throw new Error(msg.error);
+      msg = JSON.parse(value)
     } catch (e) {
-      throw new Error(value);
+      throw value
     }
+    throw msg
   }
 
   return JSON.parse(value) as Resp;
@@ -119,13 +121,14 @@ async function callServiceMethod<Req, Resp>(
   });
 
   if (resp.status > 300) {
-    const value = await resp.text();
+    const value = await resp.text()
+    let msg: any
     try {
-      const msg = JSON.parse(value);
-      throw new Error(msg.error);
+      msg = JSON.parse(value)
     } catch (e) {
-      throw new Error(value);
+      throw value
     }
+    throw msg
   }
 
   if (rawBlob) {
