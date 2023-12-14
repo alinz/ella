@@ -3,9 +3,12 @@
 // HELPER FUNCTIONS
 //
 
-export type Err = {
-  code: number
-  error: string
+class ResponseError extends Error {
+  code : number
+  constructor(message: string, code: number) {
+    super(message);
+    this.code = code
+  }
 }
 
 async function callServiceUploadMethod<Req, Resp>(
@@ -44,7 +47,7 @@ async function callServiceUploadMethod<Req, Resp>(
     } catch (e) {
       throw value
     }
-    throw msg
+    throw new ResponseError(msg.error, msg.code)
   }
 
   return JSON.parse(value) as Resp;
@@ -133,7 +136,7 @@ async function callServiceMethod<Req, Resp>(
     } catch (e) {
       throw value
     }
-    throw msg
+    throw new ResponseError(msg.error, msg.code)
   }
 
   if (rawBlob) {
