@@ -3,7 +3,7 @@
 // HELPER FUNCTIONS
 //
 
-class ResponseError extends Error {
+export class ResponseError extends Error {
   code : number
   constructor(message: string, code: number) {
     super(message);
