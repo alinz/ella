@@ -16,7 +16,7 @@ type ModelFields []ModelField
 
 func (m *ModelFields) Parse(message *ast.Model) error {
 	*m = sliceutil.Filter(sliceutil.Mapper(message.Fields, func(field *ast.Field) ModelField {
-		name := strcase.ToCamel(field.Name.String())
+		name := strcase.ToSnake(field.Name.String())
 		for _, opt := range field.Options {
 			if opt.Name.String() == "Json" {
 				switch v := opt.Value.(type) {

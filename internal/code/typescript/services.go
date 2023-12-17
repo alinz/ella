@@ -100,7 +100,7 @@ func (s *HttpServices) Parse(prog *ast.Program) error {
 					},
 				), func(arg *ast.Arg) Arg {
 					return Arg{
-						Name: strcase.ToCamel(arg.Name.String()),
+						Name: strcase.ToSnake(arg.Name.String()),
 						Type: parseType(arg.Type),
 					}
 				})
@@ -115,7 +115,7 @@ func (s *HttpServices) Parse(prog *ast.Program) error {
 					}
 
 					return Return{
-						Name: strcase.ToCamel(ret.Name.String()),
+						Name: strcase.ToSnake(ret.Name.String()),
 						Type: typ,
 					}
 				})
