@@ -26,12 +26,12 @@ export interface {{ $service.Name }} {
   {{ $method.Name }}: (
       files: {name: string, data: Blob}[],
       args: {{ $method.ArgsName }},
-      headers?: Record<string, string>
+      opts?: CallServiceOptions
     ) => Promise<{{ $method.ReturnsName }}>;
 {{- else }}
   {{ $method.Name }}: (
 		args: {{ $method.ArgsName }},
-		headers?: Record<string, string>
+		opts?: CallServiceOptions
 	) => Promise<{{ $method.ReturnsName }}>;
 {{- end }}
 {{- end }}

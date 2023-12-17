@@ -10,34 +10,34 @@ export function create{{ $service.Name }}(host: string): {{ $service.Name }} {
         {{ $method.Name }}: (
             files: {name: string, data: Blob}[],
             args: {{ $method.ArgsName }},
-            headers?: Record<string, string>): Promise<{{ $method.ReturnsName }}> => {
+            opts?: CallServiceOptions): Promise<{{ $method.ReturnsName }}> => {
             return callServiceUploadMethod(
                 host,
                 "{{ $method.PathValue }}",
                 "{{ $method.Options.HttpMethod }}",
                 args,
                 files,
-                headers);
+                opts);
         },
 {{- else }}
         {{ $method.Name }}: (
             args: {{ $method.ArgsName }},
-            headers?: Record<string, string>): Promise<{{ $method.ReturnsName }}> => {
+            opts?: CallServiceOptions): Promise<{{ $method.ReturnsName }}> => {
 {{- if $method.IsStream }}
             return callServiceStreamMethod(
                 host,
                 "{{ $method.PathValue }}",
                 "{{ $method.Options.HttpMethod }}",
                 args,
-                headers);
+                opts);
 {{- else }}
             return callServiceMethod(
                 host,
                 "{{ $method.PathValue }}",
                 "{{ $method.Options.HttpMethod }}",
                 args,
-                headers,
-                {{ if $method.IsBinaryStream }}true{{- else }}false{{- end }});
+                {{ if $method.IsBinaryStream }}true{{- else }}false{{- end }},
+                opts);
 {{- end }}
         },
 {{- end }}
