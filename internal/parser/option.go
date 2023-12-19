@@ -1,8 +1,8 @@
 package parser
 
 import (
-	"ella.to/internal/ast"
-	"ella.to/internal/token"
+	"compiler.ella.to/internal/ast"
+	"compiler.ella.to/internal/token"
 )
 
 func ParseOption(p *Parser) (option *ast.Option, err error) {

@@ -4,8 +4,8 @@ import (
 	"embed"
 	"os"
 
-	"ella.to/internal/ast"
-	"ella.to/internal/code"
+	"compiler.ella.to/internal/ast"
+	"compiler.ella.to/internal/code"
 )
 
 //go:embed templates/*.tmpl

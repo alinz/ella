@@ -3,7 +3,7 @@ package validator
 import (
 	"fmt"
 
-	"ella.to/internal/ast"
+	"compiler.ella.to/internal/ast"
 )
 
 func Validate(prog *ast.Program) error {

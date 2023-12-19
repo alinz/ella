@@ -3,9 +3,9 @@ package parser
 import (
 	"strconv"
 
-	"ella.to/internal/ast"
-	"ella.to/internal/token"
-	"ella.to/pkg/strcase"
+	"compiler.ella.to/internal/ast"
+	"compiler.ella.to/internal/token"
+	"compiler.ella.to/pkg/strcase"
 )
 
 func ParseType(p *Parser) (ast.Type, error) {

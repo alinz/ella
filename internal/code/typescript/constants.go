@@ -1,9 +1,9 @@
 package typescript
 
 import (
-	"ella.to/internal/ast"
-	"ella.to/internal/ast/astutil"
-	"ella.to/pkg/sliceutil"
+	"compiler.ella.to/internal/ast"
+	"compiler.ella.to/internal/ast/astutil"
+	"compiler.ella.to/pkg/sliceutil"
 )
 
 type Constant struct {

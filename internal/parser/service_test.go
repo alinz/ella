@@ -3,8 +3,8 @@ package parser_test
 import (
 	"testing"
 
-	"ella.to/internal/ast"
-	"ella.to/internal/parser"
+	"compiler.ella.to/internal/ast"
+	"compiler.ella.to/internal/parser"
 )
 
 func TestParseService(t *testing.T) {

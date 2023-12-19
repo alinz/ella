@@ -3,8 +3,8 @@ package scanner_test
 import (
 	"testing"
 
-	"ella.to/internal/scanner"
-	"ella.to/internal/token"
+	"compiler.ella.to/internal/scanner"
+	"compiler.ella.to/internal/token"
 )
 
 func TestLex(t *testing.T) {

@@ -1,6 +1,6 @@
 package astutil
 
-import "ella.to/internal/ast"
+import "compiler.ella.to/internal/ast"
 
 func CreateModelTypeMap(messages []*ast.Model) map[string]*ast.Model {
 	messagesMap := make(map[string]*ast.Model)

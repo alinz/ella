@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"ella.to/internal/ast"
-	"ella.to/internal/parser"
+	"compiler.ella.to/internal/ast"
+	"compiler.ella.to/internal/parser"
 )
 
 type TestCase struct {

@@ -1,6 +1,6 @@
 package ast
 
-import "ella.to/internal/token"
+import "compiler.ella.to/internal/token"
 
 type Identifier struct {
 	Token *token.Token `json:"token"`

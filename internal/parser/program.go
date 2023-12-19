@@ -1,8 +1,8 @@
 package parser
 
 import (
-	"ella.to/internal/ast"
-	"ella.to/internal/token"
+	"compiler.ella.to/internal/ast"
+	"compiler.ella.to/internal/token"
 )
 
 func ParseProgram(p *Parser) (prog *ast.Program, err error) {

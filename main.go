@@ -6,12 +6,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"ella.to/internal/ast"
-	"ella.to/internal/code"
-	"ella.to/internal/code/golang"
-	"ella.to/internal/code/typescript"
-	"ella.to/internal/parser"
-	"ella.to/internal/validator"
+	"compiler.ella.to/internal/ast"
+	"compiler.ella.to/internal/code"
+	"compiler.ella.to/internal/code/golang"
+	"compiler.ella.to/internal/code/typescript"
+	"compiler.ella.to/internal/parser"
+	"compiler.ella.to/internal/validator"
 )
 
 const Version = "0.0.2"

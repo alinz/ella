@@ -4,7 +4,7 @@ import (
 	"strings"
 	"text/template"
 
-	"ella.to/pkg/strcase"
+	"compiler.ella.to/pkg/strcase"
 )
 
 var DefaultFuncsMap = template.FuncMap{

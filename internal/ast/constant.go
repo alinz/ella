@@ -3,7 +3,7 @@ package ast
 import (
 	"strings"
 
-	"ella.to/internal/token"
+	"compiler.ella.to/internal/token"
 )
 
 type Const struct {

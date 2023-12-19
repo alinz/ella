@@ -1,6 +1,6 @@
 package astutil
 
-import "ella.to/internal/ast"
+import "compiler.ella.to/internal/ast"
 
 func GetValueType(val ast.Value) string {
 	switch v := val.(type) {

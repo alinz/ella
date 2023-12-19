@@ -3,7 +3,7 @@ package scanner
 import (
 	"strings"
 
-	"ella.to/internal/token"
+	"compiler.ella.to/internal/token"
 )
 
 func Lex(l *Lexer) State {

@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"ella.to/internal/ast"
-	"ella.to/internal/token"
+	"compiler.ella.to/internal/ast"
+	"compiler.ella.to/internal/token"
 )
 
 func parseBytesNumber(value string) (number string, scale ast.ByteSize) {

@@ -3,10 +3,10 @@ package typescript
 import (
 	"fmt"
 
-	"ella.to/internal/ast"
-	"ella.to/internal/ast/astutil"
-	"ella.to/pkg/sliceutil"
-	"ella.to/pkg/strcase"
+	"compiler.ella.to/internal/ast"
+	"compiler.ella.to/internal/ast/astutil"
+	"compiler.ella.to/pkg/sliceutil"
+	"compiler.ella.to/pkg/strcase"
 )
 
 type Arg struct {

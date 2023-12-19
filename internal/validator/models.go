@@ -5,8 +5,8 @@ import (
 	"slices"
 	"strings"
 
-	"ella.to/internal/ast"
-	"ella.to/internal/ast/astutil"
+	"compiler.ella.to/internal/ast"
+	"compiler.ella.to/internal/ast/astutil"
 )
 
 // Validates the messages of the program from the following aspects:

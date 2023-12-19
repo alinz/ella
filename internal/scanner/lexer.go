@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"ella.to/internal/token"
+	"compiler.ella.to/internal/token"
 )
 
 // Lexer lexer struct

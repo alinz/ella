@@ -1,6 +1,6 @@
 package astutil
 
-import "ella.to/internal/ast"
+import "compiler.ella.to/internal/ast"
 
 func getContent[T any](node ast.Node) []T {
 	var results []T

@@ -1,7 +1,7 @@
 package code
 
 import (
-	"ella.to/internal/ast"
+	"compiler.ella.to/internal/ast"
 )
 
 type Generator interface {

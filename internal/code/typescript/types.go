@@ -3,7 +3,7 @@ package typescript
 import (
 	"fmt"
 
-	"ella.to/internal/ast"
+	"compiler.ella.to/internal/ast"
 )
 
 func parseType(typ ast.Type) string {

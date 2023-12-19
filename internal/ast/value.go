@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"ella.to/internal/token"
+	"compiler.ella.to/internal/token"
 )
 
 type Value interface {

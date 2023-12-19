@@ -1,4 +1,4 @@
-module ella.to
+module compiler.ella.to
 
 go 1.21
 

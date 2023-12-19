@@ -3,8 +3,8 @@ package astutil
 import (
 	"strings"
 
-	"ella.to/internal/ast"
-	"ella.to/pkg/strcase"
+	"compiler.ella.to/internal/ast"
+	"compiler.ella.to/pkg/strcase"
 )
 
 type MethodOptions struct {

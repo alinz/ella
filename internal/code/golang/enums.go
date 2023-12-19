@@ -3,9 +3,9 @@ package golang
 import (
 	"fmt"
 
-	"ella.to/internal/ast"
-	"ella.to/internal/ast/astutil"
-	"ella.to/pkg/sliceutil"
+	"compiler.ella.to/internal/ast"
+	"compiler.ella.to/internal/ast/astutil"
+	"compiler.ella.to/pkg/sliceutil"
 )
 
 type EnumKeyValue struct {

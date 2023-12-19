@@ -4,9 +4,9 @@ import (
 	"strconv"
 	"strings"
 
-	"ella.to/internal/ast"
-	"ella.to/internal/token"
-	"ella.to/pkg/strcase"
+	"compiler.ella.to/internal/ast"
+	"compiler.ella.to/internal/token"
+	"compiler.ella.to/pkg/strcase"
 )
 
 func ParseEnum(p *Parser) (enum *ast.Enum, err error) {

@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"ella.to/internal/scanner"
-	"ella.to/internal/token"
+	"compiler.ella.to/internal/scanner"
+	"compiler.ella.to/internal/token"
 )
 
 type Parser struct {

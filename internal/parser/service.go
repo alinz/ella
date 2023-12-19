@@ -1,9 +1,9 @@
 package parser
 
 import (
-	"ella.to/internal/ast"
-	"ella.to/internal/token"
-	"ella.to/pkg/strcase"
+	"compiler.ella.to/internal/ast"
+	"compiler.ella.to/internal/token"
+	"compiler.ella.to/pkg/strcase"
 )
 
 func ParseService(p *Parser) (service *ast.Service, err error) {
