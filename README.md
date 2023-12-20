@@ -67,25 +67,81 @@ There is a simple role when writing a schema in Ella's IDL, all identifier needs
 
 ## const
 
-A constant is a value that is immutable and can be used in field and method options. It supports `int`, `float`, `string`, `boolean` and new types such as
+A constant is a value that is immutable and can be used in field and method options.
 
-- defining a byte size,
-
-  - any of the following postfixes can be used: `b`, `kb`, `mb`, `gb`, `tb`, `pb`, `eb`
-  - the number has to be integer. no float number
+### int
 
 ```
-const MaxSize = 10mb
+const BuildNumber = 10
 ```
 
-- defining a duration
-  - any of the following postfixes can be used: `ns`, `us`, `ms`, `s`, `m`, `h`
+### float
+
+```
+const Pi = 3.14
+```
+
+### string
+
+```
+const DoubleQuote = "1.0.0"
+
+const SingleQuote = 'Hello World'
+
+const MultiLine = `Hello
+  This is really cool
+
+  bye
+`
+```
+
+### bool
+
+```
+const Debug = true
+```
+
+### byte size
+
+This is a very helpful time as it makes it easier to write values in bytes type. The following postfixes can be used: `b`, `kb`, `mb`, `gb`, `tb`, `pb`, `eb`
+
+> Note: the number has to be integer. No floating is premitted. In order to represent `1.1kb`, use the lower postfix `b` and represent the number as follows: `1100b`.
+
+```
+const MaxFileUploadSize = 100mb
+```
+
+### duration
+
+> Note: `duration` type is also the same as `byte size` type. Only interger value is permitted.
+
+This is a very helpful time as it makes it easier to write values in duration type. The following postfixes can be used: `ns`, `us`, `ms`, `s`, `m`, `h`
 
 ```
 const MaxWaitTime = 5h
 ```
 
 ## enum
+
+`enum` is a way to define a series of const values under the same category. In Golang, there is no such thing as `enum` and usually, people use a custom type and assign values to it. Ella's compiler does the heavy lifting of that and generates the most optimized version of the Go representation that supports both `yaml` and `json` marshal and unmarshal operations. It also supports ignoring value using `_` keyword.
+
+> Note: Ella's enum type doesn't have a type, because behind the scene it will generate approporate type which is most memory efficient and optimize.
+
+```
+enum UserType {
+  _
+  Normal
+  Guest
+  Root
+}
+
+enum UserStatus {
+  _
+  Active = 10
+  Deactive
+  Deleted = 65
+}
+```
 
 ## model
 
