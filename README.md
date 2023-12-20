@@ -145,7 +145,98 @@ enum UserStatus {
 
 ## model
 
+model is a way to define a series of variables under the same category, similar to `struct` in Go.
+
+```
+model User {
+  Firstname: string
+  Lastname: string
+  Age: int8
+  LocationMap: []string
+  Parents: []User
+  ComplexMap: map<string, []User>
+  CreatedAt: timestamp
+}
+```
+
+> Note: Model's field type can be any of the default types such as `byte`, `bool`, `int8`, `int16`, `int32`, `int64`, `uint8`, `uint16`, `uint32`, `uint64`, `float32`, `float64`, `timestamp`, `string`, and complex types such as `map<key, value>` and array `[]type`, or it can be any other model's or enum's name type.
+
 ### field options
+
+field options is a way to customize and assign values to each field of the model. Currently, there are the following predefined field options available.
+
+- JsonOmitEmpty
+
+is a boolean value that adds `omitempty` inside `Go` generated struct tag.
+
+```
+model User {
+  Username: string
+  Password: string {
+    JsonOmitEmpty = true
+  }
+}
+```
+
+So basically the above model generates a `Go` struct as follows:
+
+```golang
+type User struct {
+  Username string `json:"username"`
+  Password string `json:"password,omitempty"`
+}
+```
+
+- Json
+
+Json option fields are a way to either not marshal and unmarshal the value or renaming the field during marshal and unmarshal operations.
+
+```
+model User {
+  Firstname: string {
+    Json = "firstName"
+  }
+}
+
+model AnotherUser {
+  Username: string
+  Password: string {
+    Json = false
+  }
+}
+```
+
+The above model will be converted to the following `Go` code
+
+```Golang
+type User struct {
+  Firstname string `json:"firstName"`
+}
+
+type AnotherUser struct {
+  Username string `json:"username"`
+  Password string `json:"-"`
+}
+```
+
+- Yaml
+
+is the same as `Json`. Currently, this is the only option available for `Yaml`.
+
+```
+model User {
+  Firstname: string {
+    Yaml = "firstName"
+  }
+}
+
+model User {
+  Username: string
+  Password: string {
+    Yaml = false
+  }
+}
+```
 
 ## service
 
@@ -185,3 +276,7 @@ enum UserStatus {
   - stream
 
 - The logo was generated [here](https://patorjk.com/software/taag/#p=display&f=Calvin%20S&t=ella)
+
+```
+
+```
