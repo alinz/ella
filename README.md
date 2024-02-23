@@ -242,6 +242,10 @@ model User {
 
 ### http
 
+#### stream
+
+#### file upload
+
 ### rpc
 
 ### method options
