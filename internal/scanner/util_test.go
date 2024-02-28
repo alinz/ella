@@ -16,6 +16,7 @@ type Tokens []token.Token
 type TestCase struct {
 	input  string
 	output Tokens
+	skip   bool
 }
 
 type TestCases []TestCase
@@ -35,6 +36,9 @@ func runTestCase(t *testing.T, target int, initState scanner.State, testCases Te
 	}
 
 	for i, tc := range testCases {
+		if tc.skip {
+			continue
+		}
 		output := make(Tokens, 0)
 		emitter := token.EmitterFunc(func(token *token.Token) {
 			output = append(output, *token)

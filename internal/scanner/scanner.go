@@ -80,8 +80,10 @@ func Lex(l *Lexer) State {
 		l.Ignore()
 		l.AcceptRunUntil("\n\r")
 		if newLine {
-			l.Emit(token.TopComment)
+			l.Ignore()
+			// l.Emit(token.TopComment)
 		} else {
+			l.Ignore()
 			l.Emit(token.RightComment)
 		}
 	case '\'':

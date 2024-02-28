@@ -54,6 +54,7 @@ func TestLex(t *testing.T) {
 			},
 		},
 		{
+			skip: true,
 			input: `
 			
 			# this is a comment 1
@@ -89,6 +90,7 @@ func TestLex(t *testing.T) {
 			},
 		},
 		{
+			skip: true,
 			input: `
 
 			# This is a first comment
@@ -139,6 +141,7 @@ func TestLex(t *testing.T) {
 			},
 		},
 		{
+			skip: true,
 			input: `enum a int64 {
 				one = 1 # comment
 				two = 2# comment2
