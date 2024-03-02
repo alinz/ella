@@ -19,6 +19,10 @@ error ErrUserNotFound { Code = 1000 HttpStatus = NotFound Msg = "user not found"
 			Input:  "error ErrUserNotFound { Code = 1000 HttpStatus = NotFound Msg = `user not found` }",
 			Output: "error ErrUserNotFound { Code = 1000 HttpStatus = NotFound Msg = `user not found` }",
 		},
+		{
+			Input:  "error ErrUserNotFound { HttpStatus = NotFound Msg = `user not found` }",
+			Output: "error ErrUserNotFound { Code = 1000 HttpStatus = NotFound Msg = `user not found` }",
+		},
 	}
 
 	runTests(t, func(p *parser.Parser) (ast.Node, error) {

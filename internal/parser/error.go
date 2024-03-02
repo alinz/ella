@@ -42,11 +42,12 @@ func ParseCustomError(p *Parser) (customError *ast.CustomError, err error) {
 
 	p.Next() // skip '}'
 
-	// check if all values are defined
+	// automatically assign error code if not defined
 	if customError.Code == 0 {
-		return nil, p.WithError(customError.Token, "code is not defined in custom error")
+		customError.Code = p.getNextErrorCode()
 	}
 
+	// check if all values are defined
 	if customError.HttpStatus == 0 {
 		return nil, p.WithError(customError.Token, "http status is not defined in custom error")
 	}
@@ -98,6 +99,9 @@ func parseCustomErrorCode(p *Parser, customError *ast.CustomError) (err error) {
 	}
 
 	customError.Code = codeValue.(*ast.ValueInt).Value
+	if err = p.setErrorCodeValue(customError.Code); err != nil {
+		return err
+	}
 
 	return nil
 }

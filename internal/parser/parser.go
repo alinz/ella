@@ -14,6 +14,28 @@ type Parser struct {
 	tokens  token.Iterator
 	nextTok *token.Token
 	currTok *token.Token
+
+	errorCodesMap  map[int64]struct{}
+	errorCodeValue int64
+}
+
+func (p *Parser) setErrorCodeValue(value int64) error {
+	if _, ok := p.errorCodesMap[value]; ok {
+		return fmt.Errorf("error code %d is already defined", value)
+	}
+	p.errorCodesMap[value] = struct{}{}
+	return nil
+}
+
+func (p *Parser) getNextErrorCode() int64 {
+	for {
+		if _, ok := p.errorCodesMap[p.errorCodeValue]; !ok {
+			p.errorCodesMap[p.errorCodeValue] = struct{}{}
+			return p.errorCodeValue
+		}
+
+		p.errorCodeValue++
+	}
 }
 
 func (p *Parser) Current() *token.Token {
@@ -95,11 +117,11 @@ func (p *Parser) showContext(token *token.Token, lines int) string {
 func New(input string) *Parser {
 	tokenEmitter := token.NewEmitterIterator()
 	go scanner.Start(tokenEmitter, scanner.Lex, input)
-	return &Parser{input: input, tokens: tokenEmitter}
+	return &Parser{input: input, tokens: tokenEmitter, errorCodesMap: make(map[int64]struct{}), errorCodeValue: 1000}
 }
 
 func NewFilenames(filenames ...string) *Parser {
 	tokenEmitter := token.NewEmitterIterator()
 	go scanner.StartWithFilenames(tokenEmitter, scanner.Lex, filenames...)
-	return &Parser{tokens: tokenEmitter}
+	return &Parser{tokens: tokenEmitter, errorCodesMap: make(map[int64]struct{}), errorCodeValue: 1000}
 }
