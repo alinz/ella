@@ -16,6 +16,7 @@ var files embed.FS
 
 type Golang struct {
 	PkgName      string
+	CustomErrors CustomErrors
 	Constants    Constants
 	Enums        Enums
 	Models       Models
@@ -58,6 +59,7 @@ func (g Golang) HasConstants() bool {
 func (g *Golang) Parse(prog *ast.Program) error {
 	return code.RunParsers(
 		prog,
+		g.CustomErrors.Parse,
 		g.Constants.Parse,
 		g.Enums.Parse,
 		g.Models.Parse,

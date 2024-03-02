@@ -268,6 +268,25 @@ func TestLex(t *testing.T) {
 				{Type: token.EOF, Start: 223, End: 223, Literal: ""},
 			},
 		},
+		{
+			input: `error ErrUserNotFound { Code = 1000 HttpStatus = NotFound Msg = "user not found" }`,
+			output: Tokens{
+				{Type: token.CustomError, Start: 0, End: 5, Literal: "error"},
+				{Type: token.Identifier, Start: 6, End: 21, Literal: "ErrUserNotFound"},
+				{Type: token.OpenCurly, Start: 22, End: 23, Literal: "{"},
+				{Type: token.Identifier, Start: 24, End: 28, Literal: "Code"},
+				{Type: token.Assign, Start: 29, End: 30, Literal: "="},
+				{Type: token.ConstInt, Start: 31, End: 35, Literal: "1000"},
+				{Type: token.Identifier, Start: 36, End: 46, Literal: "HttpStatus"},
+				{Type: token.Assign, Start: 47, End: 48, Literal: "="},
+				{Type: token.Identifier, Start: 49, End: 57, Literal: "NotFound"},
+				{Type: token.Identifier, Start: 58, End: 61, Literal: "Msg"},
+				{Type: token.Assign, Start: 62, End: 63, Literal: "="},
+				{Type: token.ConstStringDoubleQuote, Start: 65, End: 79, Literal: "user not found"},
+				{Type: token.CloseCurly, Start: 81, End: 82, Literal: "}"},
+				{Type: token.EOF, Start: 82, End: 82, Literal: ""},
+			},
+		},
 	})
 }
 

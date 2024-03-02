@@ -51,6 +51,7 @@ const (
 	CloseAngle                           // >
 	RightComment                         // #
 	TopComment                           // #
+	CustomError                          // error
 )
 
 func (t Type) String() string {
@@ -155,6 +156,8 @@ func (t Type) String() string {
 		return "RightComment"
 	case TopComment:
 		return "TopComment"
+	case CustomError:
+		return "CustomError"
 	default:
 		return "Unknown"
 	}

@@ -335,6 +335,9 @@ func reservedKeywrod(l *Lexer) bool {
 	case "null":
 		l.Emit(token.ConstNull)
 		return true
+	case "error":
+		l.Emit(token.CustomError)
+		return true
 	default:
 		return false
 	}

@@ -1,0 +1,7 @@
+//
+// Custom Errors
+//
+
+{{ range $customError := .CustomErrors -}}
+var {{ $customError.Name }} = newError({{ $customError.Code }}, {{ $customError.HttpStatus }}, nil, "{{ $customError.Msg }}")
+{{ end }}

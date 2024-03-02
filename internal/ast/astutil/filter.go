@@ -22,6 +22,10 @@ func getContent[T any](node ast.Node) []T {
 	return results
 }
 
+func GetCustomErrors(node ast.Node) []*ast.CustomError {
+	return getContent[*ast.CustomError](node)
+}
+
 func GetConstants(node ast.Node) []*ast.Const {
 	return getContent[*ast.Const](node)
 }
