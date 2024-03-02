@@ -107,7 +107,7 @@ type httpServiceMethodHandler func(context.Context, http.ResponseWriter, *http.R
 func createServiceMethodHandler[ReqMsg, RespMsg any](method string, hasFields bool, fn func(ctx context.Context, req *ReqMsg) (*RespMsg, error)) httpServiceMethodHandler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
-			httpResponseError(w, Errorf(http.StatusMethodNotAllowed, nil, "method %q not allowed", r.Method))
+			httpResponseError(w, ErrMethodNotAllowed.WithMsg("method %q not allowed", r.Method))
 			return
 		}
 
@@ -157,13 +157,13 @@ type streamEvent struct {
 func createStreamServiceMethod[ReqMsg any](method string, hasFields bool, fn func(ctx context.Context, req *ReqMsg) (<-chan *streamEvent, error)) httpServiceMethodHandler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
-			httpResponseError(w, Errorf(http.StatusMethodNotAllowed, nil, "method %q not allowed", r.Method))
+			httpResponseError(w, ErrMethodNotAllowed.WithMsg("method %q not allowed", r.Method))
 			return
 		}
 
 		fluser, ok := w.(http.Flusher)
 		if !ok {
-			httpResponseError(w, Errorf(http.StatusInternalServerError, nil, "response writer does not support flushing"))
+			httpResponseError(w, ErrFlusherNotSupported)
 			return
 		}
 
@@ -238,7 +238,7 @@ func createStreamServiceMethod[ReqMsg any](method string, hasFields bool, fn fun
 func createStreamBinaryServiceMethod[ReqMsg any](method string, contentType string, hasFields bool, fn func(ctx context.Context, req *ReqMsg) (io.Reader, error)) httpServiceMethodHandler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
-			httpResponseError(w, Errorf(http.StatusMethodNotAllowed, nil, "method %q not allowed", r.Method))
+			httpResponseError(w, ErrMethodNotAllowed.WithMsg("method %q not allowed", r.Method))
 			return
 		}
 
@@ -297,7 +297,7 @@ func createServiceMethodUploadHandler[ReqMsg, RespMsg any](
 ) httpServiceMethodHandler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			httpResponseError(w, Errorf(http.StatusMethodNotAllowed, nil, "method %q not allowed", r.Method))
+			httpResponseError(w, ErrMethodNotAllowed.WithMsg("method %q not allowed", r.Method))
 			return
 		}
 
@@ -317,7 +317,7 @@ func createServiceMethodUploadHandler[ReqMsg, RespMsg any](
 
 		if part.FormName() != "payload" {
 			part.Close()
-			httpResponseError(w, Errorf(http.StatusBadRequest, nil, "missing payload name"))
+			httpResponseError(w, ErrMissingPayloadName)
 			return
 		}
 
@@ -336,7 +336,7 @@ func createServiceMethodUploadHandler[ReqMsg, RespMsg any](
 			}
 
 			if part.FormName() != "files" {
-				return "", nil, Errorf(http.StatusBadRequest, nil, "missing files field")
+				return "", nil, ErrMissingFilesField
 			}
 
 			return part.FileName(), part, nil
@@ -672,7 +672,7 @@ func isContentType(r *http.Request, contentType string) bool {
 
 func checkContentType(r *http.Request, contentType string) error {
 	if !isContentType(r, contentType) {
-		return Errorf(http.StatusUnsupportedMediaType, nil, "content type %q not supported", r.Header.Get("Content-Type"))
+		return ErrUnsupportedMediaType.WithMsg("content type %q not supported", r.Header.Get("Content-Type"))
 	}
 	return nil
 }
@@ -780,102 +780,62 @@ func valuesToStruct(values url.Values, ptr any) error {
 
 // ERROR UTILITIES
 // Helper utilities for creating uniform error responses
-
+// Partially inspired by webrpc's error handling
+// some changes were made to fit the needs of the project
+// - cause will not be included in the response of http client, as it meant to be logged on the server side
+// - since the http status is incorporated in the http response header, it is unnecessary to include it in the json
+// - WithMsg is added to allow changing the message of the error, the comparison of the error will still be based on the code
+// - It is recommended to use the generated code to create errors
 type Error struct {
-	code  int
-	cause error
-	msg   string
+	Code       int    `json:"code"`
+	Message    string `json:"message"`
+	HTTPStatus int    `json:"-"`
+	cause      error
 }
 
-func (e *Error) UnmarshalJSON(text []byte) error {
-	temp := struct {
-		Code  int    `json:"code"`
-		Casue string `json:"cause,omitempty"`
-		Error string `json:"error"`
-	}{}
+var _ error = Error{}
 
-	if err := json.Unmarshal(text, &temp); err != nil {
-		return err
-	}
-
-	e.code = temp.Code
-	e.msg = temp.Error
-	e.cause = errors.New(temp.Casue)
-
-	return nil
-}
-
-func (e Error) MarshalJSON() ([]byte, error) {
-	temp := struct {
-		Code  int    `json:"code"`
-		Casue string `json:"cause,omitempty"`
-		Error string `json:"error"`
-	}{
-		Code:  e.code,
-		Error: e.Error(),
-	}
-
+func (e Error) Error() string {
 	if e.cause != nil {
-		temp.Casue = e.cause.Error()
+		return fmt.Sprintf("%d: %s: %v", e.Code, e.Message, e.cause)
 	}
-
-	return json.Marshal(temp)
+	return fmt.Sprintf("%d: %s", e.Code, e.Message)
 }
 
-func (e *Error) Error() string {
-	var sb strings.Builder
-
-	if e.msg != "" {
-		sb.WriteString(e.msg)
+func (e Error) Is(target error) bool {
+	if rpcErr, ok := target.(Error); ok {
+		return rpcErr.Code == e.Code
 	}
-
-	if e.cause != nil {
-		if sb.Len() > 0 {
-			sb.WriteString(": ")
-		}
-
-		sb.WriteString(e.cause.Error())
-	}
-
-	return sb.String()
+	return errors.Is(e.cause, target)
 }
 
-func (e *Error) Cause() error {
+func (e Error) Unwrap() error {
 	return e.cause
 }
 
-func (e *Error) Unwrap() error {
-	return e.cause
+func (e Error) WithCause(cause error) Error {
+	err := e
+	err.cause = cause
+	return err
 }
 
-// Errorf is a way to create an error with a message and a cause
-// cause can be nil if there is no cause, code can be any int, if it is
-// a valid http status code, it will be used as http status code
-func Errorf(code int, cause error, format string, args ...interface{}) error {
-	return &Error{code: code, cause: cause, msg: fmt.Sprintf(format, args...)}
+func (e Error) WithMsg(msg string, args ...any) Error {
+	err := e
+	err.Message = fmt.Sprintf(msg, args...)
+	return err
 }
 
-// IsError is an extension of errors.Is that also checks the error message
-// in string format. This enables us to check errors during serlization/deserilization
-// process
-func IsError(err, target error) bool {
-	if err == nil {
-		return false
+func newError(code int, httpStatus int, cause error, msg string, args ...any) Error {
+	if httpStatus < 100 || httpStatus > 599 {
+		panic(fmt.Sprintf("invalid http status code: %d", httpStatus))
 	}
-
-	if err == target {
-		return true
+	err := Error{
+		Code:       code,
+		Message:    fmt.Sprintf(msg, args...),
+		HTTPStatus: httpStatus,
+		cause:      cause,
 	}
-
-	if err.Error() == target.Error() {
-		return true
-	}
-
-	if err, ok := err.(*Error); ok {
-		return IsError(err.cause, target)
-	}
-
-	return errors.Is(err, target)
+	return err
 }
 
 // httpResponseError is a helper function that writes an error to the http response
@@ -885,12 +845,24 @@ func IsError(err, target error) bool {
 func httpResponseError(w http.ResponseWriter, err error) {
 	switch err := err.(type) {
 	case *Error:
-		if err.code < 100 || err.code > 599 {
+		if err.HTTPStatus < 100 || err.HTTPStatus > 599 {
 			httpResponse(w, http.StatusInternalServerError, err)
 			return
 		}
-		httpResponse(w, err.code, err)
+		slog.Error("http response error", "code", err.Code, "http_status", err.HTTPStatus, "message", err.Message, "cause", err.cause)
+		httpResponse(w, err.HTTPStatus, err)
 	default:
-		httpResponse(w, http.StatusInternalServerError, Errorf(http.StatusInternalServerError, err, ""))
+		httpResponseError(w, newError(0, http.StatusInternalServerError, err, "internal server error"))
 	}
 }
+
+// Default Errors
+
+var (
+	ErrUnsupportedMediaType = newError(-1, http.StatusUnsupportedMediaType, nil, "unsupported media type")
+	ErrServiceMethodNotFound = newError(-2, http.StatusNotFound, nil, "service method not found")
+	ErrMissingFilesField = newError(-3, http.StatusBadRequest, nil, "missing files field")
+	ErrMissingPayloadName = newError(-4, http.StatusBadRequest, nil, "missing payload field")
+	ErrMethodNotAllowed = newError(-5, http.StatusMethodNotAllowed, nil, "method not allowed")
+	ErrFlusherNotSupported = newError(-6, http.StatusNotExtended, nil, "response writer does not support flushing")
+)

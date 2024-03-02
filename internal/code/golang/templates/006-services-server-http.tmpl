@@ -37,7 +37,7 @@ func (s *{{ $service.NameImpl }}) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		handler = s.route{{ $i }}
 	{{- end }}
 	default:
-		httpResponseError(w, Errorf(http.StatusNotFound, nil, "method %q not found", r.URL.Path))
+		httpResponseError(w, ErrServiceMethodNotFound.WithMsg("method %q not found", r.URL.Path))
 		return
 	}
 
