@@ -844,7 +844,7 @@ func newError(code int, httpStatus int, cause error, msg string, args ...any) Er
 // otherwise it will write 500
 func httpResponseError(w http.ResponseWriter, err error) {
 	switch err := err.(type) {
-	case *Error:
+	case Error:
 		if err.HTTPStatus < 100 || err.HTTPStatus > 599 {
 			httpResponse(w, http.StatusInternalServerError, err)
 			return
