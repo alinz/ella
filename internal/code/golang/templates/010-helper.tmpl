@@ -859,10 +859,11 @@ func httpResponseError(w http.ResponseWriter, err error) {
 // Default Errors
 
 var (
-	ErrUnsupportedMediaType = newError(-1, http.StatusUnsupportedMediaType, nil, "unsupported media type")
+	ErrUnsupportedMediaType  = newError(-1, http.StatusUnsupportedMediaType, nil, "unsupported media type")
 	ErrServiceMethodNotFound = newError(-2, http.StatusNotFound, nil, "service method not found")
-	ErrMissingFilesField = newError(-3, http.StatusBadRequest, nil, "missing files field")
-	ErrMissingPayloadName = newError(-4, http.StatusBadRequest, nil, "missing payload field")
-	ErrMethodNotAllowed = newError(-5, http.StatusMethodNotAllowed, nil, "method not allowed")
-	ErrFlusherNotSupported = newError(-6, http.StatusNotExtended, nil, "response writer does not support flushing")
+	ErrMissingFilesField     = newError(-3, http.StatusBadRequest, nil, "missing files field")
+	ErrMissingPayloadName    = newError(-4, http.StatusBadRequest, nil, "missing payload field")
+	ErrMethodNotAllowed      = newError(-5, http.StatusMethodNotAllowed, nil, "method not allowed")
+	ErrFlusherNotSupported   = newError(-6, http.StatusNotExtended, nil, "response writer does not support flushing")
+	ErrInternal 			 = newError(-7, http.StatusInternalServerError, nil, "internal server error")
 )
