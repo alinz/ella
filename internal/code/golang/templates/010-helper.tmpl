@@ -803,6 +803,9 @@ func (e Error) Error() string {
 }
 
 func (e Error) Is(target error) bool {
+	if target == nil {
+		return false
+	}
 	if rpcErr, ok := target.(Error); ok {
 		return rpcErr.Code == e.Code
 	}
