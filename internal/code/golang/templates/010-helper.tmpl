@@ -26,8 +26,8 @@ func rpcSend[T any](ctx context.Context, adaptor rpcAdaptor, topic string, in an
 		return nil, err
 	}
 
-	if data[0] != '{' {
-		err = errors.New(string(data))
+	err, ok := decodeRpcError(data)
+	if ok {
 		return nil, err
 	}
 
@@ -828,6 +828,79 @@ func (e Error) WithMsg(msg string, args ...any) Error {
 	return err
 }
 
+// encodeRpcError encodes an error to a byte slice
+// the format is "EllaError:-:<code>:-:<message>:-:<http_status>:-:<cause>"
+// there are 3 different formats:
+// - 1 segments "<message> (for normal error without http status code)
+// - 3 segments "<code>:-:<message>:-:<http_status> (for normal error with http status code)
+// - 4 segments "<code>:-:<message>:-:<http_status>:-:<cause>" (for error with cause)
+// NOTE: use custom encode/decode for performance reasons
+func encodeRpcError(err error) []byte {
+	var b bytes.Buffer
+
+	b.WriteString("EllaError:-:")
+
+	e, ok := err.(Error)
+	if !ok {
+		b.WriteString(err.Error())
+		return b.Bytes()
+	}
+
+	b.WriteString(strconv.FormatInt(int64(e.Code), 10))
+	b.WriteString(":-:")
+	b.WriteString(e.Message)
+	b.WriteString(":-:")
+	b.WriteString(strconv.FormatInt(int64(e.HTTPStatus), 10))
+	if e.cause != nil {
+		b.WriteString(":-:")
+		b.WriteString(e.cause.Error())
+	}
+
+	return b.Bytes()
+}
+
+func decodeRpcError(b []byte) (Error, bool) {
+	if !bytes.HasPrefix(b, []byte("EllaError:-:")) {
+		return Error{}, false
+	}
+
+	b = bytes.TrimPrefix(b, []byte("EllaError:-:"))
+
+	segments := bytes.Split(b, []byte(":-:"))
+
+	switch len(segments) {
+	case 1: // normal error
+		return ErrInternal.WithMsg(string(segments[1])), true
+	case 3: // error with http status
+		code, err := strconv.ParseInt(string(segments[0]), 10, 64)
+		if err != nil {
+			return ErrInternal.WithMsg(string(b)), true
+		}
+
+		httpStatus, err := strconv.ParseInt(string(segments[2]), 10, 64)
+		if err != nil {
+			return ErrInternal.WithMsg(string(b)), true
+		}
+
+		return newError(int(code), int(httpStatus), nil, string(segments[1])), true
+
+	case 4: // error with cause
+		code, err := strconv.ParseInt(string(segments[0]), 10, 64)
+		if err != nil {
+			return ErrInternal.WithMsg(string(b)), true
+		}
+
+		httpStatus, err := strconv.ParseInt(string(segments[2]), 10, 64)
+		if err != nil {
+			return ErrInternal.WithMsg(string(b)), true
+		}
+
+		return newError(int(code), int(httpStatus), nil, string(segments[1]), errors.New(string(segments[3]))), true
+	default:
+		return ErrInternal.WithMsg(string(b)), true
+	}
+}
+
 func newError(code int, httpStatus int, cause error, msg string, args ...any) Error {
 	if httpStatus < 100 || httpStatus > 599 {
 		panic(fmt.Sprintf("invalid http status code: %d", httpStatus))
@@ -852,7 +925,7 @@ func httpResponseError(w http.ResponseWriter, err error) {
 			httpResponse(w, http.StatusInternalServerError, err)
 			return
 		}
-		slog.Error("http response error", "code", err.Code, "http_status", err.HTTPStatus, "message", err.Message, "cause", err.cause)
+		slog.Error("http response error", "http_status", err.HTTPStatus, "code", err.Code, "message", err.Message, "cause", err.cause)
 		httpResponse(w, err.HTTPStatus, err)
 	default:
 		httpResponseError(w, newError(0, http.StatusInternalServerError, err, "internal server error"))

@@ -32,7 +32,7 @@ func StartRpc{{ $service.Name }}Server(service Rpc{{ $service.Name }}, adaptor r
 
         err := json.Unmarshal(data, &in)
         if err != nil {
-            msg.Reply([]byte(err.Error()))
+            msg.Reply(encodeRpcError(err))
             return
         }
 
@@ -45,13 +45,13 @@ func StartRpc{{ $service.Name }}Server(service Rpc{{ $service.Name }}, adaptor r
             {{ $method.ArgsNames "in." }}
         )
         if err != nil {
-            msg.Reply([]byte(err.Error()))
+            msg.Reply(encodeRpcError(err))
             return
         }
 
         data, err = json.Marshal(out)
         if err != nil {
-            msg.Reply([]byte(err.Error()))
+            msg.Reply(encodeRpcError(err))
             return
         }
 
