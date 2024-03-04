@@ -9,10 +9,12 @@ type CallServiceOptions = {
 }
 
 export class ResponseError extends Error {
-  code : number
-  constructor(message: string, code: number) {
-    super(message);
+  code: number
+  httpStatus: number
+  constructor(code: number, httpStatus: number, message: string) {
+    super(message)
     this.code = code
+    this.httpStatus = httpStatus
   }
 }
 
@@ -47,13 +49,13 @@ async function callServiceUploadMethod<Req, Resp>(
 
   if (resp.status > 300) {
     const value = await resp.text()
-    let msg: any
+    let err: any
     try {
-      msg = JSON.parse(value)
+      err = JSON.parse(value)
     } catch (e) {
       throw value
     }
-    throw new ResponseError(msg.error, msg.code)
+    throw new ResponseError(err.code, resp.status, err.message)
   }
 
   return JSON.parse(value) as Resp;
@@ -139,13 +141,13 @@ async function callServiceMethod<Req, Resp>(
 
   if (resp.status > 300) {
     const value = await resp.text()
-    let msg: any
+    let err: any
     try {
-      msg = JSON.parse(value)
+      err = JSON.parse(value)
     } catch (e) {
       throw value
     }
-    throw new ResponseError(msg.error, msg.code)
+    throw new ResponseError(err.code, resp.status, err.message)
   }
 
   if (rawBlob) {
