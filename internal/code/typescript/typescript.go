@@ -16,6 +16,7 @@ type Typescript struct {
 	Enums        Enums
 	Models       Models
 	HttpServices HttpServices
+	CustomErrors CustomErrors
 }
 
 func (t *Typescript) Parse(prog *ast.Program) error {
@@ -25,6 +26,7 @@ func (t *Typescript) Parse(prog *ast.Program) error {
 		t.Enums.Parse,
 		t.Models.Parse,
 		t.HttpServices.Parse,
+		t.CustomErrors.Parse,
 	)
 }
 

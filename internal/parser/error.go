@@ -43,9 +43,9 @@ func ParseCustomError(p *Parser) (customError *ast.CustomError, err error) {
 	p.Next() // skip '}'
 
 	// automatically assign error code if not defined
-	if customError.Code == 0 {
-		customError.Code = p.getNextErrorCode()
-	}
+	// if customError.Code == 0 {
+	// 	customError.Code = p.getNextErrorCode()
+	// }
 
 	// check if all values are defined
 	if customError.HttpStatus == 0 {
