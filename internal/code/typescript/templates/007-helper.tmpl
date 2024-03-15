@@ -3,9 +3,18 @@
 // HELPER FUNCTIONS
 //
 
+type cacheEntry = {
+  value: any
+  timestamp: number
+}
+
+const cache = new Map<string, cacheEntry>()
+
 type CallServiceOptions = {
   headers?: Record<string, string>
   signal?: AbortSignal
+  cacheTTL?: number
+  cacheKey?: string[]
 }
 
 export class ResponseError extends Error {
@@ -123,6 +132,26 @@ async function callServiceMethod<Req, Resp>(
     body = undefined;
   }
 
+  if (opts?.cacheTTL && (!opts.cacheKey || opts.cacheKey.length === 0)) {
+    throw new Error("cacheKey is required when cacheTTL is set: " + url);
+  }
+
+  const cacheKey = opts?.cacheTTL ? `${url}:${opts.cacheKey.join(":")}` : undefined;
+
+  if (opts?.cacheTTL) {
+    const entry = cache.get(cacheKey)
+
+    if (entry) {
+      if (Date.now() < entry.timestamp) {
+        console.log("cache hit:", url)
+        return entry.value as Resp
+      }
+
+      console.log("cache expired:", url)
+      cache.delete(url)
+    }
+  }
+
   let headers = opts?.headers
 
   if (!headers) {
@@ -155,7 +184,13 @@ async function callServiceMethod<Req, Resp>(
   }
 
   const value = await resp.text();
-  return JSON.parse(value) as Resp;
+  const valueJson = JSON.parse(value) as Resp;
+
+  if (opts?.cacheTTL) {
+    cache.set(cacheKey, { value: valueJson, timestamp: Date.now() + opts.cacheTTL })
+  }
+
+  return valueJson;
 }
 
 function prepareForQs(obj?: any): Record<string, string> | undefined {
