@@ -393,8 +393,8 @@ func callHttpEndpoint(ctx context.Context, client *http.Client, url string, meth
 
 	if resp.StatusCode >= 300 {
 		defer resp.Body.Close()
-		err := &Error{}
-		if err := json.NewDecoder(resp.Body).Decode(err); err != nil {
+		err := Error{}
+		if err := json.NewDecoder(resp.Body).Decode(&err); err != nil {
 			return nil, err
 		}
 		return nil, err
@@ -492,8 +492,8 @@ func sendHttpFilesUpload(ctx context.Context, client *http.Client, url string, m
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 300 {
-		err := &Error{}
-		if err := json.NewDecoder(resp.Body).Decode(err); err != nil {
+		err := Error{}
+		if err := json.NewDecoder(resp.Body).Decode(&err); err != nil {
 			return err
 		}
 		return err
