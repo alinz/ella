@@ -69,7 +69,8 @@ async function callServiceUploadMethod<Req, Resp>(
 
   return JSON.parse(value) as Resp;
 }
-interface Subscription<Event> {
+
+export interface Subscription<Event> {
   recv(fn: (event: Event) => void): void
   close(): void
 }
