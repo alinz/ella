@@ -455,23 +455,29 @@ func sendHttpFilesUpload(ctx context.Context, client *http.Client, url string, m
 		}
 
 		for {
-			filename, content, err = files()
-			if errors.Is(err, io.EOF) {
-				err = nil
-				return
-			} else if err != nil {
-				return
-			}
+			func() {
+				filename, content, err = files()
+				if errors.Is(err, io.EOF) {
+					err = nil
+					return
+				} else if err != nil {
+					return
+				}
 
-			part, err = mw.CreateFormFile("files", filename)
-			if err != nil {
-				return
-			}
+				if closer, ok := content.(io.Closer); ok {
+					defer closer.Close()
+				}
 
-			_, err = io.Copy(part, content)
-			if err != nil {
-				return
-			}
+				part, err = mw.CreateFormFile("files", filename)
+				if err != nil {
+					return
+				}
+
+				_, err = io.Copy(part, content)
+				if err != nil {
+					return
+				}
+			}()
 		}
 	}()
 
