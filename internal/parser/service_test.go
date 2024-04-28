@@ -11,6 +11,15 @@ func TestParseService(t *testing.T) {
 	testCases := TestCases{
 		{
 			Input: `service Foo {
+				http Sample() => (result: file)
+			}`,
+			Output: `
+service Foo {
+	http Sample() => (result: file)
+}`,
+		},
+		{
+			Input: `service Foo {
 				rpc, http Sample()
 			}`,
 			Output: `

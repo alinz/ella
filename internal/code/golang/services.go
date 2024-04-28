@@ -199,6 +199,38 @@ func (s *HttpServices) Parse(prog *ast.Program) error {
 		return HttpService{
 			Name: service.Name.String(),
 			Methods: sliceutil.Mapper(methods, func(method *ast.Method) Method {
+
+				var isBinary bool
+				var isStream bool
+
+				returns := sliceutil.Mapper(method.Returns, func(ret *ast.Return) MethodReturn {
+					typ := parseType(ret.Type, isModelType)
+					if ret.Stream && isArrayOf[*ast.Byte](ret.Type) {
+						typ = "io.Reader"
+						isBinary = true
+						isStream = true
+					} else if ret.Stream {
+						isStream = true
+						typ = "<-chan " + typ
+					}
+
+					return MethodReturn{
+						Name:   ret.Name.String(),
+						Type:   typ,
+						Stream: ret.Stream,
+					}
+				})
+
+				if isStream && isBinary {
+					returns = append(returns, MethodReturn{
+						Name: "filename",
+						Type: "string",
+					}, MethodReturn{
+						Name: "contentType",
+						Type: "string",
+					})
+				}
+
 				return Method{
 					Name:    method.Name.String(),
 					Service: service.Name.String(),
@@ -217,20 +249,7 @@ func (s *HttpServices) Parse(prog *ast.Program) error {
 							Type: typ,
 						}
 					}),
-					Returns: sliceutil.Mapper(method.Returns, func(ret *ast.Return) MethodReturn {
-						typ := parseType(ret.Type, isModelType)
-						if ret.Stream && isArrayOf[*ast.Byte](ret.Type) {
-							typ = "io.Reader"
-						} else if ret.Stream {
-							typ = "<-chan " + typ
-						}
-
-						return MethodReturn{
-							Name:   ret.Name.String(),
-							Type:   typ,
-							Stream: ret.Stream,
-						}
-					}),
+					Returns: returns,
 				}
 			}),
 		}

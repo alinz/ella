@@ -1,0 +1,6 @@
+service DownloadService {
+    http Get() => (asset: stream []byte) {
+        HttpMethod = "GET"
+        ContentType = "hello"
+    }
+}

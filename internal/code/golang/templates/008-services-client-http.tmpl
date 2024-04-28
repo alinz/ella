@@ -40,7 +40,7 @@ func (s * http{{ $service.Name }}Client) {{ $method.Name }}(ctx context.Context 
 {{- if $method.IsFileUpload }}
 	err = sendHttpFilesUpload(ctx, s.client, url, "{{ $method.Options.HttpMethod }}", &_in_, files, &_out_)
 {{- else if and $method.IsStream $method.IsBinary }}
-	{{ $method.ReturnsNames "_out_."}} err = callHttpEndpoint(ctx, s.client, url, "{{ $method.Options.HttpMethod }}", &_in_)
+	{{ $method.ReturnsNames "_out_."}} err = callHttpStreamEndpoint(ctx, s.client, url, "{{ $method.Options.HttpMethod }}", &_in_)
 {{- else if $method.IsStream }}
 	{{ $method.ReturnsNames "_out_."}} err = callHttpServiceStreamMethod[{{ $method.ReturnStreamType }}](ctx, s.client, url, "{{ $method.Options.HttpMethod }}", &_in_)
 {{- else }}

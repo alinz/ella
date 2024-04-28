@@ -64,11 +64,10 @@ func (s *{{ $service.NameImpl }}) create{{ $method.Name }}() httpServiceMethodHa
 {{- if and $method.IsStream $method.IsBinary }}
 	return createStreamBinaryServiceMethod(
 		"{{ $method.Options.HttpMethod }}",
-		"{{ $method.Options.ContentType }}",
 		{{ $method.HasArgs }},
 		func (ctx context.Context, args *struct { 
 			{{ $method.ArgsStructDefinitions false }}
-		}) (io.Reader, error) {
+		}) (io.Reader, string, string, error) {
 			return s.service.{{ $method.Name }}(ctx, {{ $method.ArgsNames "args." }})
 		},
 	)

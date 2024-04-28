@@ -11,6 +11,31 @@ func TestLex(t *testing.T) {
 	runTestCase(t, -1, scanner.Lex, TestCases{
 		{
 			input: `service Foo {
+				http GetAssetFile(assetId: string) => (result: file)
+			}`,
+			output: Tokens{
+				{Type: token.Service, Start: 0, End: 7, Literal: "service"},
+				{Type: token.Identifier, Start: 8, End: 11, Literal: "Foo"},
+				{Type: token.OpenCurly, Start: 12, End: 13, Literal: "{"},
+				{Type: token.Http, Start: 18, End: 22, Literal: "http"},
+				{Type: token.Identifier, Start: 23, End: 35, Literal: "GetAssetFile"},
+				{Type: token.OpenParen, Start: 35, End: 36, Literal: "("},
+				{Type: token.Identifier, Start: 36, End: 43, Literal: "assetId"},
+				{Type: token.Colon, Start: 43, End: 44, Literal: ":"},
+				{Type: token.String, Start: 45, End: 51, Literal: "string"},
+				{Type: token.CloseParen, Start: 51, End: 52, Literal: ")"},
+				{Type: token.Return, Start: 53, End: 55, Literal: "=>"},
+				{Type: token.OpenParen, Start: 56, End: 57, Literal: "("},
+				{Type: token.Identifier, Start: 57, End: 63, Literal: "result"},
+				{Type: token.Colon, Start: 63, End: 64, Literal: ":"},
+				{Type: token.File, Start: 65, End: 69, Literal: "file"},
+				{Type: token.CloseParen, Start: 69, End: 70, Literal: ")"},
+				{Type: token.CloseCurly, Start: 74, End: 75, Literal: "}"},
+				{Type: token.EOF, Start: 75, End: 75, Literal: ""},
+			},
+		},
+		{
+			input: `service Foo {
 				rpc GetFoo() => (value: int64) {
 					Required
 					A = 1mb
