@@ -2,13 +2,15 @@ package download_test
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"compiler.ella.to/e2e/download"
 	"github.com/stretchr/testify/assert"
+
+	"compiler.ella.to/e2e/download"
 )
 
 func TestCallHttpMethod(t *testing.T) {
@@ -17,6 +19,8 @@ func TestCallHttpMethod(t *testing.T) {
 	)
 
 	host := server.URL
+	fmt.Println(host)
+
 	httpClient := &http.Client{}
 
 	client := download.CreateHttpDownloadServiceClient(host, httpClient)

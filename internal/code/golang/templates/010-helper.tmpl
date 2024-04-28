@@ -285,12 +285,10 @@ func createStreamBinaryServiceMethod[ReqMsg any](method string, hasFields bool, 
 			contentType = "application/octet-stream"
 		}
 
-		if filename == "" {
-			filename = "download"
-		}
-
 		w.Header().Set("Content-Type", contentType)
-		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+		if filename != "" {
+			w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+		}
 
 		io.Copy(w, streamReader)
 	}
