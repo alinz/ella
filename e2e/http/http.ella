@@ -1,5 +1,7 @@
 const Version = "1.0.0"
 
+error ErrAgen { HttpStatus = InternalServerError Msg = "age must be greater than 0" }
+
 enum Emotion {
     _ 
     Sad
