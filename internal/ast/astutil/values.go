@@ -18,15 +18,19 @@ func ParseMethodOptions(options ast.Options) MethodOptions {
 	mapper := make(map[string]any)
 	for _, opt := range options {
 		var value any
-		switch opt.Value.(type) {
+		switch v := opt.Value.(type) {
 		case *ast.ValueString:
-			value = opt.Value.(*ast.ValueString).Value
+			value = v.Value
 		case *ast.ValueBool:
-			value = opt.Value.(*ast.ValueBool).Value
+			value = v.Value
 		case *ast.ValueInt:
-			value = opt.Value.(*ast.ValueInt).Value
+			value = v.Value
 		case *ast.ValueFloat:
-			value = opt.Value.(*ast.ValueFloat).Value
+			value = v.Value
+		case *ast.ValueByteSize:
+			value = v.Value * int64(v.Scale)
+		case *ast.ValueDuration:
+			value = v.Value * int64(v.Scale)
 		default:
 			value = opt.Value
 		}
